@@ -1,0 +1,44 @@
+parameters:
+  level: max
+  paths:
+    - src
+
+  tmpDir: var/phpstan
+  checkGenericClassInNonGenericObjectType: false
+
+  ignoreErrors:
+    - '#Parameter \#1 $objectOrClass of class ReflectionClass constructor expects class-string<T of object>|T of object, string given.#'
+    - '#Method Kaa\\Validator\\Assert\\Type::__construct\(\) has parameter \$type with no value type specified in iterable type array.#'
+    - '#Parameter \#1 \$assert (.*) of method Kaa\\Validator\\Strategy\\.*::generateAssert\(\) should be contravariant with parameter \$assert.*#'
+    -
+      messages:
+        - '#Calling sha1\(\) is forbidden, use hash\(\) with at least SHA-256 for secure hash, or password_hash\(\) for passwords#'
+        - '#Call to an undefined method object::getNewInstanceCode\(\).#'
+      paths:
+        - ./src/Router/*
+    - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
+    - "#Cannot access offset .* on mixed.#"
+    - '#.*expects.*, mixed given.#'
+    - '#Parameter \#1 \$any_value of function not_null expects any, .* given.#'
+    -
+      message: '#.*#'
+      paths:
+        - src/HttpKernel/Request.php
+        - src/HttpKernel/HttpKernel.php
+        - src/*/Test/*
+    - '#Call to function is_subclass_of\(\) with object and string will always evaluate to true.#'
+    -
+      messages:
+        - '#PHPDoc tag @var for property Kaa\\EventDispatcher\\EventDispatcher::\$listeners with type Kaa\\EventDispatcher\\shape is incompatible with native type array.#'
+        - '#Property Kaa\\EventDispatcher\\EventDispatcher::\$listeners has unknown class Kaa\\EventDispatcher\\shape as its type.#'
+        - '#Property Kaa\\EventDispatcher\\EventDispatcher::\$listeners type has no value type specified in iterable type array.#'
+      path: src/EventDispatcher\EventDispatcher.php
+    -
+      message: '#Method Kaa\\HttpKernel\\Event\\FindActionEvent::getAction\(\) should return callable\(Kaa\\HttpKernel\\Request\): Kaa\\HttpKernel\\Response\\ResponseInterface but returns \(callable\(Kaa\\HttpKernel\\Request\): Kaa\\HttpKernel\\Response\\ResponseInterface\)\|null.#'
+      path: src/HttpKernel/Event/FindActionEvent.php
+
+includes:
+  - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+  - vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+  - vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
+  - vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon

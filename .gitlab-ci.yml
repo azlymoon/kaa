@@ -1,0 +1,79 @@
+stages:
+  - dependencies
+  - test
+
+image: abramchikd/kaa-php:1.0
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - var/
+    - vendor/
+
+
+composer:
+  stage: dependencies
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags: [ docker ]
+
+  script:
+    - composer install --no-interaction
+
+  artifacts:
+    paths:
+      - vendor/
+
+
+phpunit:
+  stage: test
+  tags: [ docker ]
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+  script:
+    - php ./vendor/bin/phpunit tests --coverage-text --coverage-cobertura=coverage.cobertura.xml
+
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.cobertura.xml
+
+
+phpstan:
+  stage: test
+  tags: [ docker ]
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+  script:
+    - php ./vendor/bin/phpstan --no-progress --error-format=gitlab > phpstan.json
+
+  artifacts:
+    reports:
+      codequality: phpstan.json
+
+
+phpcs:
+  stage: test
+  tags: [ docker ]
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+  before_script:
+    - mkdir -p var
+
+  script:
+    - php ./vendor/bin/phpcs src/
