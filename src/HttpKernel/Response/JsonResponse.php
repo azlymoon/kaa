@@ -3,7 +3,7 @@
 namespace Kaa\HttpKernel\Response;
 
 use JsonEncoder;
-use JsonException;
+use Kaa\HttpKernel\Exception\JsonException;
 use Kaa\HttpKernel\HttpCode;
 
 class JsonResponse extends Response
