@@ -35,7 +35,7 @@ if (null !== %s && false !== %s && 0 !== %s && '0' !== %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'Default message';
+        $message = $assert->message ?? 'This value should be false.';
         $code = sprintf(
             $code,
             $accessCode,

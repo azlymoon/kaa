@@ -67,13 +67,14 @@ class TypeGenerator implements AssertGeneratorInterface
         $types = (array)$assert->type;
         foreach ($types as $type) {
             $type = strtolower($type);
+            $message = $assert->message ?? 'This value should be of type {{ type }}.';
+            preg_replace('/{{ type }}/', $type, $message);
             if (isset(self::VALIDATION_FUNCTIONS[$type])) {
                 $code = <<<'PHP'
 if (!%s(%s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-                $message = $assert->message ?? 'Default message';
                 $code = sprintf(
                     $code,
                     self::VALIDATION_FUNCTIONS[$type],
@@ -89,8 +90,6 @@ if (!(%s instanceof \%s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-
-                $message = $assert->message ?? 'Default message';
                 $code = sprintf(
                     $code,
                     $accessCode,
