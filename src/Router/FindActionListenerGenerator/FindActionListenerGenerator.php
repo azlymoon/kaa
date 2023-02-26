@@ -10,6 +10,7 @@ use Kaa\HttpKernel\Event\FindActionEvent;
 use Kaa\HttpKernel\EventListener\AbstractFindActionEventListener;
 use Kaa\Router\CallableRoute;
 use Kaa\Router\HttpRoute;
+use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use Symfony\Component\Filesystem\Filesystem;
@@ -33,6 +34,7 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
         $class->setExtends(AbstractFindActionEventListener::class);
 
         $method = $class->addMethod('handleFindAction');
+        $method->setVisibility(ClassLike::VisibilityProtected);
         $method->addParameter('event')->setType(FindActionEvent::class);
         $method->setReturnType('void');
 
