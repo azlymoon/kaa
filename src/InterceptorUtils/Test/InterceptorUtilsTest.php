@@ -10,6 +10,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Action;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 
 class InterceptorUtilsTest extends TestCase
@@ -83,7 +84,7 @@ class InterceptorUtilsTest extends TestCase
             '"test"'
         );
 
-        $this->assertEquals('$test->setprivate("test");', $setCode);
+        $this->assertEquals('$test->setPrivate("test");', $setCode);
     }
 
     /**
@@ -129,7 +130,7 @@ class InterceptorUtilsTest extends TestCase
             'test',
         );
 
-        $this->assertEquals('$test->getprivate()', $setCode);
+        $this->assertEquals('$test->getPrivate()', $setCode);
     }
 
     /**
@@ -144,7 +145,7 @@ class InterceptorUtilsTest extends TestCase
             'test',
         );
 
-        $this->assertEquals('$test->isprivateBool()', $setCode);
+        $this->assertEquals('$test->isPrivateBool()', $setCode);
     }
 
     /**

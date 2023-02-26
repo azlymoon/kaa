@@ -8,6 +8,8 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\InterceptorUtils\Exception\InaccessiblePropertyException;
 use Kaa\InterceptorUtils\Exception\ParamNotFoundException;
 use Kaa\Router\Action;
+use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 
@@ -58,6 +60,7 @@ class InterceptorUtils
      *
      * @param string $value Может быть строкой с константой, вызовом метода, конструктора и т.д.
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public static function generateSetStatement(
         ReflectionProperty $reflectionProperty,
@@ -69,8 +72,11 @@ class InterceptorUtils
         }
 
         $reflectionClass = $reflectionProperty->getDeclaringClass();
-        $setterMethodName = 'set' . $reflectionProperty->name;
-        if (!$reflectionClass->hasMethod($setterMethodName)) {
+        $setterMethodName = self::getMethodNameWithRightCase(
+            $reflectionClass,
+            'set' . $reflectionProperty->name
+        );
+        if ($setterMethodName === null) {
             throw new InaccessiblePropertyException(
                 sprintf(
                     'Property %s::%s is private and it`s class does not have method %s',
@@ -103,6 +109,7 @@ class InterceptorUtils
      * или передан в качестве аргумента при вызове метода
      *
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public static function generateGetCode(
         ReflectionProperty $reflectionProperty,
@@ -112,14 +119,17 @@ class InterceptorUtils
             return sprintf('$%s->%s', $objectName, $reflectionProperty->name);
         }
 
-        $getterNames = ['get' . $reflectionProperty->name, 'is' . $reflectionProperty->name];
-
         $reflectionClass = $reflectionProperty->getDeclaringClass();
+
+        $getterNames = [
+            self::getMethodNameWithRightCase($reflectionClass, 'get' . $reflectionProperty->name),
+            self::getMethodNameWithRightCase($reflectionClass, 'is' . $reflectionProperty->name)
+        ];
+
+        $getterNames = array_filter($getterNames);
+
         foreach ($getterNames as $getterName) {
-            if (
-                $reflectionClass->hasMethod($getterName)
-                && $reflectionClass->getMethod($getterName)->isPublic()
-            ) {
+            if ($reflectionClass->getMethod($getterName)->isPublic()) {
                 return sprintf('$%s->%s()', $objectName, $getterName);
             }
         }
@@ -131,5 +141,16 @@ class InterceptorUtils
                 $reflectionProperty->name
             )
         );
+    }
+
+    private static function getMethodNameWithRightCase(ReflectionClass $reflectionClass, string $methodName): ?string
+    {
+        foreach ($reflectionClass->getMethods() as $reflectionMethod) {
+            if (strcasecmp($reflectionMethod->name, $methodName) === 0) {
+                return $reflectionMethod->name;
+            }
+        }
+
+        return null;
     }
 }

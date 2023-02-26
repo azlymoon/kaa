@@ -76,4 +76,4 @@ phpcs:
     - mkdir -p var
 
   script:
-    - php ./vendor/bin/phpcs src/
+    - php ./vendor/bin/phpcs
