@@ -42,6 +42,7 @@ class EmailGenerator implements AssertGeneratorInterface
         AvailableVar $modelVar,
         string $violationListVarName
     ): array {
+        $resultCode = [];
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         if (!isset(self::EMAIL_PATTERNS[$assert->mode])) {
