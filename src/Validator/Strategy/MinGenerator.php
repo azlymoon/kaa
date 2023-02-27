@@ -38,7 +38,7 @@ if (%s < %s) {
 }
 PHP;
         $message = $assert->message ?? 'This value should be a minimum of {{ min_value }}.';
-        preg_replace('/{{ min_value }}/', $assert->value, $message);
+        preg_replace('/{{ min_value }}/', "$assert->value", $message);
         $code = sprintf(
             $code,
             $accessCode,
