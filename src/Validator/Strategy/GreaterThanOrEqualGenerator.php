@@ -38,7 +38,7 @@ if (%s < %s){
 }
 PHP;
         $message = $assert->message ?? 'This value should be greater than or equal to {{ compared_value }}.';
-        preg_replace('/{{ compared_value }}/', "$assert->value", $message);
+        $message = preg_replace('/{{ compared_value }}/', "$assert->value", $message);
         $code = sprintf(
             $code,
             $accessCode,

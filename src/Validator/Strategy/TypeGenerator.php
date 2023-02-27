@@ -70,7 +70,7 @@ class TypeGenerator implements AssertGeneratorInterface
         foreach ($types as $type) {
             $type = strtolower($type);
             $message = $assert->message ?? 'This value should be of type {{ type }}.';
-            preg_replace('/{{ type }}/', $type, $message);
+            $message = preg_replace('/{{ type }}/', $type, $message);
             if (isset(self::VALIDATION_FUNCTIONS[$type])) {
                 $code = <<<'PHP'
 if (!%s(%s)){

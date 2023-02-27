@@ -38,7 +38,7 @@ if (%s > %s){
 }
 PHP;
         $message = $assert->message ?? 'This value should be a maximum of {{ max_value }}.';
-        preg_replace('/{{ max_value }}/', "$assert->value", $message);
+        $message = preg_replace('/{{ max_value }}/', "$assert->value", $message);
         $code = sprintf(
             $code,
             $accessCode,
