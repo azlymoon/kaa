@@ -41,7 +41,6 @@ PHP;
         $code = sprintf(
             $code,
             $accessCode,
-            $accessCode,
             $violationListVarName,
             $modelVar->type,
             $reflectionProperty->name,

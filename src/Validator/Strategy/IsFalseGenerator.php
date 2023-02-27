@@ -43,7 +43,6 @@ PHP;
             $accessCode,
             $accessCode,
             $accessCode,
-            $accessCode,
             $violationListVarName,
             $modelVar->type,
             $reflectionProperty->name,

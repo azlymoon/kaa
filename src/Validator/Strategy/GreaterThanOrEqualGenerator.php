@@ -42,7 +42,6 @@ PHP;
         $code = sprintf(
             $code,
             $accessCode,
-            $accessCode,
             $assert->value,
             $violationListVarName,
             $modelVar->type,
