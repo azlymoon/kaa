@@ -6,6 +6,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Strategy\AssertGeneratorInterface;
 use Kaa\Validator\Strategy\BlankGenerator;
+use Kaa\Validator\Strategy\EmailGenerator;
 use Kaa\Validator\Strategy\GreaterThanGenerator;
 use Kaa\Validator\Strategy\GreaterThanOrEqualGenerator;
 use Kaa\Validator\Strategy\IsFalseGenerator;
@@ -47,6 +48,7 @@ class GeneratorContext
             new PositiveOrZeroGenerator(),
             new NegativeGenerator(),
             new NegativeOrZeroGenerator(),
+            new EmailGenerator(),
         ];
     }
 
