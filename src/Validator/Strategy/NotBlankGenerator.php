@@ -33,7 +33,7 @@ class NotBlankGenerator implements AssertGeneratorInterface
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         $code = <<<'PHP'
-if (false === %s || (empty(%s) && '0' !== %s)) {
+if (empty(%s) && '0' !== %s) {
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;

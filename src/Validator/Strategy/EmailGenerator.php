@@ -45,7 +45,12 @@ class EmailGenerator implements AssertGeneratorInterface
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         if (!isset(self::EMAIL_PATTERNS[$assert->mode])) {
-            throw new InvalidArgumentException('The "%s::$mode" parameter value is not valid.', $assert->mode);
+            throw new InvalidArgumentException(
+                sprintf(
+                'The "%s::$mode" parameter value is not valid.',
+                $assert->mode,
+                )
+            );
         } else {
             $code = <<<PHP
 if (!preg_match(%s, %s)){

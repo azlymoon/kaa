@@ -33,7 +33,7 @@ class LessThanOrEqualGenerator implements AssertGeneratorInterface
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         $code = <<<'PHP'
-if (null !== %s && %s > %s){
+if (%s > %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;

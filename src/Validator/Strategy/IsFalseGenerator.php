@@ -33,7 +33,7 @@ class IsFalseGenerator implements AssertGeneratorInterface
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         $code = <<<'PHP'
-if (null !== %s && false !== %s && 0 !== %s && '0' !== %s){
+if (false !== %s && 0 !== %s && '0' !== %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
