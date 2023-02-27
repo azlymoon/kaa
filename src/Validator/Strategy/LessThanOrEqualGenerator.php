@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Kaa\Validator\Strategy;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
