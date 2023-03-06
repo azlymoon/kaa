@@ -4,7 +4,7 @@ namespace Kaa\HttpKernel\EventListener;
 
 use Kaa\HttpKernel\Event\ThrowableEvent;
 use Kaa\HttpKernel\HttpCode;
-use Kaa\HttpKernel\Response\Response;
+use Kaa\HttpFoundation\Response;
 
 class ThrowableEventListener extends AbstractThrowableEventListener
 {

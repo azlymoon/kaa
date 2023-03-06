@@ -10,6 +10,8 @@ use Kaa\HttpKernel\Event\ThrowableEvent;
 use Kaa\HttpKernel\Exception\ActionNotFoundException;
 use Kaa\HttpKernel\Exception\ResponseNotReachedException;
 use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\HttpFoundation\Response;
+use Kaa\HttpFoundation\Request;
 use Throwable;
 
 class HttpKernel
@@ -24,7 +26,7 @@ class HttpKernel
     /**
      * @throws ResponseNotReachedException
      */
-    public function handle(Request $request): ResponseInterface
+    public function handle(Request $request): Response
     {
         try {
             return $this->handleRequest($request);
@@ -43,7 +45,7 @@ class HttpKernel
     /**
      * @throws ActionNotFoundException
      */
-    private function handleRequest(Request $request): ResponseInterface
+    private function handleRequest(Request $request): Response
     {
         $requestEvent = new RequestEvent($request);
         $this->eventDispatcher->dispatch($requestEvent, HttpKernelEvents::REQUEST);
