@@ -15,10 +15,12 @@ use Kaa\HttpKernel\EventListener\AbstractThrowableEventListener;
 use Kaa\HttpKernel\Exception\ResponseNotReachedException;
 use Kaa\HttpKernel\HttpKernel;
 use Kaa\HttpKernel\HttpKernelEvents;
-use Kaa\HttpKernel\Request;
-use Kaa\HttpKernel\Response\Response;
+use Kaa\HttpFoundation\Request;
+use Kaa\HttpFoundation\Response;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
+// TODO: Написать тесты под JsonResponse
 
 trait ResponseAwareTrait
 {
@@ -67,7 +69,9 @@ class HttpKernelTest extends TestCase
             HttpKernelEvents::FIND_ACTION => new FindActionEventListener($response),
         ]);
 
-        $this->assertSame($response, $this->httpKernel->handle(new Request()));
+        $responseHandle = $this->httpKernel->handle(new Request());
+
+        $this->assertSame($response, $responseHandle);
     }
 
     /**

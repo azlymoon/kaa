@@ -3,16 +3,17 @@
 namespace Kaa\HttpKernel\Event;
 
 use Kaa\EventDispatcher\Event;
-use Kaa\HttpKernel\Request;
+use Kaa\HttpFoundation\Request;
 use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\HttpFoundation\Response;
 
 class ResponseEvent extends Event
 {
     private Request $request;
 
-    private ResponseInterface $response;
+    private Response $response;
 
-    public function __construct(Request $request, ResponseInterface $response)
+    public function __construct(Request $request, Response $response)
     {
         $this->request = $request;
         $this->response = $response;
@@ -23,12 +24,12 @@ class ResponseEvent extends Event
         return $this->request;
     }
 
-    public function getResponse(): ResponseInterface
+    public function getResponse(): Response
     {
         return $this->response;
     }
 
-    public function setResponse(ResponseInterface $response): void
+    public function setResponse(Response $response): void
     {
         $this->response = $response;
     }

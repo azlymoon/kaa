@@ -3,15 +3,16 @@
 namespace Kaa\HttpKernel\Event;
 
 use Kaa\EventDispatcher\Event;
-use Kaa\HttpKernel\Request;
+use Kaa\HttpFoundation\Request;
 use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\HttpFoundation\Response;
 
 class FindActionEvent extends Event
 {
     private Request $request;
 
     /**
-     * @var (callable(Request): ResponseInterface)|null
+     * @var (callable(Request): Response)|null
      */
     private $action = null;
 
@@ -31,7 +32,7 @@ class FindActionEvent extends Event
     }
 
     /**
-     * @return callable(Request): ResponseInterface $action
+     * @return callable(Request): Response $action
      */
     public function getAction(): callable
     {
@@ -39,7 +40,7 @@ class FindActionEvent extends Event
     }
 
     /**
-     * @param callable(Request): ResponseInterface $action
+     * @param callable(Request): Response $action
      */
     public function setAction(callable $action): void
     {
