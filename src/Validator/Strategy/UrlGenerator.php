@@ -54,7 +54,7 @@ class UrlGenerator implements AssertGeneratorInterface
         $pattern = sprintf($pattern, implode('|', $assert->protocols));
 
         $code = <<<'PHP'
-if (!preg_match('%s', %s)){
+if (!preg_match("%s", %s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
