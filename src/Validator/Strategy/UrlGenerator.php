@@ -50,7 +50,7 @@ class UrlGenerator implements AssertGeneratorInterface
     ): array {
         $resultCode = [];
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
-        $pattern = $assert->relativeProtocol ? str_replace('(%s):', '(?:(%s):)?', self::PATTERN) : self::PATTERN;
+        $pattern = $assert->relativeProtocol ? str_replace('(%s):', '(?:(%s):)?', static::PATTERN) : static::PATTERN;
         $pattern = sprintf($pattern, implode('|', $assert->protocols));
 
         $code = <<<'PHP'
