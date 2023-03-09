@@ -54,8 +54,8 @@ class EmailGenerator implements AssertGeneratorInterface
             );
         } else {
             $code = <<<PHP
-if (!preg_match('%s', %s)){
-    $%s[] = nnew \Kaa\Validator\Violation('%s', '%s', '%s');
+if (!preg_match("%s", %s)){
+    $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
             $message = $assert->message ?? 'This value is not a valid email address.';
