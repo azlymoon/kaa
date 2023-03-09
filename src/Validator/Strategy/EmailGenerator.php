@@ -54,7 +54,7 @@ class EmailGenerator implements AssertGeneratorInterface
             );
         } else {
             $code = <<<PHP
-if (!preg_match(%s, %s)){
+if (!preg_match('%s', %s)){
     $%s[] = nnew \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
