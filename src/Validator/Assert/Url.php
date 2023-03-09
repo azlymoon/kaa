@@ -12,7 +12,6 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Url extends Assert
 {
     public function __construct(
-        public string $url,
         public array $protocols = ['http', 'https'],
         public bool $relativeProtocol = false,
         public ?string $message = null,

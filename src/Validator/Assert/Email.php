@@ -10,7 +10,6 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Email extends Assert
 {
     public function __construct(
-        public string $email,
         public string $mode = 'loose',
         public ?string $message = null,
     ) {
