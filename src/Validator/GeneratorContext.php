@@ -24,6 +24,7 @@ use Kaa\Validator\Strategy\NotNullGenerator;
 use Kaa\Validator\Strategy\PositiveGenerator;
 use Kaa\Validator\Strategy\PositiveOrZeroGenerator;
 use Kaa\Validator\Strategy\TypeGenerator;
+use Kaa\Validator\Strategy\UrlGenerator;
 
 #[PhpOnly]
 class GeneratorContext
@@ -51,6 +52,7 @@ class GeneratorContext
             new NegativeGenerator(),
             new NegativeOrZeroGenerator(),
             new EmailGenerator(),
+            new UrlGenerator(),
         ];
     }
 
