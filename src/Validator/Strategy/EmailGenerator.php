@@ -48,8 +48,8 @@ class EmailGenerator implements AssertGeneratorInterface
         if (!isset(self::EMAIL_PATTERNS[$assert->mode])) {
             throw new InvalidArgumentException(
                 sprintf(
-                'The "%s::$mode" parameter value is not valid.',
-                $assert->mode,
+                    'The "%s::$mode" parameter value is not valid.',
+                    $assert->mode,
                 )
             );
         } else {
