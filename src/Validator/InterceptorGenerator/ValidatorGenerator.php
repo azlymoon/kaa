@@ -63,7 +63,7 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
 
                 if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false){
 
-                    $allowTypes = implode(", ", $attribute->getAllowTypes);
+                    $allowTypes = implode(", ", $attribute->getAllowTypes());
 
                     throw new InvalidArgumentException(
                         sprintf(
