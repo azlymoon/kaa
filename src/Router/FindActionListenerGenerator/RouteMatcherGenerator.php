@@ -17,27 +17,30 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
      * @throws PathAlreadyExistsException
      */
     public function generateMatchCode(
-        string $targetVarName,
-        string $routeVarName,
-        string $methodVarName,
-        array $routes,
-        array $userConfig,
+        string               $targetVarName,
+        string               $routeVarName,
+        string               $methodVarName,
+        array                $routes,
+        array                $userConfig,
         ProvidedDependencies $providedDependencies
-    ): string {
+    ): string
+    {
         $code = [];
         $indexes = [];
         $parents = [];
         $mathTree = new Tree();
-        foreach ($routes as $route){
+        foreach ($routes as $route) {
             $mathTree->addElement($route->path, $route->name, $route->method);
         }
+        $code[] = '$Router_route_name = null;';
         $code[] = '$matches = [];';
         $code[] = '$nodes = explode("/", $route);';
-        $code[] = 'if ($nodes[0] == ""){';
+        $code[] = 'if ($nodes[0] === ""){';
         $code[] = '    unset($nodes[0]);';
         $code[] = '    $nodes = array_values($nodes);';
         $code[] = '}';
-        foreach ($mathTree->getHead() as $headItem){
+        $code[] = '$count_nodes = count($nodes);';
+        foreach ($mathTree->getHead() as $headItem) {
             $code[] = sprintf(
                 'if ($method === "%s"){',
                 $headItem->getData()
@@ -45,64 +48,67 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
             $depth = 0;
             $parents[$depth] = $headItem->getNext();
             $indexes[$depth] = 0;
-            while ($parents[$depth]){
+            while (true) {
                 if ($indexes[$depth] < count($parents[$depth])) {
-                    if (strpos($parents[$depth][$indexes[$depth]]->getData(), "{") === false) {
-                        $code[] = sprintf(
-                            str_repeat("\t", $depth+1).'if ($nodes[%d] === "%s"){',
-                            $depth,
-                            $parents[$depth][$indexes[$depth]]->getData()
-                        );
-                    } else {
-                        if (count($parents[$depth]) > 1) {
-                            $code[] = str_repeat("\t", $depth + 1) . 'else {';
+                    $t = $parents[$depth][$indexes[$depth]];
+                    if ($t->getName()) {
+                        $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                'if(($nodes[%d] === "%s") and ($count_nodes === %d)){',
+                                $depth,
+                                $t->getData(),
+                                $depth + 1
+                            );
+                        $code[] = str_repeat("\t", $depth + 2) . sprintf('$Router_route_name = "%s";',
+                                $t->getName()
+                            );
+                        $code[] = str_repeat("\t", $depth + 1) . '}';
+                    }
+                    if ($t->getNext()) {
+                        if (!str_contains($t->getData(), '{')) {
+                            if ($indexes[$depth] === 0) {
+                                $code[] = str_repeat("\t", $depth + 1) .
+                                    sprintf('if (($nodes[%d] === "%s") and ($count_nodes >= %d)){',
+                                        $depth,
+                                        $parents[$depth][$indexes[$depth]]->getData(),
+                                        $depth + 1
+                                    );
+                            } else {
+                                $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                        'else if (($nodes[%d] === "%s") and ($count_nodes >= %d)){',
+                                        $depth,
+                                        $parents[$depth][$indexes[$depth]]->getData(),
+                                        $depth + 1
+                                    );
+                            }
+                        } else {
+                            if ($indexes[$depth] === 0) {
+                                $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                        'if ($count_nodes >= %d){',
+                                        $depth + 1);
+                            } else {
+                                $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                        'else if ($count_nodes >= %d){',
+                                        $depth + 1);
+                            }
                         }
-                        $code[] = sprintf(
-                            str_repeat("\t", $depth+2).'$matches["%s"] = $nodes[%d];',
-                            $parents[$depth][$indexes[$depth]]->getData(),
-                            $depth
-                        );
-                    }
-                    if ($parents[$depth][$indexes[$depth]]->getName()) {
-                        $code[] = sprintf(
-                            str_repeat("\t", $depth+2).'if (count($nodes) == %d) {',
-                            $depth + 1
-                        );
-                        $code[] = sprintf(
-                            str_repeat("\t", $depth+3).'$%s = "%s";',
-                            $targetVarName,
-                            $parents[$depth][$indexes[$depth]]->getName()
-                        );
-                        $code[] = str_repeat("\t", $depth+2).'}';
-                    }
-                    if ($parents[$depth][$indexes[$depth]]->getNext()) {
-                        $code[] = sprintf(
-                            str_repeat("\t", $depth+2).'if (count($nodes) > %d) {',
-                            $depth + 1
-                        );
+
+                        $indexes[$depth]++;
                         $depth++;
-                        $parents[$depth] = $parents[$depth - 1][$indexes[$depth - 1]]->getNext();
-                        $indexes[$depth - 1]++;
                         $indexes[$depth] = 0;
+                        $parents[$depth] = $parents[$depth - 1][$indexes[$depth - 1] - 1]->getNext();
                     } else {
-                        // if ($indexes[$depth] == (count($parents[$depth]) - 1)) {
-                        $code[] = str_repeat("\t", $depth+1).'}';
-                        //}
-                        if ($depth>0){
-                            $code[] = str_repeat("\t", $depth+1).'}';
-                        }
                         $indexes[$depth]++;
                     }
-
-                } else{
-                    if (($depth - 1) > -1){
-                        $code[] = str_repeat("\t", $depth)."}";
+                } else {
+                    $code[] = str_repeat("\t", $depth) . '}';
+                    if ($depth === 0) {
+                        break;
+                    } else {
+                        unset($parents[$depth]);
+                        $depth--;
                     }
-                    unset($parents[$depth]);
-                    $depth--;
                 }
             }
-            $code[] = '}';
         }
         return implode("\n", $code);
     }

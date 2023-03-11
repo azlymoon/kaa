@@ -12,7 +12,7 @@ class EmptyPathException extends Exception{
 
     public function __construct(string $message = "Path can't be empty!", int $code = 0)
     {
-        if (!($message == "")){
+        if (!empty($message)){
             $this->message = $message;
         }
         parent::__construct($this->message, $code);
