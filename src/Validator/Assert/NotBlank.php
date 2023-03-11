@@ -10,7 +10,16 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class NotBlank extends Assert
 {
     public function __construct(
-        public ?string $message = null
+        public ?string $message = null,
+        protected array $allowTypes = ['string'],
     ) {
+    }
+
+    public function supportsType(string $typeName): bool {
+        return (in_array($typeName, $this->allowTypes));
+    }
+
+    public function getAllowTypes(): array {
+        return $this->allowTypes;
     }
 }

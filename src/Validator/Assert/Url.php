@@ -15,6 +15,15 @@ readonly class Url extends Assert
         public array $protocols = ['http', 'https'],
         public bool $relativeProtocol = false,
         public ?string $message = null,
+        protected array $allowTypes = ['string'],
     ) {
+    }
+
+    public function supportsType(string $typeName): bool {
+        return (in_array($typeName, $this->allowTypes));
+    }
+
+    public function getAllowTypes(): array {
+        return $this->allowTypes;
     }
 }

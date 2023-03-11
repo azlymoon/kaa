@@ -32,7 +32,6 @@ class TypeGenerator implements AssertGeneratorInterface
         'countable' => 'is_countable',
         'callable' => 'is_callable',
         'object' => 'is_object',
-        'resource' => 'is_resource',
         'null' => 'is_null',
         'alnum' => 'ctype_alnum',
         'alpha' => 'ctype_alpha',

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Kaa\Validator\InterceptorGenerator;
 
-use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\ProvidedDependencies;
+use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\Router\Action;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Router\Interceptor\AvailableVars;
@@ -13,24 +13,23 @@ use Kaa\Router\Interceptor\InterceptorGeneratorInterface;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Exception\InvalidArgumentException;
 use Kaa\Validator\Exception\UnsupportedAssertException;
-use Kaa\Validator\Exception\VarToValidateNotFoundException;
+use Kaa\Validator\Exception\ValidatorReturnValueException;
 use Kaa\Validator\GeneratorContext;
 use ReflectionAttribute;
 use ReflectionClass;
-use ReflectionException;
+use ReflectionNamedType;
 
-#[PhpOnly]
-readonly class ValidatorGenerator implements InterceptorGeneratorInterface
+class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
 {
     public function __construct(
-        private string $modelName,
+        private string $exceptionClass,
         private GeneratorContext $generatorContext,
     ) {
     }
 
     /**
-     * @throws ReflectionException
-     * @throws VarToValidateNotFoundException
+     * @throws ValidatorReturnValueException
+     * @throws \ReflectionException
      * @throws UnsupportedAssertException
      * @throws InvalidArgumentException
      */
@@ -40,25 +39,50 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
         array $userConfig,
         ProvidedDependencies $providedDependencies
     ): string {
-        $varToValidate = $availableVars->getFirstByName($this->modelName)
-            ?? throw new VarToValidateNotFoundException(
+        $validateResultType = $action->reflectionMethod->getReturnType();
+        if ($validateResultType instanceof ReflectionNamedType) {
+            throw new ValidatorReturnValueException(
                 sprintf(
-                    'None of the previous interceptors for %s::%s generated variable %s',
+                    '%s::%s must have return type and it must not be union or intersection',
                     $action->reflectionClass->name,
                     $action->reflectionMethod->name,
-                    $this->modelName,
                 )
             );
+        }
+
+        if ($validateResultType->isBuiltin()) {
+            throw new ValidatorReturnValueException(
+                sprintf(
+                    "Return type of %s::%s must not be build in, but is %s",
+                    $action->reflectionClass->name,
+                    $action->reflectionMethod->name,
+                    $validateResultType->getName(),
+                )
+            );
+        }
+
+        if (is_subclass_of($validateResultType->getName(), ResponseInterface::class)) {
+            return '';
+        }
+
+        $varToValidate = $availableVars->getFirstByType(
+            $validateResultType->getName(),
+        ) ?? throw new ValidatorReturnValueException(
+            sprintf(
+                'Var with type %s is not available',
+                $validateResultType->getName(),
+            )
+        );
 
         $generatedCode = [];
         $reflectionClass = new ReflectionClass($varToValidate->type);
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
             $assertAttributes = $reflectionProperty->getAttributes(
                 Assert::class,
-                ReflectionAttribute::IS_INSTANCEOF
+                ReflectionAttribute::IS_INSTANCEOF,
             );
 
-            foreach ($assertAttributes as $assertAttribute) {
+            foreach($assertAttributes as $assertAttribute) {
                 $attribute = $assertAttribute->newInstance();
 
                 if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false){
@@ -93,10 +117,16 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
                 $generatedCode[] = $constraintGeneratedCode;
             }
         }
-
         $generatedCode = array_merge(...$generatedCode);
         array_unshift($generatedCode, '$violationList = [];');
         $availableVars->add(new AvailableVar('violationList', 'array'));
+
+        $throwCode = <<<'PHP'
+if (!empty($violationList) {
+    throw new \%s($violationList);
+}
+PHP;
+        $generatedCode[] = sprintf($throwCode, $this->exceptionClass);
 
         return implode("\n", $generatedCode);
     }

@@ -13,4 +13,12 @@ readonly class NotNull extends Assert
         public ?string $message = null,
     ) {
     }
+
+    public function supportsType(string $typeName): bool {
+        return true;
+    }
+
+    public function getAllowTypes(): array {
+        return $this->allowTypes;
+    }
 }
