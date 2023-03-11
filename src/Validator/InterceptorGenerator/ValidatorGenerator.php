@@ -67,7 +67,8 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
 
                     throw new InvalidArgumentException(
                         sprintf(
-                            'Type of validate argument should be %s types',
+                            'Type of %s should be %s.',
+                            $reflectionProperty->getName(),
                             $allowTypes,
                         )
                     );
