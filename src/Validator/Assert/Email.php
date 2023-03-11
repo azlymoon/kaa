@@ -12,7 +12,7 @@ readonly class Email extends Assert
     public function __construct(
         public string $mode = 'loose',
         public ?string $message = null,
-        protected array $allowTypes = ['strings'],
+        protected array $allowTypes = ['string'],
     ) {
     }
 
