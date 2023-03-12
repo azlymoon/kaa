@@ -12,6 +12,8 @@ class TreeNode implements TreeNodeInterface {
     /**@var ?string[] $keys*/
     private ?array $keys;
     private string $data;
+
+    /** @var TreeNode[] $next */
     private array $next;
 
     function __construct(string $data, ?string $name = null, ?array $keys = null)
@@ -48,7 +50,7 @@ class TreeNode implements TreeNodeInterface {
     }
     public function addNext(TreeNode $nextNode)
     {
-        if (str_contains($nextNode->data, "{")){
+        if (str_contains($nextNode->data, '{')){
             $this->next[] = $nextNode;
         } else{
             array_unshift($this->next, $nextNode);

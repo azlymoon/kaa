@@ -38,12 +38,12 @@ class Tree implements TreeInterface
         $keys = [];
         for ($i = 0; $i < count($nodes); $i++) {
             if (str_contains($nodes[$i], '{')) {
-                $keys[] = $nodes;
+                $keys[$i] = $nodes[$i];
                 $nodes[$i] = '{}';
             }
         }
         if (!empty($this->realisedElements[0][$method])) {
-            $a = implode("/", [$method, ...$nodes]);
+            $a = implode('/', [$method, ...$nodes]);
             if (!empty($this->realisedElements[count($nodes)][$a])) {
                 /** @var TreeNode $realisedElement */
                 $realisedElement = $this->realisedElements[count($nodes)][$a];
@@ -81,8 +81,8 @@ class Tree implements TreeInterface
 
     private function parse(string $path): array
     {
-        $mas = explode("/", $path);
-        if ($mas[0] === "") {
+        $mas = explode('/', $path);
+        if ($mas[0] === '') {
             unset($mas[0]);
             $mas = array_values($mas);
         }

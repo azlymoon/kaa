@@ -61,6 +61,13 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                         $code[] = str_repeat("\t", $depth + 2) . sprintf('$Router_route_name = "%s";',
                                 $t->getName()
                             );
+                        foreach ($t->getKeys() as $k => $v){
+                            $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                                '$matches["%s"] = $nodes[%d];',
+                                $v,
+                                $k
+                                );
+                        }
                         $code[] = str_repeat("\t", $depth + 1) . '}';
                     }
                     if ($t->getNext()) {
