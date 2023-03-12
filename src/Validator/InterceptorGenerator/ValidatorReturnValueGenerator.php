@@ -121,11 +121,9 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
             }
         }
         $generatedCode = array_merge(...$generatedCode);
-        array_unshift($generatedCode, '$violationList = [];');
-        $availableVars->add(new AvailableVar('violationList', 'array'));
 
         $throwCode = <<<'PHP'
-if (!empty($violationList) {
+if (!empty($violationList)) {
     throw new \%s($violationList);
 }
 PHP;
