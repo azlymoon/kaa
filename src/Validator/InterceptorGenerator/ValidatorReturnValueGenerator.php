@@ -45,7 +45,7 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
             return '';
         }
 
-        if ($validateResultType instanceof ReflectionNamedType) {
+        if (!$validateResultType instanceof ReflectionNamedType) {
             throw new ValidatorReturnValueException(
                 sprintf(
                     '%s::%s must have return type and it must not be union or intersection',
