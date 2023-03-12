@@ -40,6 +40,11 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
         ProvidedDependencies $providedDependencies
     ): string {
         $validateResultType = $action->reflectionMethod->getReturnType();
+
+        if (is_subclass_of($validateResultType->getName(), ResponseInterface::class)) {
+            return '';
+        }
+
         if ($validateResultType instanceof ReflectionNamedType) {
             throw new ValidatorReturnValueException(
                 sprintf(
@@ -59,10 +64,6 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
                     $validateResultType->getName(),
                 )
             );
-        }
-
-        if (is_subclass_of($validateResultType->getName(), ResponseInterface::class)) {
-            return '';
         }
 
         $varToValidate = $availableVars->getFirstByType(
