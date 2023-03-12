@@ -10,7 +10,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[PhpOnly]
 class PathAlreadyExistsException extends Exception{
 
-    public function __construct(string $message = "Paths with different controller already exists!",
+    public function __construct(string $message = 'Paths with different name already exists!',
                                 int $code = 0)
     {
         if (!empty($message)){
