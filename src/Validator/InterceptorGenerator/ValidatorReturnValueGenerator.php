@@ -91,7 +91,9 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
 
                     throw new InvalidArgumentException(
                         sprintf(
-                            'Type of validate argument should be %s types',
+                            'Type of $%s is %s but should be %s.',
+                            $reflectionProperty->getName(),
+                            $reflectionProperty->getType()->getName(),
                             $allowTypes,
                         )
                     );
