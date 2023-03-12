@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Kaa\Validator\Strategy;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
+use Kaa\InterceptorUtils\Exception\InaccessiblePropertyException;
 use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\Url;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -42,6 +44,11 @@ class UrlGenerator implements AssertGeneratorInterface
         return $assert instanceof Url;
     }
 
+    /**
+     * @param Url $assert
+     * @throws InaccessiblePropertyException
+     * @throws ReflectionException
+     */
     public function generateAssert(
         Assert $assert,
         ReflectionProperty $reflectionProperty,

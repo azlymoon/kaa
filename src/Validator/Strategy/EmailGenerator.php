@@ -11,6 +11,7 @@ use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\Email;
 use Kaa\Validator\Exception\InvalidArgumentException;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -35,6 +36,7 @@ class EmailGenerator implements AssertGeneratorInterface
      * @param Email $assert
      * @throws InaccessiblePropertyException
      * @throws InvalidArgumentException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

@@ -10,6 +10,7 @@ use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\LessThan;
 use Kaa\Validator\Assert\Negative;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -23,6 +24,7 @@ class NegativeGenerator implements AssertGeneratorInterface
     /**
      * @param Negative $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

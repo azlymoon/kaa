@@ -7,7 +7,6 @@ namespace Kaa\Validator\InterceptorGenerator;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\Router\Action;
-use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Router\Interceptor\AvailableVars;
 use Kaa\Router\Interceptor\InterceptorGeneratorInterface;
 use Kaa\Validator\Assert\Assert;

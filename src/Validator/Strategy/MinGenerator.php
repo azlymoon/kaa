@@ -10,6 +10,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\Min;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -23,6 +24,7 @@ class MinGenerator implements AssertGeneratorInterface
     /**
      * @param Min $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

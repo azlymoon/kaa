@@ -10,6 +10,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\LessThanOrEqual;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -23,6 +24,7 @@ class LessThanOrEqualGenerator implements AssertGeneratorInterface
     /**
      * @param LessThanOrEqual $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

@@ -10,6 +10,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\IsFalse;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -23,6 +24,7 @@ class IsFalseGenerator implements AssertGeneratorInterface
     /**
      * @param IsFalse $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

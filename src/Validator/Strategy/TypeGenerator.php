@@ -10,6 +10,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\Type;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -55,6 +56,7 @@ class TypeGenerator implements AssertGeneratorInterface
     /**
      * @param Type $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,

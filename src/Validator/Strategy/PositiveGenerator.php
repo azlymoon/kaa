@@ -10,6 +10,7 @@ use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Assert\GreaterThan;
 use Kaa\Validator\Assert\Positive;
+use ReflectionException;
 use ReflectionProperty;
 
 #[PhpOnly]
@@ -23,6 +24,7 @@ class PositiveGenerator implements AssertGeneratorInterface
     /**
      * @param Positive $assert
      * @throws InaccessiblePropertyException
+     * @throws ReflectionException
      */
     public function generateAssert(
         Assert $assert,
