@@ -54,7 +54,7 @@ class Tree implements TreeInterface
                 if ($realisedElement->getName() === $name) {
                     return;
                 }
-                throw new PathAlreadyExistsException();
+                throw new PathAlreadyExistsException($path);
             }
         } else {
             $prom = new TreeNode($method);
