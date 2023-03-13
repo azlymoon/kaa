@@ -17,14 +17,13 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
      * @throws PathAlreadyExistsException
      */
     public function generateMatchCode(
-        string               $targetVarName,
-        string               $routeVarName,
-        string               $methodVarName,
-        array                $routes,
-        array                $userConfig,
+        string $targetVarName,
+        string $routeVarName,
+        string $methodVarName,
+        array $routes,
+        array $userConfig,
         ProvidedDependencies $providedDependencies
-    ): string
-    {
+    ): string {
         $code = [];
         $indexes = [];
         $parents = [];
@@ -48,54 +47,68 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
             $depth = 0;
             $parents[$depth] = $headItem->getNext();
             $indexes[$depth] = 0;
+
             while (true) {
                 if ($indexes[$depth] < count($parents[$depth])) {
                     $t = $parents[$depth][$indexes[$depth]];
-                    if ($t->getName()) {
-                        $code[] = str_repeat("\t", $depth + 1) . sprintf(
-                                'if(($nodes[%d] === "%s") and ($count_nodes === %d)){',
+                    if ($t->getName() !== null) {
+                        if (!str_contains($t->getData(), "{")) {
+                            $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                'if(($nodes[%d] === "%s") && ($count_nodes === %d)){',
                                 $depth,
                                 $t->getData(),
                                 $depth + 1
                             );
-                        $code[] = str_repeat("\t", $depth + 2) . sprintf('$Router_route_name = "%s";',
-                                $t->getName()
+                        } else {
+                            $code[] = str_repeat("\t", $depth + 1) . sprintf(
+                                'if($count_nodes === %d){',
+                                $depth + 1
                             );
-                        foreach ($t->getKeys() as $k => $v){
-                            $code[] = str_repeat("\t", $depth + 2) . sprintf(
-                                '$matches["%s"] = $nodes[%d];',
-                                $v,
-                                $k
+                        }
+                        $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                            '$Router_route_name = "%s";',
+                            $t->getName()
+                        );
+                        if ($t->getKeys() !== null) {
+                            foreach ($t->getKeys() as $k => $v) {
+                                $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                                    '$matches["%s"] = $nodes[%d];',
+                                    $v,
+                                    $k
                                 );
+                            }
                         }
                         $code[] = str_repeat("\t", $depth + 1) . '}';
                     }
-                    if ($t->getNext()) {
+                    if (!empty($t->getNext())) {
                         if (!str_contains($t->getData(), '{')) {
                             if ($indexes[$depth] === 0) {
                                 $code[] = str_repeat("\t", $depth + 1) .
-                                    sprintf('if (($nodes[%d] === "%s") and ($count_nodes >= %d)){',
+                                    sprintf(
+                                        'if (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
                                         $depth,
                                         $parents[$depth][$indexes[$depth]]->getData(),
                                         $depth + 1
                                     );
                             } else {
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
-                                        'else if (($nodes[%d] === "%s") and ($count_nodes >= %d)){',
-                                        $depth,
-                                        $parents[$depth][$indexes[$depth]]->getData(),
-                                        $depth + 1
-                                    );
+                                    'else if (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
+                                    $depth,
+                                    $parents[$depth][$indexes[$depth]]->getData(),
+                                    $depth + 1
+                                );
                             }
                         } else {
                             if ($indexes[$depth] === 0) {
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
-                                        'if ($count_nodes >= %d){',
-                                        $depth + 1);
+                                    'if ($count_nodes >= %d){',
+                                    $depth + 1
+                                );
                             } else {
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
-                                        'else if ($count_nodes >= %d){',
-                                        $depth + 1);
+                                    'else if ($count_nodes >= %d){',
+                                    $depth + 1
+                                );
                             }
                         }
 

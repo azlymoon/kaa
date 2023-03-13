@@ -9,9 +9,9 @@ use Kaa\Router\Exception\PathAlreadyExistsException;
 
 class Tree implements TreeInterface
 {
-
     /** @var TreeNode[] $head */
     private array $head;
+    /** @var TreeNode[][]  */
     private array $realisedElements;
 
     public function __construct()
@@ -29,7 +29,7 @@ class Tree implements TreeInterface
      * @throws EmptyPathException
      * @throws PathAlreadyExistsException
      */
-    public function addElement(string $path, string $name, string $method)
+    public function addElement(string $path, string $name, string $method): void
     {
         $nodes = self::parse($path);
         if (count($nodes) === 0) {
@@ -47,8 +47,9 @@ class Tree implements TreeInterface
             if (!empty($this->realisedElements[count($nodes)][$a])) {
                 /** @var TreeNode $realisedElement */
                 $realisedElement = $this->realisedElements[count($nodes)][$a];
-                if (!$realisedElement->getName()) {
+                if ($realisedElement->getName() === null) {
                     $realisedElement->setName($name);
+                    $realisedElement->setKeys($keys);
                     return;
                 }
                 if ($realisedElement->getName() === $name) {
@@ -78,7 +79,7 @@ class Tree implements TreeInterface
         $realisedElement->addNext($prom);
         $this->realisedElements[count($nodes)]["$prevKey/{$nodes[count($nodes) - 1]}"] = $prom;
     }
-
+    /** @return string[] */
     private function parse(string $path): array
     {
         $mas = explode('/', $path);
@@ -88,5 +89,4 @@ class Tree implements TreeInterface
         }
         return $mas;
     }
-
 }

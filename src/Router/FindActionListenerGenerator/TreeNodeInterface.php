@@ -1,15 +1,19 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace Kaa\Router\FindActionListenerGenerator;
-interface TreeNodeInterface{
+
+interface TreeNodeInterface
+{
     public function getData(): string;
     /** @return TreeNodeInterface[] */
     public function getNext(): array;
     public function getName(): ?string;
+    /** @return string[]|null */
     public function getKeys(): ?array;
-    public function setName(string $name);
-    public function addNext(TreeNode $nextNode);
+    /** @param ?string[] $keys */
+    public function setKeys(?array $keys): void;
+    public function setName(string $name): void;
+    public function addNext(TreeNode $nextNode): void;
 }

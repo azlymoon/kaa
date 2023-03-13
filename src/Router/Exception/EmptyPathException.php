@@ -8,11 +8,11 @@ use Exception;
 use Kaa\CodeGen\Attribute\PhpOnly;
 
 #[PhpOnly]
-class EmptyPathException extends Exception{
-
+class EmptyPathException extends Exception
+{
     public function __construct(string $message = 'Path can not be empty!', int $code = 0)
     {
-        if (!empty($message)){
+        if (!empty($message)) {
             $this->message = $message;
         }
         parent::__construct($this->message, $code);
