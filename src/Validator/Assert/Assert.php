@@ -9,7 +9,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[PhpOnly]
 abstract readonly class Assert
 {
-    abstract public function supportsType(string $typeName) : bool;
+    abstract public function supportsType(string $typeName): bool;
 
-    abstract public function getAllowTypes() : array;
+    abstract public function getAllowTypes(): array;
 }

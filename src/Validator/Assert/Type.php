@@ -14,7 +14,7 @@ readonly class Type extends Assert
      */
     public function __construct(
         public string|array $type,
-        public ?string $message = null,
+        public string|null $message = null,
         protected array $allowTypes = [
             'bool',
             'boolean',
@@ -48,11 +48,13 @@ readonly class Type extends Assert
     ) {
     }
 
-    public function supportsType(string $typeName): bool {
+    public function supportsType(string $typeName): bool
+    {
         return (in_array($typeName, $this->allowTypes));
     }
 
-    public function getAllowTypes(): array {
+    public function getAllowTypes(): array
+    {
         return $this->allowTypes;
     }
 }

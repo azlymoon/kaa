@@ -10,7 +10,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Blank extends Assert
 {
     public function __construct(
-        public ?string $message = null,
+        public string|null $message = null,
         public bool $allowNull = false,
         private array $allowTypes = ['string'],
     ) {
@@ -20,7 +20,8 @@ readonly class Blank extends Assert
         return (in_array($typeName, $this->allowTypes));
     }
 
-    public function getAllowTypes(): array {
+    public function getAllowTypes(): array
+    {
         return $this->allowTypes;
     }
 

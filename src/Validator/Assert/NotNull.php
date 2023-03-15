@@ -10,15 +10,17 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class NotNull extends Assert
 {
     public function __construct(
-        public ?string $message = null,
+        public string|null $message = null,
     ) {
     }
 
-    public function supportsType(string $typeName): bool {
+    public function supportsType(string $typeName): bool
+    {
         return true;
     }
 
-    public function getAllowTypes(): array {
+    public function getAllowTypes(): array
+    {
         return $this->allowTypes;
     }
 }

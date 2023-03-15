@@ -72,37 +72,74 @@ class TypeGenerator implements AssertGeneratorInterface
             $type = strtolower($type);
             $message = $assert->message ?? 'This value should be of type {{ type }}.';
             $message = preg_replace('/{{ type }}/', $type, $message);
-            if (isset(self::VALIDATION_FUNCTIONS[$type])) {
-                $code = <<<'PHP'
+
+            if ($reflectionProperty->getType()->allowsNull()) {
+                if (isset(self::VALIDATION_FUNCTIONS[$type])) {
+                    $code = <<<'PHP'
+if (null !== %s && !%s(%s)){
+    $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
+}
+PHP;
+                    $code = sprintf(
+                        $code,
+                        self::VALIDATION_FUNCTIONS[$type],
+                        $accessCode,
+                        $violationListVarName,
+                        $modelVar->type,
+                        $reflectionProperty->name,
+                        $message,
+                    );
+                } else {
+                    $code = <<<'PHP'
+if (null !== %s && !(%s instanceof \%s)){
+    $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
+}
+PHP;
+                    $code = sprintf(
+                        $code,
+                        $accessCode,
+                        $type,
+                        $violationListVarName,
+                        $modelVar->type,
+                        $reflectionProperty->name,
+                        $message,
+                    );
+                }
+            } else {
+                if (isset(self::VALIDATION_FUNCTIONS[$type])) {
+                    $code = <<<'PHP'
 if (!%s(%s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-                $code = sprintf(
-                    $code,
-                    self::VALIDATION_FUNCTIONS[$type],
-                    $accessCode,
-                    $violationListVarName,
-                    $modelVar->type,
-                    $reflectionProperty->name,
-                    $message,
-                );
-            } else {
-                $code = <<<'PHP'
+                    $code = sprintf(
+                        $code,
+                        self::VALIDATION_FUNCTIONS[$type],
+                        $accessCode,
+                        $violationListVarName,
+                        $modelVar->type,
+                        $reflectionProperty->name,
+                        $message,
+                    );
+                } else {
+                    $code = <<<'PHP'
 if (!(%s instanceof \%s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-                $code = sprintf(
-                    $code,
-                    $accessCode,
-                    $type,
-                    $violationListVarName,
-                    $modelVar->type,
-                    $reflectionProperty->name,
-                    $message,
-                );
+                    $code = sprintf(
+                        $code,
+                        $accessCode,
+                        $type,
+                        $violationListVarName,
+                        $modelVar->type,
+                        $reflectionProperty->name,
+                        $message,
+                    );
+                }
             }
+
+
             $resultCode[] = $code;
         }
         return $resultCode;
