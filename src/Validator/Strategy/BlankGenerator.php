@@ -34,20 +34,38 @@ class BlankGenerator implements AssertGeneratorInterface
     ): array {
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
-        $code = <<<'PHP'
+        if ($reflectionProperty->getType()->allowsNull()) {
+            $code = <<<'PHP'
+if ('' !== %s && null !== %s) {
+    $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
+}
+PHP;
+            $message = $assert->message ?? 'This value should be blank.';
+            $code = sprintf(
+                $code,
+                $accessCode,
+                $accessCode,
+                $violationListVarName,
+                $modelVar->type,
+                $reflectionProperty->name,
+                $message
+            );
+        } else {
+            $code = <<<'PHP'
 if ('' !== %s) {
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'This value should be blank.';
-        $code = sprintf(
-            $code,
-            $accessCode,
-            $violationListVarName,
-            $modelVar->type,
-            $reflectionProperty->name,
-            $message
-        );
+            $message = $assert->message ?? 'This value should be blank.';
+            $code = sprintf(
+                $code,
+                $accessCode,
+                $violationListVarName,
+                $modelVar->type,
+                $reflectionProperty->name,
+                $message
+            );
+        }
 
         return [$code];
     }

@@ -7,6 +7,7 @@ namespace Kaa\Validator\InterceptorGenerator;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\Router\Action;
+use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Router\Interceptor\AvailableVars;
 use Kaa\Router\Interceptor\InterceptorGeneratorInterface;
 use Kaa\Validator\Assert\Assert;
@@ -35,14 +36,12 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
     public function generate(
         AvailableVars $availableVars,
         Action $action,
+
+
         array $userConfig,
         ProvidedDependencies $providedDependencies
     ): string {
         $validateResultType = $action->reflectionMethod->getReturnType();
-
-        if (is_subclass_of($validateResultType->getName(), ResponseInterface::class)) {
-            return '';
-        }
 
         if (!$validateResultType instanceof ReflectionNamedType) {
             throw new ValidatorReturnValueException(
@@ -65,6 +64,10 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
             );
         }
 
+        if (is_a($validateResultType->getName(), ResponseInterface::class)) {
+            return '';
+        }
+
         $varToValidate = $availableVars->getFirstByType(
             $validateResultType->getName(),
         ) ?? throw new ValidatorReturnValueException(
@@ -82,11 +85,10 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
                 ReflectionAttribute::IS_INSTANCEOF,
             );
 
-            foreach($assertAttributes as $assertAttribute) {
+            foreach ($assertAttributes as $assertAttribute) {
                 $attribute = $assertAttribute->newInstance();
 
-                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false){
-
+                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
                     $allowTypes = implode(", ", $attribute->getAllowTypes());
 
                     throw new InvalidArgumentException(
@@ -113,17 +115,20 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
                     $attribute,
                     $reflectionProperty,
                     $varToValidate,
-                    'violationList',
+                    'postViolationList',
                 );
 
                 $generatedCode[] = $constraintGeneratedCode;
             }
         }
+
         $generatedCode = array_merge(...$generatedCode);
+        array_unshift($generatedCode, '$postViolationList = [];');
+        $availableVars->add(new AvailableVar('postViolationList', 'array'));
 
         $throwCode = <<<'PHP'
-if (!empty($violationList)) {
-    throw new \%s($violationList);
+if (!empty($postViolationList)) {
+    throw new \%s($postViolationList);
 }
 PHP;
         $generatedCode[] = sprintf($throwCode, $this->exceptionClass);

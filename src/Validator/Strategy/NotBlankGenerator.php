@@ -34,21 +34,40 @@ class NotBlankGenerator implements AssertGeneratorInterface
     ): array {
         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
-        $code = <<<'PHP'
+        if ($reflectionProperty->getType()->allowsNull()) {
+            $code = <<<'PHP'
+if (null !== %s && (empty(%s) && '0' !== %s)) {
+    $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
+}
+PHP;
+            $message = $assert->message ?? 'This value should not be blank.';
+            $code = sprintf(
+                $code,
+                $accessCode,
+                $accessCode,
+                $accessCode,
+                $violationListVarName,
+                $modelVar->type,
+                $reflectionProperty->name,
+                $message
+            );
+        } else {
+            $code = <<<'PHP'
 if (empty(%s) && '0' !== %s) {
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'This value should not be blank.';
-        $code = sprintf(
-            $code,
-            $accessCode,
-            $accessCode,
-            $violationListVarName,
-            $modelVar->type,
-            $reflectionProperty->name,
-            $message
-        );
+            $message = $assert->message ?? 'This value should not be blank.';
+            $code = sprintf(
+                $code,
+                $accessCode,
+                $accessCode,
+                $violationListVarName,
+                $modelVar->type,
+                $reflectionProperty->name,
+                $message
+            );
+        }
 
         return [$code];
     }
