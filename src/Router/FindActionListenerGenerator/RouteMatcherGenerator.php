@@ -92,7 +92,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                     );
                             } else {
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
-                                    'else if (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
+                                    'elseif (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
                                     $depth,
                                     $parents[$depth][$indexes[$depth]]->getData(),
                                     $depth + 1

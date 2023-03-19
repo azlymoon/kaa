@@ -11,7 +11,7 @@ class Tree implements TreeInterface
 {
     /** @var TreeNode[] $head */
     private array $head;
-    /** @var TreeNode[][]  */
+    /** @var TreeNode[][] */
     private array $realisedElements;
 
     public function __construct()
@@ -82,10 +82,9 @@ class Tree implements TreeInterface
     /** @return string[] */
     private function parse(string $path): array
     {
-        $mas = explode('/', $path);
+        $mas = explode('/', trim($path, '/'));
         if ($mas[0] === '') {
-            unset($mas[0]);
-            $mas = array_values($mas);
+            array_shift($mas);
         }
         return $mas;
     }
