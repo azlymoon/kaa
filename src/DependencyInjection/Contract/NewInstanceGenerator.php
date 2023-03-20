@@ -61,7 +61,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
     private function aliasToMethodName(string $alias): string
     {
         $typeName = $this->serviceCollection->getOne($alias)->type;
-        return sha1($typeName);
+        return 'a' . sha1($typeName);
     }
 
     private function generateMethod(string $className, string $methodName): void
