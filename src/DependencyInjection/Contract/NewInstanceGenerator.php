@@ -123,7 +123,7 @@ PHP;
         }
 
         $setNewCode = <<<'PHP'
-self::$%s = new %s(
+self::$%s = new \%s(
     %s
 );
 PHP;
