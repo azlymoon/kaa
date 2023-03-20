@@ -1,6 +1,5 @@
 /kphp_out
 /vendor
 /.idea
-/var
 .phpunit.result.cache
 coverage.cobertura.xml

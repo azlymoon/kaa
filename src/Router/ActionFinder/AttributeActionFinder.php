@@ -17,7 +17,7 @@ use ReflectionException;
 use ReflectionMethod;
 
 /**
- * Ищет пути, опеределённые с помощью аттрибутов {@link Route}
+ * Ищет пути, определённые с помощью аттрибутов {@link Route}
  */
 class AttributeActionFinder implements ActionFinderInterface
 {
