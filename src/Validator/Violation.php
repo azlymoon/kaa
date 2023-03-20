@@ -5,6 +5,7 @@ namespace Kaa\Validator;
 class Violation
 {
     private string $className;
+
     private string $propertyName;
 
     private string $message;
