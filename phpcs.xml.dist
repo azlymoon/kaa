@@ -12,6 +12,14 @@
         <exclude name="PSR1.Files.SideEffects"/>
     </rule>
 
+    <rule ref="Squiz.WhiteSpace.FunctionSpacing">
+        <properties>
+            <property name="spacing" value="1" />
+            <property name="spacingBeforeFirst" value="0" />
+            <property name="spacingAfterLast" value="0" />
+        </properties>
+    </rule>
+
     <file>src/</file>
     <exclude-pattern>src/*/Test/*</exclude-pattern>
 </ruleset>

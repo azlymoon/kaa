@@ -45,7 +45,6 @@ class TypeGenerator implements AssertGeneratorInterface
         'xdigit' => 'ctype_xdigit',
     ];
 
-
     public function supports(Assert $assert): bool
     {
         return $assert instanceof Type;

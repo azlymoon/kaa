@@ -102,7 +102,7 @@ final readonly class RouterGenerator implements GeneratorInterface
         $plainCallableActions = $this->generatePlainCallableActions($plainActions, $providedDependencies);
 
 
-        return array_merge($interceptedCallableActions, $plainCallableActions);
+        return [...$interceptedCallableActions, ...$plainCallableActions];
     }
 
     /**

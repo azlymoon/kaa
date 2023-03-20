@@ -46,7 +46,6 @@ class Request
         $this->cookies = $cookies;
     }
 
-
     public static function initFromGlobals(): static
     {
         return new self(

@@ -8,6 +8,6 @@ use Exception;
 use Kaa\CodeGen\Attribute\PhpOnly;
 
 #[PhpOnly]
-class InvalidDependencyException extends CodeGenException
+class CodeGenException extends Exception
 {
 }
