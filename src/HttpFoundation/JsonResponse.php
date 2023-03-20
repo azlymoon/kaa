@@ -2,6 +2,9 @@
 
 namespace Kaa\HttpFoundation;
 
+use JsonEncoder;
+use Kaa\HttpKernel\Exception\JsonException;
+
 /**
  * Response represents an HTTP response in JSON format.
  *
@@ -17,7 +20,8 @@ class JsonResponse extends Response
 {
     /** @var mixed $data */
     protected $data;
-    /** @var string $callback */
+
+    /** @var ?string $callback */
     protected $callback;
 
     // Encode <, >, ', &, and " characters in the JSON, making it also safe to be embedded into HTML.
@@ -35,69 +39,74 @@ class JsonResponse extends Response
     {
         parent::__construct('', $status, $headers);
 
-//        if ($json && !\is_string($data) && !is_numeric($data) && !\is_callable([$data, '__toString'])) {
-//            throw new \TypeError(sprintf('"%s": If $json is set to true, argument $data must be a string or object implementing __toString(), "%s" given.', __METHOD__, get_debug_type($data)));
-//        }
-
-//        $data ??= new \ArrayObject();
-
+        # If json is passed, it is a string
         $json ? $this->setJson((string)$data) : $this->setData($data);
     }
-//
-//    /**
-//     * Factory method for chainability.
-//     *
-//     * Example:
-//     *
-//     *     return JsonResponse::fromJsonString('{"key": "value"}')
-//     *         ->setSharedMaxAge(300);
-//     *
-//     * @param string $data    The JSON response string
-//     * @param int    $status  The response status code (200 "OK" by default)
-//     * @param array  $headers An array of response headers
-//     */
-//    public static function fromJsonString(string $data, int $status = 200, array $headers = []): static
-//    {
-//        return new static($data, $status, $headers, true);
-//    }
-//
-//    /**
-//     * Sets the JSONP callback.
-//     *
-//     * @param string|null $callback The JSONP callback or null to use none
-//     *
-//     * @return $this
-//     *
-//     * @throws \InvalidArgumentException When the callback name is not valid
-//     */
-//    public function setCallback(string $callback = null): static
-//    {
-//        if (1 > \func_num_args()) {
-//            trigger_deprecation('symfony/http-foundation', '6.2', 'Calling "%s()" without any arguments is deprecated, pass null explicitly instead.', __METHOD__);
-//        }
-//        if (null !== $callback) {
-//            // partially taken from https://geekality.net/2011/08/03/valid-javascript-identifier/
-//            // partially taken from https://github.com/willdurand/JsonpCallbackValidator
-//            //      JsonpCallbackValidator is released under the MIT License. See https://github.com/willdurand/JsonpCallbackValidator/blob/v1.1.0/LICENSE for details.
-//            //      (c) William Durand <william.durand1@gmail.com>
-//            $pattern = '/^[$_\p{L}][$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\x{200C}\x{200D}]*(?:\[(?:"(?:\\\.|[^"\\\])*"|\'(?:\\\.|[^\'\\\])*\'|\d+)\])*?$/u';
-//            $reserved = [
-//                'break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally', 'return', 'void', 'continue', 'for', 'switch', 'while',
-//                'debugger', 'function', 'this', 'with', 'default', 'if', 'throw', 'delete', 'in', 'try', 'class', 'enum', 'extends', 'super',  'const', 'export',
-//                'import', 'implements', 'let', 'private', 'public', 'yield', 'interface', 'package', 'protected', 'static', 'null', 'true', 'false',
-//            ];
-//            $parts = explode('.', $callback);
-//            foreach ($parts as $part) {
-//                if (!preg_match($pattern, $part) || \in_array($part, $reserved, true)) {
-//                    throw new \InvalidArgumentException('The callback name is not valid.');
-//                }
-//            }
-//        }
-//
-//        $this->callback = $callback;
-//
-//        return $this->update();
-//    }
+
+    /**
+     * @param string[] $headers
+     * @throws JsonException
+     */
+    public static function fromObject(object $data, int $status = 200, array $headers = []): self
+    {
+        $json = JsonEncoder::encode($data);
+        if ($json === '' && JsonEncoder::getLastError() !== '') {
+            throw new JsonException(JsonEncoder::getLastError());
+        }
+        return new self($json, $status, $headers, true);
+    }
+
+    /**
+     * Factory method for chainability.
+     *
+     * Example:
+     *
+     *     return JsonResponse::fromJsonString('{"key": "value"}')
+     *         ->setSharedMaxAge(300);
+     *
+     * @param string $data    The JSON response string
+     * @param int    $status  The response status code (200 "OK" by default)
+     * @param any[] $headers An array of response headers
+     */
+    public static function fromJsonString(string $data, int $status = 200, $headers = []): static
+    {
+        return new static($data, $status, $headers, true);
+    }
+
+    /**
+     * Sets the JSONP callback.
+     *
+     * @param string|null $callback The JSONP callback or null to use none
+     *
+     * @return $this
+     *
+     * @throws \InvalidArgumentException When the callback name is not valid
+     */
+    public function setCallback(?string $callback = null): Response
+    {
+        if (null !== $callback) {
+            // partially taken from https://geekality.net/2011/08/03/valid-javascript-identifier/
+            // partially taken from https://github.com/willdurand/JsonpCallbackValidator
+            //      JsonpCallbackValidator is released under the MIT License. See https://github.com/willdurand/JsonpCallbackValidator/blob/v1.1.0/LICENSE for details.
+            //      (c) William Durand <william.durand1@gmail.com>
+            $pattern = '/^[$_\p{L}][$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\x{200C}\x{200D}]*(?:\[(?:"(?:\\\.|[^"\\\])*"|\'(?:\\\.|[^\'\\\])*\'|\d+)\])*?$/u';
+            $reserved = [
+                'break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally', 'return', 'void', 'continue', 'for', 'switch', 'while',
+                'debugger', 'function', 'this', 'with', 'default', 'if', 'throw', 'delete', 'in', 'try', 'class', 'enum', 'extends', 'super',  'const', 'export',
+                'import', 'implements', 'let', 'private', 'public', 'yield', 'interface', 'package', 'protected', 'static', 'null', 'true', 'false',
+            ];
+            $parts = explode('.', $callback);
+            foreach ($parts as $part) {
+                if (!preg_match($pattern, $part) || \in_array($part, $reserved, true)) {
+                    throw new \InvalidArgumentException('The callback name is not valid.');
+                }
+            }
+        }
+
+        $this->callback = $callback;
+
+        return $this->update();
+    }
 
     /**
      * Sets a raw string containing a JSON document to be sent.
@@ -110,57 +119,49 @@ class JsonResponse extends Response
     }
 
     /**
+     * TODO: напиши, что не должно быть комментариев
      * Sets the data to be sent as JSON.
      *
      * @param mixed $data
      *
      * @return $this
      *
-     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
     public function setData($data): Response
     {
         try {
 //            $data = json_encode($data, $this->encodingOptions);
-            $data = json_encode($data);
+            $data = JsonEncoder::encode($data);
         } catch (\Exception $e) {
             if (str_starts_with($e->getMessage(), 'Failed calling ')) {
-//                throw $e->getPrevious() ?: $e;
                 throw $e;
             }
             throw $e;
         }
-
-//        if (\JSON_THROW_ON_ERROR & $this->encodingOptions) {
-//            return $this->setJson($data);
-//        }
-//
-//        if (\JSON_ERROR_NONE !== json_last_error()) {
-//            throw new \InvalidArgumentException(json_last_error_msg());
-//        }
-//
         return $this->setJson((string)$data);
     }
-//
-//    /**
-//     * Returns options used while encoding data to JSON.
-//     */
-//    public function getEncodingOptions(): int
-//    {
-//        return $this->encodingOptions;
-//    }
-//
+
+//    TODO: проблема с JsonEncode() - он похоже не принмает параметры, спроси ребят
 //    /**
 //     * Sets options used while encoding data to JSON.
-//     *
-//     * @return $this
 //     */
-//    public function setEncodingOptions(int $encodingOptions): static
+//    public function setEncodingOptions(int $encodingOptions): Response
 //    {
 //        $this->encodingOptions = $encodingOptions;
 //
 //        return $this->setData(json_decode($this->data));
 //    }
+
+    /**
+     * Sets options used while encoding data to JSON.
+     */
+    public function setEncodingOptions(int $encodingOptions): Response
+    {
+        $this->encodingOptions = $encodingOptions;
+
+        return $this->setData(json_decode($this->data));
+    }
 
     /**
      * Updates the content and headers according to the JSON data and callback.
@@ -175,8 +176,8 @@ class JsonResponse extends Response
             return $this->setContent(sprintf('/**/%s(%s);', $this->callback, $this->data));
         }
 
-        // Only set the header when there is none or when it equals 'text/javascript' (from a previous update with callback)
-        // in order to not overwrite a custom definition.
+        // Only set the header when there is none or when it equals 'text/javascript'
+        // (from a previous update with callback) in order to not overwrite a custom definition.
         if (!$this->headers->has('Content-Type') || 'text/javascript' === $this->headers->get('Content-Type')) {
             $this->headers->set('Content-Type', 'application/json');
         }
