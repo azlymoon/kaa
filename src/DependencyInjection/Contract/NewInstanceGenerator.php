@@ -55,7 +55,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
     private function generateMethodIfNotExists(string $className): void
     {
         $methodName = $this->aliasToMethodName($className);
-        if (array_key_exists($methodName, $this->availableMethods)) {
+        if (in_array($methodName, $this->availableMethods, true)) {
             return;
         }
 
