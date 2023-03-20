@@ -105,7 +105,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
 
     private function fileName(): string
     {
-        return $this->containerDirectory . self::CONTAINER_CLASS_NAME . '.php';
+        return $this->containerDirectory . '/' . self::CONTAINER_CLASS_NAME . '.php';
     }
 
     private function saveFile(PhpFile $phpFile): void
