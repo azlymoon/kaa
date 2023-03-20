@@ -3,17 +3,13 @@
 namespace Kaa\HttpFoundation;
 
 use Kaa\HttpFoundation\Request;
-//
-//use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-//
+
 /**
+ * Реализован полный функционал, за исключением функции filter()
+ * Т.к. в KPHP нет функции filter_var(), нужно попробовать прикрутить наш валидатор
+ *
  * ParameterBag is a container for key/value pairs.
- *
- * @author Fabien Potencier <fabien@symfony.com>
- *
- * @implements \IteratorAggregate<string, mixed>
  */
-//class ParameterBag implements \IteratorAggregate, \Countable
 class ParameterBag
 {
     /**
@@ -43,36 +39,32 @@ class ParameterBag
 
         $value = $this->parameters[$key] ?? [];
 
-//        if (!\is_array($value)) {
-//            throw new BadRequestException(sprintf('Unexpected value for parameter "%s": expecting "array", got "%s".', $key, get_debug_type($value)));
-//        }
-
         return $value;
     }
 
-//    /**
-//     * Returns the parameter keys.
-//     */
-//    public function keys(): array
-//    {
-//        return array_keys($this->parameters);
-//    }
-//
-//    /**
-//     * Replaces the current parameters by a new set.
-//     */
-//    public function replace(array $parameters = [])
-//    {
-//        $this->parameters = $parameters;
-//    }
-//
-//    /**
-//     * Adds parameters.
-//     */
-//    public function add(array $parameters = [])
-//    {
-//        $this->parameters = array_replace($this->parameters, $parameters);
-//    }
+    /**
+     * Returns the parameter keys.
+     */
+    public function keys(): array
+    {
+        return array_keys($this->parameters);
+    }
+
+    /**
+     * Replaces the current parameters by a new set.
+     */
+    public function replace(array $parameters = [])
+    {
+        $this->parameters = $parameters;
+    }
+
+    /**
+     * Adds parameters.
+     */
+    public function add(array $parameters = [])
+    {
+        $this->parameters = array_replace($this->parameters, $parameters);
+    }
 
     /**
      * @param mixed $default
@@ -105,84 +97,41 @@ class ParameterBag
         unset($this->parameters[$key]);
     }
 
-//    /**
-//     * Returns the alphabetic characters of the parameter value.
-//     */
-//    public function getAlpha(string $key, string $default = ''): string
-//    {
-//        return preg_replace('/[^[:alpha:]]/', '', $this->get($key, $default));
-//    }
-//
-//    /**
-//     * Returns the alphabetic characters and digits of the parameter value.
-//     */
-//    public function getAlnum(string $key, string $default = ''): string
-//    {
-//        return preg_replace('/[^[:alnum:]]/', '', $this->get($key, $default));
-//    }
-//
-//    /**
-//     * Returns the digits of the parameter value.
-//     */
-//    public function getDigits(string $key, string $default = ''): string
-//    {
-//        // we need to remove - and + because they're allowed in the filter
-//        return str_replace(['-', '+'], '', $this->filter($key, $default, \FILTER_SANITIZE_NUMBER_INT));
-//    }
-//
-//    /**
-//     * Returns the parameter value converted to integer.
-//     */
-//    public function getInt(string $key, int $default = 0): int
-//    {
-//        return (int) $this->get($key, $default);
-//    }
-//
-//    /**
-//     * Returns the parameter value converted to boolean.
-//     */
-//    public function getBoolean(string $key, bool $default = false): bool
-//    {
-//        return $this->filter($key, $default, \FILTER_VALIDATE_BOOL);
-//    }
-//
-//    /**
-//     * Filter key.
-//     *
-//     * @param int $filter FILTER_* constant
-//     *
-//     * @see https://php.net/filter-var
-//     */
-//    public function filter(string $key, mixed $default = null, int $filter = \FILTER_DEFAULT, mixed $options = []): mixed
-//    {
-//        $value = $this->get($key, $default);
-//
-//        // Always turn $options into an array - this allows filter_var option shortcuts.
-//        if (!\is_array($options) && $options) {
-//            $options = ['flags' => $options];
-//        }
-//
-//        // Add a convenience check for arrays.
-//        if (\is_array($value) && !isset($options['flags'])) {
-//            $options['flags'] = \FILTER_REQUIRE_ARRAY;
-//        }
-//
-//        if ((\FILTER_CALLBACK & $filter) && !(($options['options'] ?? null) instanceof \Closure)) {
-//            throw new \InvalidArgumentException(sprintf('A Closure must be passed to "%s()" when FILTER_CALLBACK is used, "%s" given.', __METHOD__, get_debug_type($options['options'] ?? null)));
-//        }
-//
-//        return filter_var($value, $filter, $options);
-//    }
-//
-//    /**
-//     * Returns an iterator for parameters.
-//     *
-//     * @return ArrayIterator<string, mixed>
-//     */
-//    public function getIterator(): ArrayIterator
-//    {
-//        return new ArrayIterator($this->parameters);
-//    }
+    /**
+     * Returns the alphabetic characters of the parameter value.
+     */
+    public function getAlpha(string $key, string $default = ''): string
+    {
+        return (string)preg_replace('/[^[:alpha:]]/', '', $this->get($key, $default));
+    }
+
+    /**
+     * Returns the alphabetic characters and digits of the parameter value.
+     */
+    public function getAlnum(string $key, string $default = ''): string
+    {
+        return (string)preg_replace('/[^[:alnum:]]/', '', $this->get($key, $default));
+    }
+
+    /**
+     * Returns the parameter value converted to integer.
+     */
+    public function getInt(string $key, int $default = 0): int
+    {
+        return (int) $this->get($key, $default);
+    }
+
+    /**
+     * Returns an iterator for headers.
+     */
+    public function getIterator(): array
+    {
+        $iterator = [];
+        foreach ($this->parameters as $name => $values) {
+            $iterator[$name] = $values;
+        }
+        return $iterator;
+    }
 
     /**
      * Returns the number of parameters.

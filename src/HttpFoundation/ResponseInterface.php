@@ -1,6 +1,6 @@
 <?php
 
-namespace Kaa\HttpKernel\Response;
+namespace Kaa\HttpFoundation\Response;
 
 interface ResponseInterface
 {
