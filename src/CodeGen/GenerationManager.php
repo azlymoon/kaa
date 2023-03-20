@@ -26,5 +26,11 @@ readonly class GenerationManager
         foreach ($this->config->getGenerators() as $generator) {
             $generator->generate($this->config->getUserConfig(), $providedDependencies);
         }
+
+        foreach ($this->config->getGenerators() as $generator) {
+            if ($generator instanceof DumpableGeneratorInterface) {
+                $generator->dump();
+            }
+        }
     }
 }

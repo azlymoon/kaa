@@ -25,6 +25,8 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
 
     private readonly string $containerDirectory;
 
+    private ?PhpFile $phpFile = null;
+
     /**
      * @param mixed[] $userConfig
      */
@@ -66,13 +68,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
 
     private function generateMethod(string $className, string $methodName): void
     {
-        $this->makeClassIfNotExits();
-
-        $phpFile = PhpFile::fromCode((string) file_get_contents($this->fileName()));
-        $classes = $phpFile->getClasses();
-
-        $class = reset($classes);
-        assert($class instanceof ClassType);
+        $class = $this->getClass();
 
         $property = $class->addProperty($methodName, null);
         $property->setStatic();
@@ -87,36 +83,22 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
 
         $method->addBody($this->generateMethodBody($className, $methodName));
 
-        $this->saveFile($phpFile);
         $this->availableMethods[] = $methodName;
     }
 
-    private function makeClassIfNotExits(): void
+    private function getClass(): ClassType
     {
-        if ($this->filesystem->exists($this->fileName())) {
-            return;
+        if ($this->phpFile === null) {
+            $this->phpFile = new PhpFile();
+            $namespace = $this->phpFile->addNamespace($this->containerNamespace);
+            $namespace->addClass(self::CONTAINER_CLASS_NAME);
         }
 
-        $phpFile = new PhpFile();
-        $namespace = $phpFile->addNamespace($this->containerNamespace);
-        $namespace->addClass(self::CONTAINER_CLASS_NAME);
+        $classes = $this->phpFile->getClasses();
 
-        $this->saveFile($phpFile);
-    }
-
-    private function fileName(): string
-    {
-        return $this->containerDirectory . '/' . self::CONTAINER_CLASS_NAME . '.php';
-    }
-
-    private function saveFile(PhpFile $phpFile): void
-    {
-        if (!$this->filesystem->exists($this->containerDirectory)) {
-            $this->filesystem->mkdir($this->containerDirectory);
-        }
-
-        $code = (new PsrPrinter())->printFile($phpFile);
-        file_put_contents($this->fileName(), $code);
+        /** @var ClassType $class */
+        $class = reset($classes);
+        return $class;
     }
 
     private function generateMethodBody(string $className, string $methodName): string
@@ -153,5 +135,19 @@ PHP;
         $body[] = sprintf('return self::$%s;', $methodName);
 
         return implode("\n", $body);
+    }
+
+    public function dump(): void
+    {
+        if ($this->phpFile === null) {
+            return;
+        }
+
+        if (!$this->filesystem->exists($this->containerDirectory)) {
+            $this->filesystem->mkdir($this->containerDirectory);
+        }
+
+        $code = (new PsrPrinter())->printFile($this->phpFile);
+        file_put_contents($this->containerDirectory . '/' . self::CONTAINER_CLASS_NAME . '.php', $code);
     }
 }

@@ -7,6 +7,7 @@ namespace Kaa\DependencyInjection;
 use Exception;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
+use Kaa\CodeGen\DumpableGeneratorInterface;
 use Kaa\CodeGen\Exception\InvalidDependencyException;
 use Kaa\CodeGen\GeneratorInterface;
 use Kaa\CodeGen\ProvidedDependencies;
@@ -15,8 +16,10 @@ use Kaa\DependencyInjection\ServiceFinder\ClassServiceFinder;
 use Kaa\DependencyInjection\ServiceFinder\ServiceFinderInterface;
 
 #[PhpOnly]
-readonly class DependencyInjectionGenerator implements GeneratorInterface
+class DependencyInjectionGenerator implements GeneratorInterface, DumpableGeneratorInterface
 {
+    private ?NewInstanceGenerator $generator = null;
+
     /**
      * @param ServiceFinderInterface[] $serviceFinders
      */
@@ -35,9 +38,10 @@ readonly class DependencyInjectionGenerator implements GeneratorInterface
         $serviceCollection = $this->buildServiceCollection($services);
         $this->validate($serviceCollection, $services);
 
+        $this->generator = new NewInstanceGenerator($serviceCollection, $userConfig);
         $providedDependencies->add(
             NewInstanceGeneratorInterface::class,
-            new NewInstanceGenerator($serviceCollection, $userConfig)
+            $this->generator
         );
     }
 
@@ -114,5 +118,10 @@ readonly class DependencyInjectionGenerator implements GeneratorInterface
         }
 
         throw new InvalidDependencyException(implode("\n", $errors));
+    }
+
+    public function dump(): void
+    {
+        $this->generator?->dump();
     }
 }
