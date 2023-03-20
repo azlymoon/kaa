@@ -44,7 +44,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
         $this->generateMethodIfNotExists($className);
 
         return sprintf(
-            '$%s = %s\%s::%s();',
+            '$%s = \%s\%s::%s();',
             $varName,
             $this->containerNamespace,
             self::CONTAINER_CLASS_NAME,
