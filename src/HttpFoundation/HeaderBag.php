@@ -2,20 +2,23 @@
 
 namespace Kaa\HttpFoundation;
 
+use Generator;
+
 /**
- * HeaderBag is a container for HTTP headers.
+ * Компонент полностью реализован в соответствии с HttpFoundation
  *
- * @author Fabien Potencier <fabien@symfony.com>
+ * HeaderBag is a container for HTTP headers.
  */
 class HeaderBag
 {
     protected const UPPER = '_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     protected const LOWER = '-abcdefghijklmnopqrstuvwxyz';
 
-    /** @var mixed $headers */
-    protected $headers = [];
+    # TODO: выбрать правильный тип для headers. Мб подойдёт string[]
+    /** @var any[]|mixed $headers */
+    protected $headers;
 
-    /** @var mixed $cacheControl */
+    /** @var mixed[] $cacheControl */
     protected $cacheControl = [];
 
     /** @param mixed $headers */
@@ -27,7 +30,6 @@ class HeaderBag
     }
 
     /**
-     * TODO: в чём тут проблема с max? почини всю функцию
      * Returns the headers as a string.
      */
     public function __toString(): string
@@ -38,7 +40,10 @@ class HeaderBag
         }
 
         ksort($headers);
-//        $max = max(array_map('strlen', array_keys($headers))) + 1;
+        $max = max(array_map(function ($key) {
+                return is_string($key) ? strlen($key) : 0;
+        }, array_keys($headers))) + 1;
+
         $content = '';
         foreach ($headers as $name => $values) {
             $name = strtolower($name);
@@ -51,9 +56,9 @@ class HeaderBag
                 }
                 $name = implode($delimiter, $newWords);
             }
-//            foreach ($values as $value) {
-//                $content .= sprintf("%-{$max}s %s\r\n", $name.':', $value);
-//            }
+            foreach ($values as $value) {
+                $content .= sprintf("%-{$max}s %s\r\n", $name . ':', $value);
+            }
         }
 
         return $content;
@@ -66,7 +71,7 @@ class HeaderBag
      * @return any[]|mixed
      */
     // @return array<string, array<int, string|null>>|array<int, string|null>
-    public function all($key = null)
+    public function all(?string $key = null)
     {
         if (null !== $key) {
             return $this->headers[strtr($key, self::UPPER, self::LOWER)] ?? [];
@@ -74,35 +79,35 @@ class HeaderBag
 
         return $this->headers;
     }
-//
-////    /**
-////     * Returns the parameter keys.
-////     *
-////     * @return string[]
-////     */
-////    public function keys(): array
-////    {
-////        return array_keys($this->all());
-////    }
-////
-////    /**
-////     * Replaces the current HTTP headers by a new set.
-////     */
-////    public function replace(array $headers = [])
-////    {
-////        $this->headers = [];
-////        $this->add($headers);
-////    }
-////
-////    /**
-////     * Adds new headers the current HTTP headers set.
-////     */
-////    public function add(array $headers)
-////    {
-////        foreach ($headers as $key => $values) {
-////            $this->set($key, $values);
-////        }
-////    }
+
+    /**
+     * Returns the parameter keys.
+     *
+     * @return string[]|int[]
+     */
+    public function keys()
+    {
+        return array_keys($this->all());
+    }
+
+    /**
+     * Replaces the current HTTP headers by a new set.
+     */
+    public function replace(array $headers = []): void
+    {
+        $this->headers = [];
+        $this->add($headers);
+    }
+
+    /**
+     * Adds new headers the current HTTP headers set.
+     */
+    public function add(array $headers): void
+    {
+        foreach ($headers as $key => $values) {
+            $this->set($key, $values);
+        }
+    }
 
     /**
      * Returns the first header by name or the default one.
@@ -129,7 +134,7 @@ class HeaderBag
      * @param mixed|any            $values  The value or an array of values
      * @param bool                 $replace Whether to replace the actual value or not (true by default)
      */
-    public function set($key, $values, $replace = true)
+    public function set($key, $values, bool $replace = true): void
     {
         $key = strtr($key, self::UPPER, self::LOWER);
 
@@ -162,18 +167,18 @@ class HeaderBag
         return \array_key_exists(strtr($key, self::UPPER, self::LOWER), $this->all());
     }
 
-////    /**
-////     * Returns true if the given HTTP header contains the given value.
-////     */
-////    public function contains(string $key, string $value): bool
-////    {
-////        return \in_array($value, $this->all($key));
-////    }
+    /**
+     * Returns true if the given HTTP header contains the given value.
+     */
+    public function contains(string $key, string $value): bool
+    {
+        return \in_array($value, $this->all($key));
+    }
 
     /**
      * Removes a header.
      */
-    public function remove(string $key)
+    public function remove(string $key): void
     {
         $key = strtr($key, self::UPPER, self::LOWER);
 
@@ -184,84 +189,102 @@ class HeaderBag
         }
     }
 
-////    /**
-////     * Returns the HTTP header value converted to a date.
-////     *
-////     * @throws \RuntimeException When the HTTP header is not parseable
-////     */
-////    public function getDate(string $key, \DateTime $default = null): ?\DateTimeInterface
-////    {
-////        if (null === $value = $this->get($key)) {
-////            return $default;
-////        }
-////
-////        if (false === $date = \DateTime::createFromFormat(\DATE_RFC2822, $value)) {
-////            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
-////        }
-////
-////        return $date;
-////    }
-////
-////    /**
-////     * Adds a custom Cache-Control directive.
-////     */
-////    public function addCacheControlDirective(string $key, bool|string $value = true)
-////    {
-////        $this->cacheControl[$key] = $value;
-////
-////        $this->set('Cache-Control', $this->getCacheControlHeader());
-////    }
-////
-////    /**
-////     * Returns true if the Cache-Control directive is defined.
-////     */
-////    public function hasCacheControlDirective(string $key): bool
-////    {
-////        return \array_key_exists($key, $this->cacheControl);
-////    }
-////
-////    /**
-////     * Returns a Cache-Control directive value by name.
-////     */
-////    public function getCacheControlDirective(string $key): bool|string|null
-////    {
-////        return $this->cacheControl[$key] ?? null;
-////    }
-////
-////    /**
-////     * Removes a Cache-Control directive.
-////     */
-////    public function removeCacheControlDirective(string $key)
-////    {
-////        unset($this->cacheControl[$key]);
-////
-////        $this->set('Cache-Control', $this->getCacheControlHeader());
-////    }
-////
-////    /**
-////     * Returns an iterator for headers.
-////     *
-////     * @return \ArrayIterator<string, list<string|null>>
-////     */
-////    public function getIterator(): \ArrayIterator
-////    {
-////        return new \ArrayIterator($this->headers);
-////    }
-////
-////    /**
-////     * Returns the number of headers.
-////     */
-////    public function count(): int
-////    {
-////        return \count($this->headers);
-////    }
-////
-////    protected function getCacheControlHeader()
-////    {
-////        ksort($this->cacheControl);
-////
-////        return HeaderUtils::toString($this->cacheControl, ',');
-////    }
+    /**
+     * Returns the HTTP header value converted to a date.
+     *
+     *
+     *
+     * @throws \RuntimeException When the HTTP header is not parseable
+     */
+    public function getDate(string $key, \DateTime $default = null): \DateTime
+    {
+        $value = $this->get($key);
+        if (null === $value) {
+            return $default;
+        }
+
+        # The KPHP create from format function returns null|\DateTime
+        $date = \DateTime::createFromFormat(\DATE_RFC2822, $value);
+        if (!isset($date)) {
+            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
+        }
+        # This is a correct return
+        return $date;
+    }
+
+    /**
+     * Adds a custom Cache-Control directive.
+     * @param true|string $value
+     */
+    public function addCacheControlDirective(string $key, $value = true): void
+    {
+        $this->cacheControl[$key] = $value;
+
+        $this->set('Cache-Control', $this->getCacheControlHeader());
+    }
+
+    /**
+     * Returns true if the Cache-Control directive is defined.
+     */
+    public function hasCacheControlDirective(string $key): bool
+    {
+        return \array_key_exists($key, $this->cacheControl);
+    }
+
+    /**
+     * Returns a Cache-Control directive value by name.
+     *
+     * @return true|string|null
+     */
+    public function getCacheControlDirective(string $key)
+    {
+        $value = $this->cacheControl[$key] ?? null;
+        if (true === $value) {
+            return true;
+        } elseif (isset($value)) {
+            return (string)$this->cacheControl[$key];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Removes a Cache-Control directive.
+     */
+    public function removeCacheControlDirective(string $key): void
+    {
+        unset($this->cacheControl[$key]);
+
+        $this->set('Cache-Control', $this->getCacheControlHeader());
+    }
+
+    /**
+     * Returns an iterator for headers.
+     */
+    public function getIterator(): array
+    {
+        $iterator = [];
+        foreach ($this->headers as $name => $values) {
+            $iterator[$name] = $values;
+        }
+        return $iterator;
+    }
+
+
+    /**
+     * Returns the number of headers.
+     */
+    public function count(): int
+    {
+        return \count($this->headers);
+    }
+
+    protected function getCacheControlHeader(): string
+    {
+        ksort($this->cacheControl);
+
+        return HeaderUtils::toString($this->cacheControl, ',');
+    }
 
     /**
      * Parses a Cache-Control HTTP header.

@@ -11,6 +11,6 @@ readonly class QueryParamConverterGenerator extends AbstractSetterParamConverter
 {
     protected function getGetParameterMethodName(): string
     {
-        return 'queryParam';
+        return 'query()->get';
     }
 }
