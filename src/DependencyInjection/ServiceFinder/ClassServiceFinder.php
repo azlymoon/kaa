@@ -89,6 +89,9 @@ class ClassServiceFinder implements ServiceFinderInterface
         return true;
     }
 
+    /**
+     * @throws InvalidDependenciesException
+     */
     private function createServiceDefinition(ReflectionClass $serviceClass): ServiceDefinition
     {
         $serviceReflectionAttributes = $serviceClass->getAttributes(Service::class);
