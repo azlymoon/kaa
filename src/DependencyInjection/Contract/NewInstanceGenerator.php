@@ -123,8 +123,8 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
         $body = [];
 
         $returnIfCreatedCode = <<<'PHP'
-if (self::%s !== null) {
-    return self::%s;
+if (self::$%s !== null) {
+    return self::$%s;
 }
 PHP;
 
@@ -138,16 +138,18 @@ PHP;
         }
 
         $setNewCode = <<<'PHP'
-self::%s = new %s(
-%s
+self::$%s = new %s(
+    %s
 );
 PHP;
         $body[] = sprintf(
             $setNewCode,
             $methodName,
             $service->type,
-            implode(",\n", $arguments)
+            implode(",\n\t", $arguments)
         );
+
+        $body[] = sprintf('return self::$%s;', $methodName);
 
         return implode("\n", $body);
     }
