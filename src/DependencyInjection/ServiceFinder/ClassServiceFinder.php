@@ -58,7 +58,8 @@ class ClassServiceFinder implements ServiceFinderInterface
     {
         $namespace = $reflectionClass->getNamespaceName();
 
-        foreach ($this->userConfig['exclude'] ?? [] as $excludedNamespace) {
+        foreach ($this->userConfig['service']['exclude'] ?? [] as $excludedNamespace) {
+            $excludedNamespace = ltrim($excludedNamespace, '\\');
             if (str_contains($excludedNamespace, '*')) {
                 // * в паттерне заменяется на ровно одно вложенное пространство имён
                 $excludedNamespaceRegexp = str_replace('*', '[^\\]+', $excludedNamespace);
