@@ -94,6 +94,7 @@ PHP;
     }
 
     /**
+     * @param PhpFile $phpFile
      * @param mixed[] $userConfig
      */
     private function saveFile(PhpFile $phpFile, array $userConfig): void

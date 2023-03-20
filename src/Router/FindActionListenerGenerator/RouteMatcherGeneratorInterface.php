@@ -12,8 +12,13 @@ use Kaa\Router\HttpRoute;
 interface RouteMatcherGeneratorInterface
 {
     /**
+     * @param string $targetVarName
+     * @param string $routeVarName
+     * @param string $methodVarName
      * @param HttpRoute[] $routes
      * @param mixed[] $userConfig
+     * @param ProvidedDependencies $providedDependencies
+     * @return string
      */
     public function generateMatchCode(
         string $targetVarName,

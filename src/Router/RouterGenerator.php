@@ -73,10 +73,11 @@ final readonly class RouterGenerator implements GeneratorInterface
     /**
      * @param Action[] $actions
      * @param mixed[] $userConfig
+     * @param ProvidedDependencies $providedDependencies
      * @return CallableAction[]
+     * @throws BadActionException
      * @throws InterceptorException
      * @throws NoDependencyException
-     * @throws BadActionException
      */
     private function generateCallableActions(
         array $actions,

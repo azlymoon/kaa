@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Kaa\Router\FindActionListenerGenerator;
 
+use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\Router\Exception\EmptyPathException;
 use Kaa\Router\Exception\PathAlreadyExistsException;
 
+#[PhpOnly]
 class Tree implements TreeInterface
 {
-    /** @var TreeNode[] $head */
+    /** @var TreeNode[] */
     private array $head;
     /** @var TreeNode[][] */
     private array $realisedElements;
@@ -43,10 +45,10 @@ class Tree implements TreeInterface
             }
         }
         if (!empty($this->realisedElements[0][$method])) {
-            $a = implode('/', [$method, ...$nodes]);
-            if (!empty($this->realisedElements[count($nodes)][$a])) {
+            $existPath = implode('/', [$method, ...$nodes]);
+            if (!empty($this->realisedElements[count($nodes)][$existPath])) {
                 /** @var TreeNode $realisedElement */
-                $realisedElement = $this->realisedElements[count($nodes)][$a];
+                $realisedElement = $this->realisedElements[count($nodes)][$existPath];
                 if ($realisedElement->getName() === null) {
                     $realisedElement->setName($name);
                     $realisedElement->setKeys($keys);
@@ -79,8 +81,9 @@ class Tree implements TreeInterface
         $realisedElement->addNext($prom);
         $this->realisedElements[count($nodes)]["$prevKey/{$nodes[count($nodes) - 1]}"] = $prom;
     }
+
     /** @return string[] */
-    private function parse(string $path): array
+    private static function parse(string $path): array
     {
         $mas = explode('/', trim($path, '/'));
         if ($mas[0] === '') {

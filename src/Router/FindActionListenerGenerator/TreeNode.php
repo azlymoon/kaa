@@ -9,13 +9,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[PhpOnly]
 class TreeNode implements TreeNodeInterface
 {
-    private ?string $name;
-
-    /** @var string[]|null $keys */
-    private ?array $keys;
-    private string $data;
-
-    /** @var TreeNode[] $next */
+    /** @var TreeNode[] */
     private array $next;
 
     /**
@@ -23,18 +17,19 @@ class TreeNode implements TreeNodeInterface
      * @param string|null $name
      * @param string[]|null $keys
      */
-    public function __construct(string $data, ?string $name = null, ?array $keys = null)
-    {
-        $this->data = $data;
-        $this->name = $name;
+    public function __construct(
+        private readonly string $data,
+        private ?string $name = null,
+        private ?array $keys = null
+    ) {
         $this->next = [];
-        $this->keys = $keys;
     }
 
     public function setName(string $name): void
     {
         $this->name = $name;
     }
+
     public function getName(): ?string
     {
         return $this->name;
@@ -49,19 +44,16 @@ class TreeNode implements TreeNodeInterface
     }
 
     /** @param ?string[] $keys */
-    public function setKeys(?array $keys): void
-    {
-        $this->keys = $keys;
-    }
-    public function getData(): string
-    {
-        return $this->data;
-    }
+    public function setKeys(?array $keys): void { $this->keys = $keys; }
+
+    public function getData(): string { return $this->data; }
+
     /** @return TreeNode[] */
     public function getNext(): array
     {
         return $this->next;
     }
+
     public function addNext(TreeNode $nextNode): void
     {
         if (str_contains($nextNode->data, '{')) {
