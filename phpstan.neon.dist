@@ -19,7 +19,6 @@ parameters:
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
     - "#Cannot access offset .* on mixed.#"
     - '#.*expects.*, mixed given.#'
-    - '#Parameter \#1 \$any_value of function not_null expects any, .* given.#'
     -
       message: '#.*#'
       paths:
