@@ -74,7 +74,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
         $class = reset($classes);
         assert($class instanceof ClassType);
 
-        $property = $class->addProperty($methodName, 'null');
+        $property = $class->addProperty($methodName, null);
         $property->setStatic();
         $property->setVisibility(ClassLike::VisibilityPrivate);
         $property->setType($className);
@@ -88,6 +88,7 @@ class NewInstanceGenerator implements NewInstanceGeneratorInterface
         $method->addBody($this->generateMethodBody($className, $methodName));
 
         $this->saveFile($phpFile);
+        $this->availableMethods[] = $methodName;
     }
 
     private function makeClassIfNotExits(): void
