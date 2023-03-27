@@ -11,11 +11,6 @@ parameters:
     - '#Method Kaa\\Validator\\Assert\\Type::__construct\(\) has parameter \$type with no value type specified in iterable type array.#'
     - '#Parameter \#1 \$assert (.*) of method Kaa\\Validator\\Strategy\\.*::generateAssert\(\) should be contravariant with parameter \$assert.*#'
     - '#Argument of an invalid type mixed supplied for foreach, only iterables are supported.#'
-    -
-      messages:
-        - '#Call to an undefined method object::getNewInstanceCode\(\).#'
-      paths:
-        - ./src/Router/*
     - messages:
         - '#Calling sha1\(\) is forbidden, use hash\(\) with at least SHA-256 for secure hash, or password_hash\(\) for passwords#'
       paths:

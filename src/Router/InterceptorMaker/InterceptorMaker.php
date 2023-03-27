@@ -28,7 +28,6 @@ use Symfony\Component\Filesystem\Filesystem;
 #[PhpOnly]
 class InterceptorMaker implements InterceptorMakerInterface
 {
-    private const CONTROLLER_VAR_NAME = 'Router_controller';
     private const CONTROLLER_RESULT_VAR_NAME = 'Router_controller_result';
 
     /**
@@ -39,7 +38,7 @@ class InterceptorMaker implements InterceptorMakerInterface
      * @throws BadActionException
      * @throws NoDependencyException
      */
-    public function makeInterceptors(
+    public function makeInterceptor(
         array $actions,
         array $userConfig,
         ProvidedDependencies $providedDependencies
@@ -124,7 +123,6 @@ class InterceptorMaker implements InterceptorMakerInterface
         }
 
         $availableVars
-            ->add(new AvailableVar(self::CONTROLLER_VAR_NAME, $action->reflectionClass->name))
             ->add(
                 new AvailableVar(
                     self::CONTROLLER_RESULT_VAR_NAME,
@@ -220,25 +218,19 @@ class InterceptorMaker implements InterceptorMakerInterface
             );
         }
 
+        /** @var NewInstanceGeneratorInterface $newInstanceGenerator */
         $newInstanceGenerator = $providedDependencies->get(
             NewInstanceGeneratorInterface::class,
             new DefaultNewInstanceGenerator()
         );
 
-        $newInstanceCode = $newInstanceGenerator->getNewInstanceCode(
-            self::CONTROLLER_VAR_NAME,
-            $action->reflectionClass->name
-        );
-
-        $callCode = sprintf(
-            '$%s = $%s->%s(%s);',
+        return sprintf(
+            '$%s = %s->%s(%s);',
             self::CONTROLLER_RESULT_VAR_NAME,
-            self::CONTROLLER_VAR_NAME,
+            $newInstanceGenerator->getNewInstanceCode($action->reflectionClass->name),
             $action->reflectionMethod->name,
             implode(',', $parameters),
         );
-
-        return $newInstanceCode . "\n" . $callCode;
     }
 
     /**

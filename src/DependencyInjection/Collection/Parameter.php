@@ -10,6 +10,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Parameter
 {
     public bool $isEnvVar;
+
     public string $envVarName;
 
     public function __construct(

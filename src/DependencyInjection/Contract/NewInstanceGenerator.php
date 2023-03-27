@@ -20,31 +20,31 @@ use ReflectionException;
 readonly class NewInstanceGenerator implements NewInstanceGeneratorInterface
 {
     private const CREATE_SINGLETON_CODE = <<<'PHP'
-    self::$%varName% = new \%className%(
-        %parameters%
-    );
-    return self::$%varName%;
+        self::$%varName% = new \%className%(
+            %parameters%
+        );
+        return self::$%varName%;
 PHP;
 
     private const CREATE_NOT_SINGLETON_CODE = <<<'PHP'
-    return new \%className%(
-        %parameters%
-    );
+        return new \%className%(
+            %parameters%
+        );
 PHP;
 
     private const FACTORY_SINGLETON_CODE = <<<'PHP'
-    self::$%varName% = %factoryCall%;
-    return self::$%varName%;
+        self::$%varName% = %factoryCall%;
+        return self::$%varName%;
 PHP;
 
     private const FACTORY_NOT_SINGLETON_CODE = <<<'PHP'
-    return %factoryCall%;
+        return %factoryCall%;
 PHP;
 
     private const IF_ENV_CODE = <<<'PHP'
-    if (self::%envMethod%()['APP_ENV'] === '%env%') {
-        %code%
-    }
+        if (self::%envMethod%()['APP_ENV'] === '%env%') {
+            %code%
+        }
 PHP;
 
     private const ENVIRONMENT_CODE = <<<'PHP'
@@ -72,7 +72,7 @@ PHP;
      * @throws CodeGenException
      * @throws ReflectionException
      */
-    public function getNewInstanceCode(string $varName, string $className): string
+    public function getNewInstanceCode(string $className): string
     {
         $methodName = $this->generateService($className);
         return sprintf('\%s::%s()', $this->diContainerGenerator->getClassName(), $methodName);

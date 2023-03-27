@@ -10,8 +10,8 @@ use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
 #[PhpOnly]
 class DefaultNewInstanceGenerator implements NewInstanceGeneratorInterface
 {
-    public function getNewInstanceCode(string $varName, string $className): string
+    public function getNewInstanceCode(string $className): string
     {
-        return sprintf('$%s = new \%s();', $varName, $className);
+        return sprintf('new \%s();', $className);
     }
 }

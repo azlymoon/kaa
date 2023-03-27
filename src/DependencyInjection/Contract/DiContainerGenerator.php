@@ -17,6 +17,7 @@ class DiContainerGenerator
     private readonly string $directory;
 
     private readonly PhpFile $phpFile;
+
     private readonly ClassType $class;
 
     /** @var string[] */
