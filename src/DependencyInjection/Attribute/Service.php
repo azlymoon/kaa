@@ -7,15 +7,16 @@ namespace Kaa\DependencyInjection\Attribute;
 use Attribute;
 use Kaa\CodeGen\Attribute\PhpOnly;
 
+/**
+ * Позволяет явно определить параметры сервиса
+ */
 #[PhpOnly]
-#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_CLASS)]
 readonly class Service
 {
-    /**
-     * @param string[]|string $aliases
-     */
     public function __construct(
-        public array|string $aliases = [],
+        public ?string $name = null,
+        public bool $singleton = true,
     ) {
     }
 }

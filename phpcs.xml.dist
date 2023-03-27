@@ -10,6 +10,8 @@
 
     <rule ref="PSR12">
         <exclude name="PSR1.Files.SideEffects"/>
+        <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
     </rule>
 
     <rule ref="Squiz.WhiteSpace.FunctionSpacing">

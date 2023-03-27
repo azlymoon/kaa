@@ -8,23 +8,25 @@ use Exception;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
 use Kaa\CodeGen\DumpableGeneratorInterface;
-use Kaa\CodeGen\Exception\InvalidDependencyException;
 use Kaa\CodeGen\GeneratorInterface;
 use Kaa\CodeGen\ProvidedDependencies;
+use Kaa\DependencyInjection\Collection\ServiceCollection;
+use Kaa\DependencyInjection\ConfigParser\ConfigParser;
+use Kaa\DependencyInjection\ConfigParser\ConfigParserInterface;
 use Kaa\DependencyInjection\Contract\NewInstanceGenerator;
-use Kaa\DependencyInjection\ServiceFinder\ClassServiceFinder;
-use Kaa\DependencyInjection\ServiceFinder\ServiceFinderInterface;
+use Kaa\DependencyInjection\ServiceFinder\ServiceFinder;
+use Kaa\DependencyInjection\Validator\ContainerValidator;
+use Kaa\DependencyInjection\Validator\ContainerValidatorInterface;
 
 #[PhpOnly]
 class DependencyInjectionGenerator implements GeneratorInterface, DumpableGeneratorInterface
 {
     private ?NewInstanceGenerator $generator = null;
 
-    /**
-     * @param ServiceFinderInterface[] $serviceFinders
-     */
     public function __construct(
-        public array $serviceFinders = [new ClassServiceFinder()],
+        private readonly ServiceFinder $serviceFinder = new ServiceFinder(),
+        private readonly ConfigParserInterface $configParser = new ConfigParser(),
+        private readonly ContainerValidatorInterface $containerValidator = new ContainerValidator(),
     ) {
     }
 
@@ -34,90 +36,17 @@ class DependencyInjectionGenerator implements GeneratorInterface, DumpableGenera
      */
     public function generate(array $userConfig, ProvidedDependencies $providedDependencies): void
     {
-        $services = $this->findServices($userConfig);
-        $serviceCollection = $this->buildServiceCollection($services);
-        $this->validate($serviceCollection, $services);
+        $services = $this->serviceFinder->findServices($userConfig);
+        $serviceCollection = new ServiceCollection($services);
 
-        $this->generator = new NewInstanceGenerator($serviceCollection, $userConfig);
+        $container = $this->configParser->parseConfig($userConfig, $serviceCollection);
+        $this->containerValidator->validate($container);
+
+        $this->generator = new NewInstanceGenerator($container, $userConfig);
         $providedDependencies->add(
             NewInstanceGeneratorInterface::class,
             $this->generator
         );
-    }
-
-    /**
-     * @param mixed[] $userConfig
-     * @return ServiceDefinition[]
-     * @throws Exception
-     */
-    private function findServices(array $userConfig): array
-    {
-        $services = [];
-        foreach ($this->serviceFinders as $serviceFinder) {
-            $services[] = $serviceFinder->findServices($userConfig);
-        }
-
-        return array_merge(...$services);
-    }
-
-    /**
-     * @param ServiceDefinition[] $services
-     */
-    private function buildServiceCollection(array $services): NamedServiceCollection
-    {
-        $serviceCollection = new NamedServiceCollection();
-        foreach ($services as $service) {
-            foreach ($service->aliases as $alias) {
-                $serviceCollection->add($alias, $service);
-            }
-        }
-
-        return $serviceCollection;
-    }
-
-    /**
-     * @param ServiceDefinition[] $services
-     * @throws InvalidDependencyException
-     */
-    private function validate(NamedServiceCollection $serviceCollection, array $services): void
-    {
-        $noImplementationsMessage = 'Service %s requires service %s for which no implementations are defined';
-        $multipleImplementationsMessage
-            = 'Service %s requires service %s for which exists multiple possible implementations: %s';
-
-        $errors = [];
-        foreach ($services as $service) {
-            foreach ($service->dependencies as $dependency) {
-                if (!$serviceCollection->has($dependency)) {
-                    $errors[] = sprintf(
-                        $noImplementationsMessage,
-                        $service->type,
-                        $dependency
-                    );
-                    continue;
-                }
-
-                if ($serviceCollection->hasMany($dependency)) {
-                    $possibleImplementations = array_map(
-                        static fn(ServiceDefinition $serviceDefinition) => $serviceDefinition->type,
-                        $serviceCollection->getAll($dependency)
-                    );
-
-                    $errors[] = sprintf(
-                        $multipleImplementationsMessage,
-                        $service->type,
-                        $dependency,
-                        implode(', ', $possibleImplementations)
-                    );
-                }
-            }
-        }
-
-        if (empty($errors)) {
-            return;
-        }
-
-        throw new InvalidDependencyException(implode("\n", $errors));
     }
 
     public function dump(): void
