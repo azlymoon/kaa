@@ -5,12 +5,12 @@ namespace Kaa\EventDispatcher;
 class EventDispatcher implements ConfigurableEventDispatcherInterface
 {
     /**
-     * @var shape(listener: EventListenerInterface, priority: int)[][]
+     * @var shape(listener: (callable(EventInterface): void), priority: int)[][]
      */
     private array $listeners = [];
 
     /**
-     * @var EventListenerInterface[][]
+     * @var (callable(EventInterface): void)[][]
      */
     private array $sortedListeners = [];
 
@@ -49,11 +49,14 @@ class EventDispatcher implements ConfigurableEventDispatcherInterface
                 return;
             }
 
-            $listener->handle($event);
+            $listener($event);
         }
     }
 
-    public function addListener(string $eventName, EventListenerInterface $eventListener, int $priority = 0): self
+    /**
+     * @param callable(EventInterface): void $eventListener
+     */
+    public function addListener(string $eventName, callable $eventListener, int $priority = 0): self
     {
         $this->listeners[$eventName][] = shape(['listener' => $eventListener, 'priority' => $priority]);
         unset($this->sortedListeners[$eventName]);
@@ -61,7 +64,10 @@ class EventDispatcher implements ConfigurableEventDispatcherInterface
         return $this;
     }
 
-    public function removeListener(string $eventName, EventListenerInterface $eventListener): void
+    /**
+     * @param callable(EventInterface): void $eventListener
+     */
+    public function removeListener(string $eventName, callable $eventListener): void
     {
         foreach ($this->listeners[$eventName] as $index => $listener) {
             if ($listener['listener'] === $eventListener) {
@@ -88,7 +94,7 @@ class EventDispatcher implements ConfigurableEventDispatcherInterface
     }
 
     /**
-     * @return EventListenerInterface[]
+     * @return (callable(EventInterface): void)[]
      */
     public function getListeners(string $eventName): array
     {
@@ -103,7 +109,10 @@ class EventDispatcher implements ConfigurableEventDispatcherInterface
         return $this->sortedListeners[$eventName];
     }
 
-    public function getListenerPriority(string $eventName, EventListenerInterface $listener): ?int
+    /**
+     * @param callable(EventInterface): void $listener
+     */
+    public function getListenerPriority(string $eventName, callable $listener): ?int
     {
         if (empty($this->listeners[$eventName])) {
             return null;

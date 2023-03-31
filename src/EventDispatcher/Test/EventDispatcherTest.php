@@ -29,8 +29,8 @@ class EventDispatcherTest extends TestCase
         $listener = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener)
-            ->addListener(self::SECOND_EVENT, $listener);
+            ->addListener(self::FIRST_EVENT, [$listener, 'handle'])
+            ->addListener(self::SECOND_EVENT, [$listener, 'handle']);
 
         $this->assertTrue($this->dispatcher->hasListeners());
         $this->assertTrue($this->dispatcher->hasListeners(self::FIRST_EVENT));
@@ -51,14 +51,14 @@ class EventDispatcherTest extends TestCase
         $listener3 = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1, -10)
-            ->addListener(self::FIRST_EVENT, $listener2, 10)
-            ->addListener(self::FIRST_EVENT, $listener3);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'], -10)
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle'], 10)
+            ->addListener(self::FIRST_EVENT, [$listener3, 'handle']);
 
         $expected = [
-            $listener2,
-            $listener3,
-            $listener1,
+            [$listener2, 'handle'],
+            [$listener3, 'handle'],
+            [$listener1, 'handle'],
         ];
 
         $this->assertSame($expected, $this->dispatcher->getListeners(self::FIRST_EVENT));
@@ -70,13 +70,13 @@ class EventDispatcherTest extends TestCase
         $listener2 = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1, -10)
-            ->addListener(self::FIRST_EVENT, $listener2);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'], -10)
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle']);
 
-        $this->assertSame(-10, $this->dispatcher->getListenerPriority(self::FIRST_EVENT, $listener1));
-        $this->assertSame(0, $this->dispatcher->getListenerPriority(self::FIRST_EVENT, $listener2));
-        $this->assertNull($this->dispatcher->getListenerPriority(self::SECOND_EVENT, $listener2));
-        $this->assertNull($this->dispatcher->getListenerPriority(self::FIRST_EVENT, $this->createEventListener()));
+        $this->assertSame(-10, $this->dispatcher->getListenerPriority(self::FIRST_EVENT, [$listener1, 'handle']));
+        $this->assertSame(0, $this->dispatcher->getListenerPriority(self::FIRST_EVENT, [$listener2, 'handle']));
+        $this->assertNull($this->dispatcher->getListenerPriority(self::SECOND_EVENT, [$listener2, 'handle']));
+        $this->assertNull($this->dispatcher->getListenerPriority(self::FIRST_EVENT, [$this->createEventListener(), 'handle']));
     }
 
     public function testDispatch(): void
@@ -86,9 +86,9 @@ class EventDispatcherTest extends TestCase
         $listener3 = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1)
-            ->addListener(self::FIRST_EVENT, $listener2)
-            ->addListener(self::SECOND_EVENT, $listener3);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'])
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle'])
+            ->addListener(self::SECOND_EVENT, [$listener3, 'handle']);
 
         $this->dispatcher
             ->dispatch(new TestEvent(), self::FIRST_EVENT)
@@ -108,9 +108,9 @@ class EventDispatcherTest extends TestCase
         $testEvent = new TestEvent();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1, -10)
-            ->addListener(self::FIRST_EVENT, $listener2, 10)
-            ->addListener(self::FIRST_EVENT, $listener3);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'], -10)
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle'], 10)
+            ->addListener(self::FIRST_EVENT, [$listener3, 'handle']);
 
         $this->dispatcher->dispatch($testEvent, self::FIRST_EVENT);
 
@@ -123,8 +123,8 @@ class EventDispatcherTest extends TestCase
         $listener2 = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1, 10)
-            ->addListener(self::FIRST_EVENT, $listener2);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'], 10)
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle']);
 
         $this->dispatcher->dispatch(new TestEvent(), self::FIRST_EVENT);
 
@@ -139,14 +139,14 @@ class EventDispatcherTest extends TestCase
         $listener3 = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener1)
-            ->addListener(self::FIRST_EVENT, $listener2)
-            ->addListener(self::SECOND_EVENT, $listener3);
+            ->addListener(self::FIRST_EVENT, [$listener1, 'handle'])
+            ->addListener(self::FIRST_EVENT, [$listener2, 'handle'])
+            ->addListener(self::SECOND_EVENT, [$listener3, 'handle']);
 
         $this->assertCount(2, $this->dispatcher->getListeners(self::FIRST_EVENT));
         $this->assertCount(1, $this->dispatcher->getListeners(self::SECOND_EVENT));
 
-        $this->dispatcher->removeListener(self::FIRST_EVENT, $listener1);
+        $this->dispatcher->removeListener(self::FIRST_EVENT, [$listener1, 'handle']);
 
         $this->assertCount(1, $this->dispatcher->getListeners(self::FIRST_EVENT));
         $this->assertCount(1, $this->dispatcher->getListeners(self::SECOND_EVENT));
@@ -161,13 +161,13 @@ class EventDispatcherTest extends TestCase
         $listener = $this->createEventListener();
 
         $this->dispatcher
-            ->addListener(self::FIRST_EVENT, $listener)
-            ->addListener(self::SECOND_EVENT, $listener);
+            ->addListener(self::FIRST_EVENT, [$listener, 'handle'])
+            ->addListener(self::SECOND_EVENT, [$listener, 'handle']);
 
         $this->assertTrue($this->dispatcher->hasListeners(self::FIRST_EVENT));
         $this->assertTrue($this->dispatcher->hasListeners(self::SECOND_EVENT));
 
-        $this->dispatcher->removeListener(self::FIRST_EVENT, $listener);
+        $this->dispatcher->removeListener(self::FIRST_EVENT, [$listener, 'handle']);
 
         $this->assertFalse($this->dispatcher->hasListeners(self::FIRST_EVENT));
         $this->assertTrue($this->dispatcher->hasListeners(self::SECOND_EVENT));

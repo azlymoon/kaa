@@ -52,7 +52,7 @@ class HttpKernelTest extends TestCase
     public function attachListenersToDispatcher(array $listeners): void
     {
         foreach ($listeners as $event => $listener) {
-            $this->dispatcher->addListener($event, $listener);
+            $this->dispatcher->addListener($event, [$listener, 'handle']);
         }
     }
 
