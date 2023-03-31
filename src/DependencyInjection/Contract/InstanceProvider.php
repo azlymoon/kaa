@@ -66,6 +66,12 @@ self::$%varName% = \Kaa\CodeGen\EnvReader::readEnv('%kernelDir%');
 return self::$%varName%;
 PHP;
 
+    private const THROW_ENV_EXCEPTION_CODE = <<<'PHP'
+throw new \Kaa\DependencyInjection\Exception\EnvImplementationNotFoundException(
+    'Implementation of service "%serviceName%" for environment "' . self::%envMethod%()['APP_ENV'] . '" not found'
+);
+PHP;
+
     private DiContainerGenerator $diContainerGenerator;
 
     /**
@@ -137,13 +143,13 @@ PHP;
         $defaultEnvCode = null;
         foreach ($services as $environment => $service) {
             if ($environment === When::DEFAULT_ENVIRONMENT) {
-                $defaultEnvCode = $this->generateReturnServiceCode($methodName, $service);
+                $defaultEnvCode = $this->generateReturnServiceCode($methodName, $service, $serviceName);
             } else {
-                $envCode[$environment] = $this->generateReturnServiceCode($methodName, $service);
+                $envCode[$environment] = $this->generateReturnServiceCode($methodName, $service, $serviceName);
             }
         }
 
-        $code = $this->joinEnvironmentCode($envCode, $defaultEnvCode);
+        $code = $this->joinEnvironmentCode($envCode, $defaultEnvCode, $serviceName);
         $comment = sprintf("// Service %s\n", $serviceName);
 
         $this->diContainerGenerator->addMethod($commonParent, $methodName, $comment . $code);
@@ -153,10 +159,13 @@ PHP;
      * @throws ReflectionException
      * @throws CodeGenException
      */
-    private function generateReturnServiceCode(string $methodName, ServiceDefinition $service): string
-    {
+    private function generateReturnServiceCode(
+        string $methodName,
+        ServiceDefinition $service,
+        string $serviceName
+    ): string {
         if ($service->hasFactories()) {
-            return $this->generateReturnServiceCodeWithFactory($methodName, $service);
+            return $this->generateReturnServiceCodeWithFactory($methodName, $service, $serviceName);
         }
 
         return $this->generateReturnServiceCodeWithNew($methodName, $service);
@@ -166,8 +175,11 @@ PHP;
      * @throws CodeGenException
      * @throws ReflectionException
      */
-    private function generateReturnServiceCodeWithFactory(string $methodName, ServiceDefinition $service): string
-    {
+    private function generateReturnServiceCodeWithFactory(
+        string $methodName,
+        ServiceDefinition $service,
+        string $serviceName
+    ): string {
         $envCode = [];
         $defaultEnvCode = null;
         foreach ($service->factories as $environment => $factory) {
@@ -178,7 +190,7 @@ PHP;
             }
         }
 
-        return $this->joinEnvironmentCode($envCode, $defaultEnvCode);
+        return $this->joinEnvironmentCode($envCode, $defaultEnvCode, $serviceName);
     }
 
     /**
@@ -206,12 +218,18 @@ PHP;
     /**
      * @param string[] $envCode
      */
-    private function joinEnvironmentCode(array $envCode, ?string $defaultCode): string
+    private function joinEnvironmentCode(array $envCode, ?string $defaultCode, string $serviceName): string
     {
         $code = [];
+        $throwEnvCode = '';
 
         if (!empty($envCode)) {
             $envMethod = $this->generateEnvMethod();
+            $replacements = [
+                '%envMethod%' => $envMethod,
+                '%serviceName%' => $serviceName,
+            ];
+            $throwEnvCode = strtr(self::THROW_ENV_EXCEPTION_CODE, $replacements);
 
             foreach ($envCode as $environment => $localCode) {
                 $replacements = [
@@ -226,6 +244,8 @@ PHP;
 
         if ($defaultCode !== null) {
             $code[] = $defaultCode;
+        } else {
+            $code[] = $throwEnvCode;
         }
 
         return implode("\n\n", $code);
