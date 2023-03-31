@@ -204,6 +204,9 @@ class ContainerValidator implements ContainerValidatorInterface
         return $errors;
     }
 
+    /**
+     * @return string[]
+     */
     private function validateImplementations(
         ServiceDefinition $service,
         Dependency $dependency,
@@ -242,6 +245,7 @@ class ContainerValidator implements ContainerValidatorInterface
     }
 
     /**
+     * @return array{0: string|null, 1: string[]}
      * @throws CodeGenException
      */
     private function getFactoryClass(Factory $factory, ServiceDefinition $service, Container $container): array

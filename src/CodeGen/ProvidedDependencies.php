@@ -44,7 +44,7 @@ class ProvidedDependencies
     }
 
     /**
-     * @template T
+     * @template T of object
      * @param class-string<T> $interface
      * @return T
      * @throws NoDependencyException
