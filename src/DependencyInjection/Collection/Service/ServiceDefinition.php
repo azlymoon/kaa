@@ -15,6 +15,7 @@ class ServiceDefinition
     /**
      * @param string[] $aliases
      * @param string[] $environments
+     * @param array<string, mixed> $tags
      */
     public function __construct(
         public readonly string $class,
@@ -24,6 +25,7 @@ class ServiceDefinition
         public array $environments,
         public FactoryCollection $factories,
         public bool $isSingleton,
+        public array $tags
     ) {
         if (empty($this->environments)) {
             $this->environments = [When::DEFAULT_ENVIRONMENT];

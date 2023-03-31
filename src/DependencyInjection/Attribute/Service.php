@@ -14,8 +14,12 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[Attribute(Attribute::TARGET_CLASS)]
 readonly class Service
 {
+    /**
+     * @param array<string, mixed> $tags
+     */
     public function __construct(
         public ?string $name = null,
+        public array $tags = [],
         public bool $singleton = true,
     ) {
     }

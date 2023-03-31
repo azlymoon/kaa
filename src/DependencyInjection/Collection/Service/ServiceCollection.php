@@ -20,6 +20,9 @@ class ServiceCollection implements IteratorAggregate
     /** @var ServiceDefinition[] */
     private array $services = [];
 
+    /** @var array<string, ServiceDefinition[]> */
+    private array $tagNamesToServices = [];
+
     /**
      * @param ServiceDefinition[] $services
      */
@@ -47,6 +50,14 @@ class ServiceCollection implements IteratorAggregate
 
             $this->nameToServices[$alias]->add($service);
         }
+
+        foreach ($service->tags as $tagName => $_) {
+            if (!array_key_exists($tagName, $this->tagNamesToServices)) {
+                $this->tagNamesToServices[$tagName] = [];
+            }
+
+            $this->tagNamesToServices[$tagName][] = $service;
+        }
     }
 
     public function merge(ServiceDefinition $service): self
@@ -63,11 +74,24 @@ class ServiceCollection implements IteratorAggregate
         }
 
         $identicalService = reset($identicalServices);
+        foreach ($identicalService->tags as $tag) {
+            $serviceNameIndex = array_search($identicalService, $this->tagNamesToServices[$tag], true);
+            unset($this->tagNamesToServices[$tag][$serviceNameIndex]);
+        }
+
         $identicalService->copyFrom($service);
 
         $this->nameToServices[$identicalService->name]->recalculateEnvironments();
         foreach ($identicalService->aliases as $alias) {
             $this->nameToServices[$alias]->recalculateEnvironments();
+        }
+
+        foreach ($service->tags as $tagName => $_) {
+            if (!array_key_exists($tagName, $this->tagNamesToServices)) {
+                $this->tagNamesToServices[$tagName] = [];
+            }
+
+            $this->tagNamesToServices[$tagName][] = $identicalService;
         }
 
         return $this;
@@ -96,5 +120,13 @@ class ServiceCollection implements IteratorAggregate
     public function getIterator(): Traversable
     {
         return new ArrayIterator($this->services);
+    }
+
+    /**
+     * @return ServiceDefinition[]
+     */
+    public function getServicesByTagName(string $tagName): array
+    {
+        return $this->tagNamesToServices[$tagName] ?? [];
     }
 }

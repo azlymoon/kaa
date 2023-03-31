@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Kaa\CodeGen;
 
-interface DumpableGeneratorInterface
+interface DumpableInterface
 {
     public function dump(): void;
 }

@@ -7,13 +7,13 @@ namespace Kaa\DependencyInjection\ServiceFinder;
 use Exception;
 use HaydenPierce\ClassFinder\ClassFinder;
 use Kaa\CodeGen\Exception\CodeGenException;
+use Kaa\DependencyInjection\Attribute\AsEventListener;
 use Kaa\DependencyInjection\Attribute\Factory;
 use Kaa\DependencyInjection\Attribute\Service;
 use Kaa\DependencyInjection\Attribute\When;
 use Kaa\DependencyInjection\Collection\Dependency\DependencyCollection;
 use Kaa\DependencyInjection\Collection\FactoryCollection;
 use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
-use Kaa\DependencyInjection\Exception\BadDefinitionException;
 use Kaa\DependencyInjection\Exception\MatchNamespaceException;
 use Kaa\DependencyInjection\ReflectionUtils;
 use ReflectionAttribute;
@@ -94,7 +94,6 @@ class ServiceFinder implements ServiceFinderInterface
     }
 
     /**
-     * @throws BadDefinitionException
      * @throws CodeGenException
      */
     private function createServiceDefinition(ReflectionClass $serviceClass): ServiceDefinition
@@ -108,9 +107,11 @@ class ServiceFinder implements ServiceFinderInterface
 
         $singleton = true;
         $serviceName = $serviceClass->name;
+        $tags = [];
         if (!empty($serviceAttributes) && $serviceAttributes[0]->name !== null) {
             $serviceName = $serviceAttributes[0]->name;
             $singleton = $serviceAttributes[0]->singleton;
+            $tags = $serviceAttributes[0]->tags;
         }
 
         $aliases = ReflectionUtils::getClassParents($serviceClass);
@@ -138,6 +139,25 @@ class ServiceFinder implements ServiceFinderInterface
             ? new DependencyCollection()
             : ReflectionUtils::getDependencies($serviceClass);
 
+        /** @var AsEventListener[] $asEventListenerAttributes */
+        $asEventListenerAttributes = array_map(
+            static fn(ReflectionAttribute $attr) => $attr->newInstance(),
+            $serviceClass->getAttributes(AsEventListener::class),
+        );
+
+        foreach ($asEventListenerAttributes as $asEventListenerAttribute) {
+            if (!array_key_exists('events', $tags)) {
+                $tags['events'] = [];
+            }
+
+            $tags['events'][] = [
+                'event' => $asEventListenerAttribute->event,
+                'dispatcher' => $asEventListenerAttribute->dispatcher,
+                'priority' => $asEventListenerAttribute->priority,
+                'method' => $asEventListenerAttribute->method,
+            ];
+        }
+
         return new ServiceDefinition(
             $serviceClass->name,
             $serviceName,
@@ -145,7 +165,8 @@ class ServiceFinder implements ServiceFinderInterface
             $dependencies,
             $environments,
             $factories,
-            $singleton
+            $singleton,
+            $tags
         );
     }
 }

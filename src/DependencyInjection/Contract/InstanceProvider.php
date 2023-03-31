@@ -6,6 +6,7 @@ namespace Kaa\DependencyInjection\Contract;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
+use Kaa\CodeGen\DumpableInterface;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Attribute\Factory;
 use Kaa\DependencyInjection\Attribute\When;
@@ -17,7 +18,7 @@ use Kaa\DependencyInjection\Exception\DependencyNotFoundException;
 use ReflectionException;
 
 #[PhpOnly]
-readonly class InstanceProvider implements InstanceProviderInterface
+readonly class InstanceProvider implements InstanceProviderInterface, DumpableInterface
 {
     private const CREATE_SINGLETON_CODE = <<<'PHP'
 if (self::$%varName% !== null) {
@@ -78,10 +79,17 @@ PHP;
      * @param mixed[] $userConfig
      */
     public function __construct(
-        private Container $container,
+        public Container $container,
         private array $userConfig,
     ) {
         $this->diContainerGenerator = new DiContainerGenerator($this->userConfig);
+    }
+
+    public function provideGetEnvCode(): string
+    {
+        $envMethod = $this->generateEnvMethod();
+
+        return sprintf('\%s::%s()[\'APP_ENV\']', $this->diContainerGenerator->getClassName(), $envMethod);
     }
 
     /**

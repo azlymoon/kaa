@@ -45,6 +45,7 @@ parameters:
         - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$isEnvVar is already assigned.#'
         - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$envVarName is already assigned.#'
       path: src/DependencyInjection/Collection/Parameter/Parameter.php
+    - '#Cannot access an offset on mixed.#'
 
 includes:
   - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon

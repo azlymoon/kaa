@@ -75,7 +75,8 @@ class ServiceFinderTest extends TestCase
             ]),
             environments: [When::DEFAULT_ENVIRONMENT],
             factories: new FactoryCollection(),
-            isSingleton: true
+            isSingleton: true,
+            tags: [],
         );
 
         $innerServiceA = new ServiceDefinition(
@@ -87,7 +88,8 @@ class ServiceFinderTest extends TestCase
             ]),
             environments: [When::DEFAULT_ENVIRONMENT],
             factories: new FactoryCollection(),
-            isSingleton: true
+            isSingleton: true,
+            tags: [],
         );
 
         $innerServiceB = new ServiceDefinition(
@@ -97,7 +99,8 @@ class ServiceFinderTest extends TestCase
             dependencies: new DependencyCollection(),
             environments: [When::DEFAULT_ENVIRONMENT],
             factories: new FactoryCollection(),
-            isSingleton: true
+            isSingleton: true,
+            tags: []
         );
 
         $this->assertEqualsCanonicalizing([$superService, $innerServiceA, $innerServiceB], $services);

@@ -7,7 +7,7 @@ namespace Kaa\DependencyInjection;
 use Exception;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
-use Kaa\CodeGen\DumpableGeneratorInterface;
+use Kaa\CodeGen\DumpableInterface;
 use Kaa\CodeGen\GeneratorInterface;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\DependencyInjection\Collection\Service\ServiceCollection;
@@ -19,10 +19,8 @@ use Kaa\DependencyInjection\Validator\ContainerValidator;
 use Kaa\DependencyInjection\Validator\ContainerValidatorInterface;
 
 #[PhpOnly]
-class DependencyInjectionGenerator implements GeneratorInterface, DumpableGeneratorInterface
+class DependencyInjectionGenerator implements GeneratorInterface
 {
-    private ?InstanceProvider $generator = null;
-
     public function __construct(
         private readonly ServiceFinder $serviceFinder = new ServiceFinder(),
         private readonly ConfigParserInterface $configParser = new ConfigParser(),
@@ -42,15 +40,9 @@ class DependencyInjectionGenerator implements GeneratorInterface, DumpableGenera
         $container = $this->configParser->parseConfig($userConfig, $serviceCollection);
         $this->containerValidator->validate($container);
 
-        $this->generator = new InstanceProvider($container, $userConfig);
         $providedDependencies->add(
             InstanceProviderInterface::class,
-            $this->generator
+            new InstanceProvider($container, $userConfig)
         );
-    }
-
-    public function dump(): void
-    {
-        $this->generator?->dump();
     }
 }

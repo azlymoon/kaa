@@ -120,6 +120,20 @@ class ConfigParser implements ConfigParserInterface
         $serviceAliases = ReflectionUtils::getClassParents($reflectionClass);
 
         $singleton = $definitionArray['singleton'] ?? true;
+        $tags = $definitionArray['tags'] ?? [];
+
+        foreach ($tags['events'] ?? [] as &$event) {
+            if (!array_key_exists('event', $event)) {
+                BadDefinitionException::throw(
+                    'Service %s defines "events", but does not define event name',
+                    $serviceName
+                );
+            }
+
+            $event['dispatcher'] ??= 'kernel.dispatcher';
+            $event['priority'] ??= 0;
+            $event['method'] ??= '__invoke';
+        }
 
         return new ServiceDefinition(
             $serviceClass,
@@ -128,7 +142,8 @@ class ConfigParser implements ConfigParserInterface
             $dependencies,
             $environments,
             $factories,
-            $singleton
+            $singleton,
+            $tags
         );
     }
 
