@@ -9,12 +9,12 @@ use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Attribute\Factory;
 use Kaa\DependencyInjection\Attribute\When;
 use Kaa\DependencyInjection\Collection\Container;
-use Kaa\DependencyInjection\Collection\DependencyCollection;
+use Kaa\DependencyInjection\Collection\Dependency\DependencyCollection;
 use Kaa\DependencyInjection\Collection\FactoryCollection;
-use Kaa\DependencyInjection\Collection\Parameter;
-use Kaa\DependencyInjection\Collection\ParameterCollection;
-use Kaa\DependencyInjection\Collection\ServiceCollection;
-use Kaa\DependencyInjection\Collection\ServiceDefinition;
+use Kaa\DependencyInjection\Collection\Parameter\Parameter;
+use Kaa\DependencyInjection\Collection\Parameter\ParameterCollection;
+use Kaa\DependencyInjection\Collection\Service\ServiceCollection;
+use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
 use Kaa\DependencyInjection\Exception\BadDefinitionException;
 use Kaa\DependencyInjection\ReflectionUtils;
 use ReflectionClass;
@@ -148,18 +148,10 @@ class ConfigParser implements ConfigParserInterface
                 );
             }
 
-            if (!array_key_exists('method', $factoryDefinition)) {
-                BadDefinitionException::throw(
-                    'Service %s defines factory %s, but "method" key is missing',
-                    $serviceName,
-                    $factoryDefinition['factory']
-                );
-            }
-
             $factories[] = new Factory(
                 $factoryDefinition['factory'],
-                $factoryDefinition['method'],
-                $factoryDefinition['is_static'] ?? false,
+                $factoryDefinition['method'] ?? '__invoke',
+                $factoryDefinition['static'] ?? false,
                 $factoryDefinition['when'] ?? [When::DEFAULT_ENVIRONMENT]
             );
         }

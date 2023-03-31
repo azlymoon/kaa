@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Kaa\Router\InterceptorMaker;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
-use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
+use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Request;
 use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\Router\Action;
 use Kaa\Router\CallableAction;
-use Kaa\Router\Contract\DefaultNewInstanceGenerator;
+use Kaa\Router\Contract\DefaultInstanceProvider;
 use Kaa\Router\Exception\BadActionException;
 use Kaa\Router\Exception\InterceptorException;
 use Kaa\Router\Interceptor\AvailableVar;
@@ -218,16 +218,16 @@ class InterceptorMaker implements InterceptorMakerInterface
             );
         }
 
-        /** @var NewInstanceGeneratorInterface $newInstanceGenerator */
+        /** @var InstanceProviderInterface $newInstanceGenerator */
         $newInstanceGenerator = $providedDependencies->get(
-            NewInstanceGeneratorInterface::class,
-            new DefaultNewInstanceGenerator()
+            InstanceProviderInterface::class,
+            new DefaultInstanceProvider()
         );
 
         return sprintf(
             '$%s = %s->%s(%s);',
             self::CONTROLLER_RESULT_VAR_NAME,
-            $newInstanceGenerator->getNewInstanceCode($action->reflectionClass->name),
+            $newInstanceGenerator->provideInstanceCode($action->reflectionClass->name),
             $action->reflectionMethod->name,
             implode(',', $parameters),
         );

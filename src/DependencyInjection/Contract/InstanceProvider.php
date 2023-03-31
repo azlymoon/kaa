@@ -5,55 +5,65 @@ declare(strict_types=1);
 namespace Kaa\DependencyInjection\Contract;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
-use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
+use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Attribute\Factory;
 use Kaa\DependencyInjection\Attribute\When;
 use Kaa\DependencyInjection\Collection\Container;
-use Kaa\DependencyInjection\Collection\ServiceDefinition;
+use Kaa\DependencyInjection\Collection\Service\EnvAwareServiceCollection;
+use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
 use Kaa\DependencyInjection\Exception\BadDefinitionException;
-use Kaa\DependencyInjection\ReflectionUtils;
-use ReflectionClass;
+use Kaa\DependencyInjection\Exception\DependencyNotFoundException;
 use ReflectionException;
 
 #[PhpOnly]
-readonly class NewInstanceGenerator implements NewInstanceGeneratorInterface
+readonly class InstanceProvider implements InstanceProviderInterface
 {
     private const CREATE_SINGLETON_CODE = <<<'PHP'
-        self::$%varName% = new \%className%(
-            %parameters%
-        );
-        return self::$%varName%;
+if (self::$%varName% !== null) {
+    return self::$%varName%;
+}
+
+self::$%varName% = new \%className%(
+    %parameters%
+);
+
+return self::$%varName%;
 PHP;
 
     private const CREATE_NOT_SINGLETON_CODE = <<<'PHP'
-        return new \%className%(
-            %parameters%
-        );
+return new \%className%(
+    %parameters%
+);
 PHP;
 
     private const FACTORY_SINGLETON_CODE = <<<'PHP'
-        self::$%varName% = %factoryCall%;
-        return self::$%varName%;
+if (self::$%varName% !== null) {
+    return self::$%varName%;
+}
+
+self::$%varName% = %factoryCall%;
+
+return self::$%varName%;
 PHP;
 
     private const FACTORY_NOT_SINGLETON_CODE = <<<'PHP'
-        return %factoryCall%;
+return %factoryCall%;
 PHP;
 
     private const IF_ENV_CODE = <<<'PHP'
-        if (self::%envMethod%()['APP_ENV'] === '%env%') {
-            %code%
-        }
+if (self::%envMethod%()['APP_ENV'] === '%env%') {
+    %code%
+}
 PHP;
 
     private const ENVIRONMENT_CODE = <<<'PHP'
-        if (self::$%methodName% !== null) {
-            return self::$%methodName%;
-        }
+if (self::$%varName% !== null) {
+    return self::$%varName%;
+}
 
-        self::$%methodName% = \Kaa\CodeGen\EnvReader::readEnv('%kernel_dir%');
-        return self::$%methodName%;
+self::$%varName% = \Kaa\CodeGen\EnvReader::readEnv('%kernelDir%');
+return self::$%varName%;
 PHP;
 
     private DiContainerGenerator $diContainerGenerator;
@@ -72,67 +82,55 @@ PHP;
      * @throws CodeGenException
      * @throws ReflectionException
      */
-    public function getNewInstanceCode(string $className): string
+    public function provideInstanceCode(string $className): string
     {
         $methodName = $this->generateService($className);
-        return sprintf('\%s::%s()', $this->diContainerGenerator->getClassName(), $methodName);
+        return sprintf('\%s::%s()', $this->diContainerGenerator->getFqnClassName(), $methodName);
     }
 
     /**
      * @throws ReflectionException
      * @throws CodeGenException
      */
-    private function generateService(string $className): string
+    private function generateService(string $classOrName): string
     {
-        $services = $this->getServiceDefinitions($className);
+        if (!$this->container->services->have($classOrName)) {
+            DependencyNotFoundException::throw('Service "%s" does not exist', $classOrName);
+        }
 
-        $methodName = 'service_' . sha1($className);
+        $services = $this->container->services->get($classOrName);
+        $commonParent = $services->getCommonParent();
+
+        if ($commonParent === null) {
+            BadDefinitionException::throw(
+                'Services found for "%s" do not have common superclass',
+                $classOrName
+            );
+        }
+
+        if (class_exists($classOrName) || interface_exists($classOrName)) {
+            $methodName = 'service_by_type_' . sha1($commonParent);
+        } else {
+            $methodName = 'service_by_name_' . sha1($classOrName);
+        }
+
         if (!$this->diContainerGenerator->hasMethod($methodName)) {
-            $this->addServiceMethod($methodName, $services, $className);
+            $this->addServiceMethod($methodName, $services, $classOrName, $commonParent);
         }
 
         return $methodName;
     }
 
     /**
-     * @return ServiceDefinition[]
-     * @throws CodeGenException
-     */
-    private function getServiceDefinitions(string $className): array
-    {
-        return match (true) {
-            $this->container->services->haveName($className)
-            => $this->container->services->getByName($className),
-
-            $this->container->services->haveAlias($className)
-            => $this->container->services->getByAlias($className),
-
-            default
-            => BadDefinitionException::throw('Service %s does not exist', $className)
-        };
-    }
-
-    /**
-     * @param ServiceDefinition[] $services
      * @throws ReflectionException
      * @throws CodeGenException
      */
-    private function addServiceMethod(string $methodName, array $services, string $serviceName): void
-    {
-        $commonParent = ReflectionUtils::getCommonSuperClass(
-            array_map(
-                static fn(ServiceDefinition $definition) => new ReflectionClass($definition->class),
-                $services
-            )
-        );
-
-        if ($commonParent === null) {
-            BadDefinitionException::throw(
-                'Services found for %s do not have common superclass',
-                $serviceName
-            );
-        }
-
+    private function addServiceMethod(
+        string $methodName,
+        EnvAwareServiceCollection $services,
+        string $serviceName,
+        string $commonParent
+    ): void {
         $this->diContainerGenerator->addVar($commonParent, $methodName);
 
         $envCode = [];
@@ -146,8 +144,9 @@ PHP;
         }
 
         $code = $this->joinEnvironmentCode($envCode, $defaultEnvCode);
+        $comment = sprintf("// Service %s\n", $serviceName);
 
-        $this->diContainerGenerator->addMethod($commonParent, $methodName, $code);
+        $this->diContainerGenerator->addMethod($commonParent, $methodName, $comment . $code);
     }
 
     /**
@@ -209,17 +208,20 @@ PHP;
      */
     private function joinEnvironmentCode(array $envCode, ?string $defaultCode): string
     {
-        $envMethod = $this->generateEnvMethod();
-
         $code = [];
-        foreach ($envCode as $environment => $localCode) {
-            $replacements = [
-                '%envMethod%' => $envMethod,
-                '%env%' => $environment,
-                '%code%' => $localCode
-            ];
 
-            $code[] = strtr(self::IF_ENV_CODE, $replacements);
+        if (!empty($envCode)) {
+            $envMethod = $this->generateEnvMethod();
+
+            foreach ($envCode as $environment => $localCode) {
+                $replacements = [
+                    '%envMethod%' => $envMethod,
+                    '%env%' => $environment,
+                    '%code%' => $localCode
+                ];
+
+                $code[] = strtr(self::IF_ENV_CODE, $replacements);
+            }
         }
 
         if ($defaultCode !== null) {
@@ -239,8 +241,8 @@ PHP;
         $this->diContainerGenerator->addVar('mixed', $methodName);
 
         $replacements = [
-            '%kernel_dir%' => $this->userConfig['kernel_dir'],
-            '%methodName%' => $methodName,
+            '%kernelDir%' => $this->userConfig['kernel_dir'],
+            '%varName%' => $methodName,
         ];
 
         $this->diContainerGenerator->addMethod('mixed', $methodName, strtr(self::ENVIRONMENT_CODE, $replacements));
@@ -257,7 +259,8 @@ PHP;
         $parameters = [];
         foreach ($service->dependencies as $dependency) {
             if ($dependency->isService()) {
-                $parameters[] = $this->generateService($dependency->injectedName ?? $dependency->type);
+                $name = !empty($dependency->injectedName) ? $dependency->injectedName : $dependency->type;
+                $parameters[] = $this->generateService($name);
             } else {
                 $parameters[] = $this->generateParameter(
                     $dependency->type,
@@ -276,7 +279,7 @@ PHP;
         $replacements = [
             '%varName%' => $methodName,
             '%className%' => $service->class,
-            '%parameters%' => implode(",\n", $parameters)
+            '%parameters%' => implode(",\n\t", $parameters)
         ];
 
         return strtr($code, $replacements);
@@ -303,7 +306,8 @@ PHP;
             $code = sprintf('return (%s) %s;', $type, $parameter->value);
         }
 
-        $this->diContainerGenerator->addMethod($type, $methodName, $code);
+        $comment = sprintf("// Parameter %s $%s %s\n", $type, $name, $injectedName);
+        $this->diContainerGenerator->addMethod($type, $methodName, $comment . $code);
 
         return $methodName;
     }

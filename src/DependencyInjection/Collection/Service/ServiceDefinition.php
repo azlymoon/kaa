@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Kaa\DependencyInjection\Collection;
+namespace Kaa\DependencyInjection\Collection\Service;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\DependencyInjection\Attribute\When;
+use Kaa\DependencyInjection\Collection\Dependency\DependencyCollection;
+use Kaa\DependencyInjection\Collection\FactoryCollection;
 
 #[PhpOnly]
 class ServiceDefinition
@@ -26,14 +28,6 @@ class ServiceDefinition
         if (empty($this->environments)) {
             $this->environments = [When::DEFAULT_ENVIRONMENT];
         }
-    }
-
-    public function wasConfigured(): bool
-    {
-        return !$this->nameIsClass()
-            || $this->dependencies->hasInjectedDependencies
-            || $this->factories->notEmpty()
-            || !$this->isSingleton;
     }
 
     public function nameIsClass(): bool

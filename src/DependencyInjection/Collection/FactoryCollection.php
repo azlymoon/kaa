@@ -24,7 +24,7 @@ class FactoryCollection implements IteratorAggregate
      * @param Factory[] $factories
      * @throws CodeGenException
      */
-    public function __construct(array $factories)
+    public function __construct(array $factories = [])
     {
         foreach ($factories as $factory) {
             $this->add($factory);
@@ -38,7 +38,7 @@ class FactoryCollection implements IteratorAggregate
     {
         $environments = (array)$factory->when;
         foreach ($environments as $environment) {
-            if (isset($this->factories[$environment])) {
+            if (array_key_exists($environment, $this->factories)) {
                 BadDefinitionException::throw(
                     'Factories %s and %s were both configured to create one service for environment %s',
                     $this->factories[$environment]->factory,
@@ -60,8 +60,7 @@ class FactoryCollection implements IteratorAggregate
 
     public function hasEnvironmentFactories(): bool
     {
-        return !empty($this->factories)
-            && !(count($this->factories) === 1 && isset($this->factories[When::DEFAULT_ENVIRONMENT]));
+        return array_keys($this->factories) !== [When::DEFAULT_ENVIRONMENT];
     }
 
     public function notEmpty(): bool

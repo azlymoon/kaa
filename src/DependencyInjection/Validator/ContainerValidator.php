@@ -7,10 +7,14 @@ namespace Kaa\DependencyInjection\Validator;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\CodeGen\Exception\InvalidDependencyException;
+use Kaa\DependencyInjection\Attribute\Factory;
+use Kaa\DependencyInjection\Attribute\When;
 use Kaa\DependencyInjection\Collection\Container;
-use Kaa\DependencyInjection\Collection\Dependency;
-use Kaa\DependencyInjection\Collection\ServiceDefinition;
+use Kaa\DependencyInjection\Collection\Dependency\Dependency;
+use Kaa\DependencyInjection\Collection\Service\EnvAwareServiceCollection;
+use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 
 #[PhpOnly]
@@ -18,13 +22,14 @@ class ContainerValidator implements ContainerValidatorInterface
 {
     /**
      * @throws CodeGenException
+     * @throws ReflectionException
      */
     public function validate(Container $container): void
     {
         $errors = [];
         foreach ($container->services as $service) {
             if ($service->hasFactories()) {
-                $errors[] = $this->validateFactories($service);
+                $errors[] = $this->validateFactories($service, $container);
             } else {
                 $errors[] = $this->validateDependencies($service, $container);
             }
@@ -32,28 +37,50 @@ class ContainerValidator implements ContainerValidatorInterface
 
         $errors = array_merge(...$errors);
         if (!empty($errors)) {
-            InvalidDependencyException::throw(implode("\n", $errors));
+            InvalidDependencyException::throw(implode("\n\n", $errors));
         }
     }
 
     /**
      * @return string[] Сообщения об ошибках
+     * @throws ReflectionException
+     * @throws CodeGenException
      */
-    private function validateFactories(ServiceDefinition $service): array
+    private function validateFactories(ServiceDefinition $service, Container $container): array
     {
         $errors = [];
 
+        if ($service->factories->hasEnvironmentFactories() && $service->environments !== [When::DEFAULT_ENVIRONMENT]) {
+            $errors[] = sprintf(
+                'Service %s must not define both environments ("when") and environment dependent factories',
+                $service->name
+            );
+        }
+
         foreach ($service->factories as $factory) {
-            if (!class_exists($factory->factory)) {
+            if (!class_exists($factory->factory) && $factory->isStatic) {
                 $errors[] = sprintf(
-                    'Service %s requires factory %s but factory class does not exist',
+                    'Service %s defines static factory %s, but factory class does not exist '
+                    . '(Or you define static factory by service name)',
                     $service->name,
                     $factory->factory
                 );
+
                 continue;
             }
 
-            $reflectionClass = new ReflectionClass($factory->factory);
+            if ($factory->isStatic) {
+                $factoryClass = $factory->factory;
+            } else {
+                [$factoryClass, $factoryErrors] = $this->getFactoryClass($factory, $service, $container);
+
+                if (!empty($factoryErrors)) {
+                    $errors = [...$errors, ...$factoryErrors];
+                    continue;
+                }
+            }
+
+            $reflectionClass = new ReflectionClass($factoryClass);
             if (!$reflectionClass->hasMethod($factory->method)) {
                 $errors[] = sprintf(
                     'Service %s requires factory %s with method %s, but the method does not exist',
@@ -107,6 +134,7 @@ class ContainerValidator implements ContainerValidatorInterface
 
     /**
      * @return string[] Сообщения об ошибках
+     * @throws CodeGenException
      */
     private function validateDependencies(ServiceDefinition $service, Container $container): array
     {
@@ -135,92 +163,64 @@ class ContainerValidator implements ContainerValidatorInterface
 
             if (!$dependency->isService()) {
                 $errors[] = sprintf(
-                    'Service %s defines dependency %s, which is neither a service nor a parameter '
+                    'Service %s defines dependency %s $%s%s, which is neither a service nor a parameter '
                     . '(probably wrong type like "resource" etc)',
                     $service->name,
+                    $dependency->type,
+                    $dependency->injectedName !== '' ? " \"$dependency->injectedName\" " : '',
                     $dependency->name,
                 );
             }
 
-            // Зависимость является сервисом и указан аттрибут #[Inject]
-            if ($dependency->isInjected()) {
-                if (!$container->services->haveName($dependency->injectedName)) {
-                    $errors[] = sprintf(
-                        'Service %s depends on service %s, but service with such name is not defined',
-                        $service->name,
-                        $dependency->injectedName
-                    );
-                    continue;
-                }
+            $name = $dependency->isInjected() ? $dependency->injectedName : $dependency->type;
 
-                $implementations = $container->services->getByName($dependency->injectedName);
-                $errors = [...$errors, ...$this->validateImplementations($service, $dependency, $implementations)];
+            if (!$container->services->have($name)) {
+                $errors[] = sprintf(
+                    'Service %s depends on service %s, but such service does not exist',
+                    $service->name,
+                    $dependency->type
+                );
+            }
+
+            $implementations = $container->services->get($name);
+            if ($implementations->areDubious()) {
+                $possibleImplementationsString = $this->buildPossibleImplementationsString(
+                    $implementations
+                );
+
+                $errors[] = sprintf(
+                    'Service %s depends on service %s for which exists multiple implementations: %s',
+                    $service->name,
+                    $dependency->type,
+                    $possibleImplementationsString
+                );
 
                 continue;
             }
 
-            // Зависимость является сервисом и НЕ указан аттрибут #[Inject]
-            if ($container->services->haveName($dependency->type)) {
-                $implementations = $container->services->getByName($dependency->type);
-                $errors = [...$errors, ...$this->validateImplementations($service, $dependency, $implementations)];
-
-                continue;
-            }
-
-            if ($container->services->haveAlias($dependency->type)) {
-                if ($container->services->isDubiousAlias($dependency->type)) {
-                    $possibleImplementations = $container->services->getAllByAlias($dependency->type);
-                    $possibleImplementationsString = $this->buildPossibleImplementationsString(
-                        $possibleImplementations
-                    );
-
-                    $errors[] = sprintf(
-                        'Service %s depends on service %s for which exists multiple implementations: %s',
-                        $service->name,
-                        $dependency->type,
-                        $possibleImplementationsString
-                    );
-
-                    continue;
-                }
-
-                $implementations = $container->services->getByAlias($dependency->type);
-                $errors = [...$errors, ...$this->validateImplementations($service, $dependency, $implementations)];
-
-                continue;
-            }
-
-            $errors[] = sprintf(
-                'Service %s depends on service %s, but such service does not exist',
-                $service->name,
-                $dependency->type
-            );
+            $errors = [...$errors, ...$this->validateImplementations($service, $dependency, $implementations)];
         }
 
         return $errors;
     }
 
-    /**
-     * @param ServiceDefinition[] $implementations
-     * @return string[] Сообщения об ошибках
-     */
     private function validateImplementations(
         ServiceDefinition $service,
         Dependency $dependency,
-        array $implementations
+        EnvAwareServiceCollection $implementations
     ): array {
         $errors = [];
 
         foreach ($implementations as $environment => $implementation) {
             if (!is_a($implementation->class, $dependency->type, true)) {
                 $errors[] = sprintf(
-                    'Service %s depends on service %s, but it`s implementation %s for environment "%s" '
-                    . 'is not a subclass of service`s class %s',
+                    'Service %s depends on service "%s", but it`s implementation %s for environment "%s" '
+                    . 'is not a subclass of service`s dependency class %s',
                     $service->name,
                     $dependency->injectedName,
                     $implementation->class,
                     $environment,
-                    $service->class,
+                    $dependency->type,
                 );
             }
         }
@@ -228,20 +228,46 @@ class ContainerValidator implements ContainerValidatorInterface
         return $errors;
     }
 
-    /**
-     * @param ServiceDefinition[][] $possibleImplementations
-     * @return string
-     */
-    private function buildPossibleImplementationsString(array $possibleImplementations): string
+    private function buildPossibleImplementationsString(EnvAwareServiceCollection $possibleImplementations): string
     {
         $strings = [''];
 
-        foreach ($possibleImplementations as $environment => $implementations) {
+        foreach ($possibleImplementations->getAll() as $environment => $implementations) {
             foreach ($implementations as $implementation) {
                 $strings[] = sprintf('Environment: "%s" => Service: %s', $environment, $implementation->name);
             }
         }
 
         return implode("\n", $strings);
+    }
+
+    /**
+     * @throws CodeGenException
+     */
+    private function getFactoryClass(Factory $factory, ServiceDefinition $service, Container $container): array
+    {
+        if (!$container->services->have($factory->factory)) {
+            $error = sprintf(
+                'Service "%s" requires factory service "%s", but it does not exist',
+                $service->name,
+                $factory->factory
+            );
+
+            return [null, [$error]];
+        }
+
+        $factories = $container->services->get($factory->factory);
+        if (!$factories->haveOnlyDefaultEnvironment() || $factories->areDubious()) {
+            $error = sprintf(
+                'Service "%s" requires factory service "%s", but it is environment dependent or dubious. '
+                    . 'If you need different factories for different environments, use "when" is #[Factory]',
+                $service->name,
+                $factory->factory
+            );
+
+            return [null, [$error]];
+        }
+
+        return [$factories->getOnlyByEnvironment(When::DEFAULT_ENVIRONMENT)->class, []];
     }
 }

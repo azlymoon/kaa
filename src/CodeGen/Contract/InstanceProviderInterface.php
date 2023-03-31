@@ -5,10 +5,10 @@ namespace Kaa\CodeGen\Contract;
 use Kaa\CodeGen\Attribute\PhpOnly;
 
 #[PhpOnly]
-interface NewInstanceGeneratorInterface
+interface InstanceProviderInterface
 {
     /**
      * Возвращает код, который создаёт новый объект переданного класса или интерфейса
      */
-    public function getNewInstanceCode(string $className): string;
+    public function provideInstanceCode(string $className): string;
 }

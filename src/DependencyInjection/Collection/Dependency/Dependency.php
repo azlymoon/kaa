@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Kaa\DependencyInjection\Collection;
+namespace Kaa\DependencyInjection\Collection\Dependency;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 
@@ -23,7 +23,7 @@ class Dependency
 
     public function isService(): bool
     {
-        return class_exists($this->type);
+        return class_exists($this->type) || interface_exists($this->type);
     }
 
     public function isInjected(): bool

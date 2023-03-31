@@ -19,7 +19,7 @@ readonly class GenerationManager
      * Если два модуля предоставляют зависимость одинакового интерфейса,
      * то следующим модулям будет передана последняя из них
      */
-    public function generate(): void
+    public function generate(): ProvidedDependencies
     {
         $providedDependencies = new ProvidedDependencies();
 
@@ -32,5 +32,7 @@ readonly class GenerationManager
                 $generator->dump();
             }
         }
+
+        return $providedDependencies;
     }
 }

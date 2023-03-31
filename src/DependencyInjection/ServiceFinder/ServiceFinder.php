@@ -10,9 +10,9 @@ use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Attribute\Factory;
 use Kaa\DependencyInjection\Attribute\Service;
 use Kaa\DependencyInjection\Attribute\When;
-use Kaa\DependencyInjection\Collection\DependencyCollection;
+use Kaa\DependencyInjection\Collection\Dependency\DependencyCollection;
 use Kaa\DependencyInjection\Collection\FactoryCollection;
-use Kaa\DependencyInjection\Collection\ServiceDefinition;
+use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
 use Kaa\DependencyInjection\Exception\BadDefinitionException;
 use Kaa\DependencyInjection\Exception\MatchNamespaceException;
 use Kaa\DependencyInjection\ReflectionUtils;
@@ -116,11 +116,14 @@ class ServiceFinder implements ServiceFinderInterface
         $aliases = ReflectionUtils::getClassParents($serviceClass);
 
         $whenReflectionAttributes = $serviceClass->getAttributes(When::class);
+
+        /** @var string[][] $environments */
         $environments = array_map(
             static fn(ReflectionAttribute $attr) => (array) $attr->newInstance()->environment,
             $whenReflectionAttributes
         );
 
+        /** @var string[] $environments */
         $environments = array_merge(...$environments);
 
         $factoryReflectionAttributes = $serviceClass->getAttributes(Factory::class);

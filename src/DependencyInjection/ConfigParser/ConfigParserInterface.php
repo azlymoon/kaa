@@ -6,7 +6,7 @@ namespace Kaa\DependencyInjection\ConfigParser;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\DependencyInjection\Collection\Container;
-use Kaa\DependencyInjection\Collection\ServiceCollection;
+use Kaa\DependencyInjection\Collection\Service\ServiceCollection;
 
 #[PhpOnly]
 interface ConfigParserInterface

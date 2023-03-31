@@ -7,6 +7,7 @@ namespace Kaa\CodeGen;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Exception\InvalidDependencyException;
 use Kaa\CodeGen\Exception\NoDependencyException;
+use T;
 
 #[PhpOnly]
 class ProvidedDependencies
@@ -43,6 +44,9 @@ class ProvidedDependencies
     }
 
     /**
+     * @template T
+     * @param class-string<T> $interface
+     * @return T
      * @throws NoDependencyException
      */
     public function get(string $interface, ?object $default = null): object

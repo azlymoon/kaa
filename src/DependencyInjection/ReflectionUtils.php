@@ -7,10 +7,11 @@ namespace Kaa\DependencyInjection;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Attribute\Inject;
-use Kaa\DependencyInjection\Collection\Dependency;
-use Kaa\DependencyInjection\Collection\DependencyCollection;
+use Kaa\DependencyInjection\Collection\Dependency\Dependency;
+use Kaa\DependencyInjection\Collection\Dependency\DependencyCollection;
 use Kaa\DependencyInjection\Exception\BadDefinitionException;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 
 #[PhpOnly]
@@ -49,7 +50,7 @@ class ReflectionUtils
                 );
             }
 
-            $dependencies[] = new Dependency($parameter->name, $type->getName(), $serviceName ?? '');
+            $dependencies[] = new Dependency($type->getName(), $parameter->name, $serviceName ?? '');
         }
 
         return new DependencyCollection($dependencies, $hasInjectedDependencies);
@@ -73,10 +74,17 @@ class ReflectionUtils
     }
 
     /**
-     * @param ReflectionClass[] $reflectionClasses
+     * @param string[] $classNames
+     * @throws ReflectionException
      */
-    public static function getCommonSuperClass(array $reflectionClasses): ?string
+    public static function getCommonSuperClass(array $classNames): ?string
     {
+        $classNames = array_values($classNames);
+        $reflectionClasses = array_map(
+            static fn (string $className) => new ReflectionClass($className),
+            $classNames
+        );
+
         $parentsArrays = array_map(self::getClassParents(...), $reflectionClasses);
         $parentsIntersection = array_intersect(...$parentsArrays);
 

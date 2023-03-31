@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Kaa\DependencyInjection\ServiceFinder;
 
-use Kaa\DependencyInjection\Collection\ServiceDefinition;
+use Kaa\DependencyInjection\Collection\Service\ServiceDefinition;
 
 interface ServiceFinderInterface
 {

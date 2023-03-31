@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Kaa\DependencyInjection\Collection;
+namespace Kaa\DependencyInjection\Collection\Dependency;
 
 use ArrayIterator;
 use IteratorAggregate;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\DependencyInjection\Exception\BadDefinitionException;
-use Kaa\DependencyInjection\Exception\DependencyNotFoundException;
 use Traversable;
 
 #[PhpOnly]

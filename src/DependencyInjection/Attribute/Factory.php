@@ -14,7 +14,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
  * будет вызвана фабрика без when, а если её нет, будет выброшено исключение
  */
 #[PhpOnly]
-#[Attribute(Attribute::TARGET_CLASS)]
+#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 readonly class Factory
 {
     /**
@@ -32,7 +32,7 @@ readonly class Factory
      */
     public function __construct(
         public string $factory,
-        public string $method,
+        public string $method = '__invoke',
         public bool $isStatic = false,
         public array|string $when = [When::DEFAULT_ENVIRONMENT],
     ) {

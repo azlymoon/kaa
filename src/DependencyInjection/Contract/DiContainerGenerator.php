@@ -16,6 +16,8 @@ class DiContainerGenerator
 {
     private readonly string $directory;
 
+    private readonly string $namespace;
+
     private readonly PhpFile $phpFile;
 
     private readonly ClassType $class;
@@ -31,11 +33,16 @@ class DiContainerGenerator
         private readonly Filesystem $filesystem = new Filesystem(),
     ) {
         $this->directory = rtrim($userConfig['code_gen_directory'], '/') . '/DependencyInjection';
-        $namespace = rtrim($userConfig['code_gen_namespace'], '\\') . '\\DependencyInjection';
+        $this->namespace = trim($userConfig['code_gen_namespace'], '\\') . '\\DependencyInjection';
 
         $this->phpFile = new PhpFile();
-        $namespace = $this->phpFile->addNamespace($namespace);
-        $this->class = $namespace->addClass($this->getClassName());
+        $phpNamespace = $this->phpFile->addNamespace($this->namespace);
+        $this->class = $phpNamespace->addClass($this->getClassName());
+    }
+
+    public function getFqnClassName(): string
+    {
+        return $this->namespace . '\\' . $this->getClassName();
     }
 
     public function getClassName(): string
@@ -50,7 +57,7 @@ class DiContainerGenerator
 
     public function addVar(string $type, string $name): void
     {
-        $var = $this->class->addProperty($name);
+        $var = $this->class->addProperty($name, null);
         if ($type !== 'mixed') {
             $var->setNullable();
         }

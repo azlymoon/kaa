@@ -11,7 +11,7 @@ use Kaa\CodeGen\Attribute\PhpOnly;
  * Алиас сервиса или параметра, который должен быть injected
  */
 #[PhpOnly]
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 readonly class Inject
 {
     public function __construct(
