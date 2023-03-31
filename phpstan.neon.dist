@@ -40,6 +40,11 @@ parameters:
       message: '#Calling sha1\(\) is forbidden, use hash\(\) with at least SHA-256 for secure hash, or password_hash\(\) for passwords#'
       path: src/DependencyInjection/*
     - '#Method Kaa\\CodeGen\\ProvidedDependencies::get\(\) should return T of object but returns object.#'
+    -
+      messages:
+        - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$isEnvVar is already assigned.#'
+        - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$envVarName is already assigned.#'
+      path: src/DependencyInjection/Collection/Parameter/Parameter.php
 
 includes:
   - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon

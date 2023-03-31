@@ -212,7 +212,7 @@ class ConfigParser implements ConfigParserInterface
                 new Parameter(
                     $name,
                     $definition['value'],
-                    $definition['binding']
+                    $definition['binding'] ?? null
                 )
             );
         }

@@ -305,9 +305,9 @@ PHP;
         return strtr($code, $replacements);
     }
 
-    private function generateParameter(string $type, string $name, ?string $injectedName): string
+    private function generateParameter(string $type, string $name, string $injectedName): string
     {
-        if ($injectedName !== null) {
+        if ($injectedName !== '') {
             $methodName = $injectedName;
             $parameter = $this->container->parameters->get($injectedName);
         } else {
@@ -321,9 +321,11 @@ PHP;
         }
 
         if ($parameter->isEnvVar) {
-            $code = sprintf('return self::%s()[%s];', $this->generateEnvMethod(), $parameter->envVarName);
+            $code = sprintf('return self::%s()[\'%s\'];', $this->generateEnvMethod(), $parameter->envVarName);
         } else {
-            $code = sprintf('return (%s) %s;', $type, $parameter->value);
+            $code = is_string($parameter->value)
+                ? sprintf('return \'%s\';', $parameter->value)
+                : sprintf('return (%s) %s;', $type, $parameter->value);
         }
 
         $comment = sprintf("// Parameter %s $%s %s\n", $type, $name, $injectedName);

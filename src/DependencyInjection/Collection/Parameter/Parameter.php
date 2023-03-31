@@ -15,13 +15,18 @@ readonly class Parameter
 
     public function __construct(
         public string $name,
-        public string $value,
+        public string|int|float $value,
         public ?string $binding = null,
     ) {
-        // Проверяем, что value в формате %env(название_переменной)%
-        preg_match('/^ %env \( (?<var_name>.*) \) % $/x', $this->value, $matches);
+        if (is_string($this->value)) {
+            // Проверяем, что value в формате %env(название_переменной)%
+            preg_match('/^ %env \( (?<var_name>.*) \) % $/x', $this->value, $matches);
 
-        $this->isEnvVar = !empty($matches);
-        $this->envVarName = $matches['var_name'] ?? '';
+            $this->isEnvVar = !empty($matches);
+            $this->envVarName = $matches['var_name'] ?? '';
+        } else {
+            $this->isEnvVar = false;
+            $this->envVarName = '';
+        }
     }
 }

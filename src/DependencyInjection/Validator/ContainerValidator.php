@@ -142,13 +142,20 @@ class ContainerValidator implements ContainerValidatorInterface
         foreach ($service->dependencies as $dependency) {
             // Зависимость является параметром
             if ($dependency->isParameter()) {
-                if ($dependency->isInjected() && !$container->parameters->have($dependency->injectedName)) {
-                    $errors[] = sprintf(
-                        'Service %s depends on parameter injected as %s but parameter with such name is not defined',
-                        $service->name,
-                        $dependency->injectedName,
-                    );
-                } elseif (!$container->parameters->haveBinding($dependency->type, $dependency->name)) {
+                if ($dependency->isInjected()) {
+                    if (!$container->parameters->have($dependency->injectedName)) {
+                        $errors[] = sprintf(
+                            'Service %s depends on parameter injected as %s, '
+                            . 'but parameter with such name is not defined',
+                            $service->name,
+                            $dependency->injectedName,
+                        );
+                    }
+
+                    continue;
+                }
+
+                if (!$container->parameters->haveBinding($dependency->type, $dependency->name)) {
                     $errors[] = sprintf(
                         'Service %s depends on parameter binded as %s $%s, '
                         . 'but parameter with such binding is not defined',
@@ -264,7 +271,7 @@ class ContainerValidator implements ContainerValidatorInterface
         if (!$factories->haveOnlyDefaultEnvironment() || $factories->areDubious()) {
             $error = sprintf(
                 'Service "%s" requires factory service "%s", but it is environment dependent or dubious. '
-                    . 'If you need different factories for different environments, use "when" is #[Factory]',
+                . 'If you need different factories for different environments, use "when" is #[Factory]',
                 $service->name,
                 $factory->factory
             );
