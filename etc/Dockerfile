@@ -4,7 +4,8 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 
 RUN apk update && apk add --no-cache \
     vim \
-    bash
+    bash \
+    git
 
 RUN install-php-extensions \
     json \
