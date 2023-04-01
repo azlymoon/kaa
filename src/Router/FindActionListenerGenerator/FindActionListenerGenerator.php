@@ -124,11 +124,11 @@ PHP;
     {
         $fileSystem = new Filesystem();
 
-        if (!$fileSystem->exists(rtrim($userConfig['code_gen_directory'], '\\') . '\\Router')) {
-            $fileSystem->mkdir(rtrim($userConfig['code_gen_directory'], '\\') . '\\Router');
+        if (!$fileSystem->exists(rtrim($userConfig['code_gen_directory'], '/') . '/Router')) {
+            $fileSystem->mkdir(rtrim($userConfig['code_gen_directory'], '/') . '/Router');
         }
 
         $code = (new PsrPrinter())->printFile($phpFile);
-        file_put_contents(rtrim($userConfig['code_gen_directory'], '\\') . '\\Router\\Router.php', $code);
+        file_put_contents(rtrim($userConfig['code_gen_directory'], '/') . '/Router/Router.php', $code);
     }
 }
