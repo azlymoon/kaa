@@ -21,7 +21,8 @@
         "haydenpierce/class-finder": "dev-master",
         "nette/php-generator": "^4.0",
         "symfony/filesystem": "^6.2",
-        "nikic/php-parser": "^4.15"
+        "nikic/php-parser": "^4.15",
+        "symfony/yaml": "^6.2"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",

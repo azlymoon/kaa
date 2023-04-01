@@ -5,22 +5,28 @@ declare(strict_types=1);
 namespace Kaa\Router\FindActionListenerGenerator;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
+use Kaa\CodeGen\Contract\ServiceInfo;
+use Kaa\CodeGen\Contract\ServiceStorageInterface;
+use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Event\FindActionEvent;
 use Kaa\HttpKernel\EventListener\AbstractFindActionEventListener;
+use Kaa\HttpKernel\HttpKernelEvents;
 use Kaa\Router\CallableRoute;
 use Kaa\Router\HttpRoute;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Filesystem\Path;
 
 #[PhpOnly]
 class FindActionListenerGenerator implements FindActionListenerGeneratorInterface
 {
     private const ROUTE_NAME_VAR = 'Router_route_name';
 
+    /**
+     * @throws NoDependencyException
+     */
     public function generate(
         array $callableRoutes,
         RouteMatcherGeneratorInterface $routeMatcherGenerator,
@@ -28,9 +34,9 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
         ProvidedDependencies $providedDependencies
     ): void {
         $phpFile = new PhpFile();
-        $namespace = $phpFile->addNamespace($userConfig['router']['find_action_listener_namespace']);
+        $namespace = $phpFile->addNamespace(rtrim($userConfig['code_gen_namespace'], '\\') . '\\Router');
 
-        $class = $namespace->addClass($userConfig['router']['find_action_listener_class_name']);
+        $class = $namespace->addClass('Router');
         $class->setExtends(AbstractFindActionEventListener::class);
 
         $method = $class->addMethod('handleFindAction');
@@ -59,6 +65,24 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
         $method->addBody($this->generateSetCode($callableRoutes));
 
         $this->saveFile($phpFile, $userConfig);
+
+        if ($providedDependencies->has(ServiceStorageInterface::class)) {
+            $serviceInfo = new ServiceInfo(
+                class: rtrim($userConfig['code_gen_namespace'], '\\') . '\\Router\\Router',
+                tags: [
+                    'events' => [
+                        [
+                            'event' => HttpKernelEvents::FIND_ACTION,
+                            'method' => 'handleFindAction',
+                            'priority' => 0,
+                            'dispatcher' => 'kernel.dispatcher'
+                        ]
+                    ]
+                ]
+            );
+
+            $providedDependencies->get(ServiceStorageInterface::class)->addService($serviceInfo);
+        }
     }
 
     /**
@@ -100,11 +124,11 @@ PHP;
     {
         $fileSystem = new Filesystem();
 
-        if (!$fileSystem->exists(Path::getDirectory($userConfig['router']['find_action_listener_file']))) {
-            $fileSystem->mkdir(Path::getDirectory($userConfig['router']['find_action_listener_file']));
+        if (!$fileSystem->exists(rtrim($userConfig['code_gen_namespace'], '\\') . '\\Router')) {
+            $fileSystem->mkdir(rtrim($userConfig['code_gen_namespace'], '\\') . '\\Router');
         }
 
         $code = (new PsrPrinter())->printFile($phpFile);
-        file_put_contents($userConfig['router']['find_action_listener_file'], $code);
+        file_put_contents(rtrim($userConfig['code_gen_namespace'], '\\') . '\\Router\\Router.php', $code);
     }
 }
