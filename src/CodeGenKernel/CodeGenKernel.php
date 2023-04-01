@@ -111,13 +111,7 @@ PHP;
             }
 
             if (is_dir($entry)) {
-                $scannedFiles = $this->scanDir($entry);
-                $scannedFiles = array_map(
-                    static fn(string $file) => $dir . DIRECTORY_SEPARATOR . $file,
-                    $scannedFiles
-                );
-
-                $files = [...$files, ...$scannedFiles];
+                $files = [...$files, ...$this->scanDir($entry)];
                 continue;
             }
 
