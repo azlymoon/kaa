@@ -6,6 +6,7 @@ namespace Kaa\CodeGenKernel;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Config\PhpConfig;
+use Kaa\CodeGen\Contract\BoostrapProviderInterface;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\InvalidDependencyException;
 use Kaa\CodeGen\Exception\NoDependencyException;
@@ -26,6 +27,7 @@ namespace KaaGenerated;
 class KernelProvider {
     public static function getKernel(): \Kaa\HttpKernel\HttpKernel
     {
+        %bootstrap%;
         return new \Kaa\HttpKernel\HttpKernel(%kernelDispatcher%);
     }
 }
@@ -69,9 +71,11 @@ PHP;
         }
 
         $instanceProvider = $dependencies->get(InstanceProviderInterface::class);
+        $boostrapProvider = $dependencies->get(BoostrapProviderInterface::class);
 
         $replacements = [
-            '%kernelDispatcher%' => $instanceProvider->provideInstanceCode('kernel.dispatcher')
+            '%kernelDispatcher%' => $instanceProvider->provideInstanceCode('kernel.dispatcher'),
+            '%bootstrap%' => $boostrapProvider->getCallBootstrapCode(),
         ];
 
         $path = $this->kernelDir . DIRECTORY_SEPARATOR . 'generated' . DIRECTORY_SEPARATOR . 'KernelProvider.php';
@@ -123,7 +127,7 @@ PHP;
         }
 
         return array_map(
-            static fn (string $file) => $dir . DIRECTORY_SEPARATOR . $file,
+            static fn(string $file) => $dir . DIRECTORY_SEPARATOR . $file,
             $files
         );
     }
