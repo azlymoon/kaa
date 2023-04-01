@@ -118,6 +118,9 @@ PHP;
             $files[] = $entry;
         }
 
-        return $files;
+        return array_map(
+            static fn (string $file) => $dir . DIRECTORY_SEPARATOR . $file,
+            $files
+        );
     }
 }
