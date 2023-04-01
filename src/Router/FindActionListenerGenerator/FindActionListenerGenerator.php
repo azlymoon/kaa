@@ -10,7 +10,6 @@ use Kaa\CodeGen\Contract\ServiceStorageInterface;
 use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Event\FindActionEvent;
-use Kaa\HttpKernel\EventListener\AbstractFindActionEventListener;
 use Kaa\HttpKernel\HttpKernelEvents;
 use Kaa\Router\CallableRoute;
 use Kaa\Router\HttpRoute;

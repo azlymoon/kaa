@@ -12,6 +12,7 @@ use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\GenerationManager;
 use Kaa\CodeGen\GeneratorInterface;
 use Kaa\CodeGenKernel\Exception\ConfigException;
+use Kaa\EventDispatcher\EventDispatcher;
 use Symfony\Component\Yaml\Yaml;
 
 #[PhpOnly]
@@ -46,6 +47,9 @@ PHP;
         $userConfig['kernel_dir'] = $this->kernelDir;
         $userConfig['code_gen_namespace'] = 'KaaGenerated';
         $userConfig['code_gen_directory'] = $this->kernelDir . DIRECTORY_SEPARATOR . 'generated';
+        $userConfig['service']['kernel.dispatcher'] = [
+            'class' => EventDispatcher::class
+        ];
 
         $modulesPath = $this->kernelDir . DIRECTORY_SEPARATOR . '/config/modules.php';
         if (!file_exists($modulesPath)) {
