@@ -36,17 +36,23 @@ class TreeNode implements TreeNodeInterface
     }
 
     /**
-     * @return ?string[]
+     * @return string[]|null
      */
     public function getKeys(): ?array
     {
         return $this->keys;
     }
 
-    /** @param ?string[] $keys */
-    public function setKeys(?array $keys): void { $this->keys = $keys; }
+    /** @param string[]|null $keys */
+    public function setKeys(?array $keys): void
+    {
+        $this->keys = $keys;
+    }
 
-    public function getData(): string { return $this->data; }
+    public function getData(): string
+    {
+        return $this->data;
+    }
 
     /** @return TreeNode[] */
     public function getNext(): array

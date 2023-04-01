@@ -28,10 +28,10 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
         $indexes = [];
         $parents = [];
         $mathTree = new Tree();
-        foreach ($routes as $route) {
+        foreach ($routes as $route) { // Строим дерево
             $mathTree->addElement($route->path, $route->name, $route->method);
         }
-        $code[] = '$Router_route_name = null;';
+        $code[] = '$Router_route_name = null;'; // Добавляем в код разбиение строки на массив
         $code[] = '$matches = [];';
         $code[] = '$nodes = explode("/", $route);';
         $code[] = 'if ($nodes[0] === ""){';
@@ -39,27 +39,27 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
         $code[] = '    $nodes = array_values($nodes);';
         $code[] = '}';
         $code[] = '$count_nodes = count($nodes);';
-        foreach ($mathTree->getHead() as $headItem) {
+        foreach ($mathTree->getHead() as $headItem) { // Для каждого метода строим блок if-else
             $code[] = sprintf(
                 'if ($method === "%s"){',
                 $headItem->getData()
             );
-            $depth = 0;
-            $parents[$depth] = $headItem->getNext();
-            $indexes[$depth] = 0;
+            $depth = 0; // Глубина вложенности
+            $parents[$depth] = $headItem->getNext(); // Предыдущие элементы для определённой глубины
+            $indexes[$depth] = 0; // Индекс первого предыдущего элемента для которого не построен блок if-else
 
             while (true) {
-                if ($indexes[$depth] < count($parents[$depth])) {
+                if ($indexes[$depth] < count($parents[$depth])) { // Проверяем что ещё не все блоки для родителей готовы
                     $t = $parents[$depth][$indexes[$depth]];
-                    if ($t->getName() !== null) {
-                        if (!str_contains($t->getData(), "{")) {
+                    if ($t->getName() !== null) { // Если у ноды есть имя доюавляем проверку и примвоение
+                        if (!str_contains($t->getData(), "{")) { // Если нода - переменная
                             $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                 'if(($nodes[%d] === "%s") && ($count_nodes === %d)){',
                                 $depth,
                                 $t->getData(),
                                 $depth + 1
                             );
-                        } else {
+                        } else { // Иначе
                             $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                 'if($count_nodes === %d){',
                                 $depth + 1
@@ -69,7 +69,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                             '$Router_route_name = "%s";',
                             $t->getName()
                         );
-                        if ($t->getKeys() !== null) {
+                        if ($t->getKeys() !== null) { // Записываем в массив все переменные
                             foreach ($t->getKeys() as $k => $v) {
                                 $code[] = str_repeat("\t", $depth + 2) . sprintf(
                                     '$matches["%s"] = $nodes[%d];',
@@ -80,9 +80,9 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                         }
                         $code[] = str_repeat("\t", $depth + 1) . '}';
                     }
-                    if (!empty($t->getNext())) {
-                        if (!str_contains($t->getData(), '{')) {
-                            if ($indexes[$depth] === 0) {
+                    if (!empty($t->getNext())) { // Если у текущей ноды есть следующие
+                        if (!str_contains($t->getData(), '{')) { // Если это переменная
+                            if ($indexes[$depth] === 0) { // Если это первая нода
                                 $code[] = str_repeat("\t", $depth + 1) .
                                     sprintf(
                                         'if (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
@@ -90,7 +90,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                         $parents[$depth][$indexes[$depth]]->getData(),
                                         $depth + 1
                                     );
-                            } else {
+                            } else { // Иначе
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                     'elseif (($nodes[%d] === "%s") && ($count_nodes >= %d)){',
                                     $depth,
@@ -98,13 +98,13 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                     $depth + 1
                                 );
                             }
-                        } else {
-                            if ($indexes[$depth] === 0) {
+                        } else { // Если это не переменная
+                            if ($indexes[$depth] === 0) { // Если это случилось на первом элементе
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                     'if ($count_nodes >= %d){',
                                     $depth + 1
                                 );
-                            } else {
+                            } else { // Если это случилось на втором и следующих элементах
                                 $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                     'else if ($count_nodes >= %d){',
                                     $depth + 1
@@ -116,14 +116,14 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                         $depth++;
                         $indexes[$depth] = 0;
                         $parents[$depth] = $parents[$depth - 1][$indexes[$depth - 1] - 1]->getNext();
-                    } else {
+                    } else { // Если следующих нет
                         $indexes[$depth]++;
                     }
-                } else {
+                } else { // Когда все блоки для родительских элементов текущей глубины готовы
                     $code[] = str_repeat("\t", $depth) . '}';
-                    if ($depth === 0) {
+                    if ($depth === 0) { // Заканчиваем как только это произло для нод из head
                         break;
-                    } else {
+                    } else { // ПОднимаемся на уровень выше в ином случае
                         unset($parents[$depth]);
                         $depth--;
                     }

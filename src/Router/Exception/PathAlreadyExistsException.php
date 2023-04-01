@@ -13,9 +13,6 @@ class PathAlreadyExistsException extends Exception
     public function __construct(
         string $message = 'Path with different name already exists!'
     ) {
-        if (!empty($message)) {
-            $this->message = sprintf('Path "%s" with different name already exists!', $message);
-        }
-        parent::__construct($this->message);
+        parent::__construct($message);
     }
 }
