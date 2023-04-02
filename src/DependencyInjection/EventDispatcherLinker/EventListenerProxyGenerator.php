@@ -72,6 +72,8 @@ PHP;
         $method->setStatic();
         $method->setReturnType('void');
 
+        $method->setComment('@kphp-required');
+
         $parameter = $method->addParameter('event');
         $parameter->setType(EventInterface::class);
 
