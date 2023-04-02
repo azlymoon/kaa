@@ -16,7 +16,8 @@ readonly class Blank extends Assert
     ) {
     }
 
-    public function supportsType(string $typeName): bool {
+    public function supportsType(string $typeName): bool
+    {
         return (in_array($typeName, $this->allowTypes));
     }
 
@@ -24,6 +25,4 @@ readonly class Blank extends Assert
     {
         return $this->allowTypes;
     }
-
-
 }

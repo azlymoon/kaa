@@ -61,8 +61,7 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
             foreach ($assertAttributes as $assertAttribute) {
                 $attribute = $assertAttribute->newInstance();
 
-                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false){
-
+                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
                     $allowTypes = implode(", ", $attribute->getAllowTypes());
 
                     throw new InvalidArgumentException(
