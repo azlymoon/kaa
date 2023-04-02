@@ -132,7 +132,7 @@ class ConfigParser implements ConfigParserInterface
 
             $event['dispatcher'] ??= 'kernel.dispatcher';
             $event['priority'] ??= 0;
-            $event['method'] ??= '__invoke';
+            $event['method'] ??= 'invoke';
         }
 
         return new ServiceDefinition(
@@ -165,7 +165,7 @@ class ConfigParser implements ConfigParserInterface
 
             $factories[] = new Factory(
                 $factoryDefinition['factory'],
-                $factoryDefinition['method'] ?? '__invoke',
+                $factoryDefinition['method'] ?? 'invoke',
                 $factoryDefinition['static'] ?? false,
                 $factoryDefinition['when'] ?? [When::DEFAULT_ENVIRONMENT]
             );

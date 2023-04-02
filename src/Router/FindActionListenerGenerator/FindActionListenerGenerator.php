@@ -37,7 +37,7 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 
         $class = $namespace->addClass('Router');
 
-        $method = $class->addMethod('__invoke');
+        $method = $class->addMethod('invoke');
         $method->setVisibility(ClassLike::VisibilityPublic);
         $method->addParameter('event')->setType(FindActionEvent::class);
         $method->setReturnType('void');
@@ -71,7 +71,7 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
                     'events' => [
                         [
                             'event' => HttpKernelEvents::FIND_ACTION,
-                            'method' => '__invoke',
+                            'method' => 'invoke',
                             'priority' => 0,
                             'dispatcher' => 'kernel.dispatcher'
                         ]

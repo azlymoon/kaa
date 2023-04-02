@@ -7,7 +7,7 @@ namespace Kaa\CodeGen\Contract;
 /**
  * Класс, реализующий этот интерфейс, создаёт код, который должен быть выполнен при получении каждого запроса
  */
-interface BoostrapProviderInterface
+interface BootstrapProviderInterface
 {
     public function addCode(string $code): void;
 

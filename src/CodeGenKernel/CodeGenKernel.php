@@ -6,7 +6,7 @@ namespace Kaa\CodeGenKernel;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\Config\PhpConfig;
-use Kaa\CodeGen\Contract\BoostrapProviderInterface;
+use Kaa\CodeGen\Contract\BootstrapProviderInterface;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\InvalidDependencyException;
 use Kaa\CodeGen\Exception\NoDependencyException;
@@ -71,7 +71,7 @@ PHP;
         }
 
         $instanceProvider = $dependencies->get(InstanceProviderInterface::class);
-        $boostrapProvider = $dependencies->get(BoostrapProviderInterface::class);
+        $boostrapProvider = $dependencies->get(BootstrapProviderInterface::class);
 
         $replacements = [
             '%kernelDispatcher%' => $instanceProvider->provideInstanceCode('kernel.dispatcher'),

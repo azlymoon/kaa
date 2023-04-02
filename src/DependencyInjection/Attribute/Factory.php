@@ -32,7 +32,7 @@ readonly class Factory
      */
     public function __construct(
         public string $factory,
-        public string $method = '__invoke',
+        public string $method = 'invoke',
         public bool $isStatic = false,
         public array|string $when = [When::DEFAULT_ENVIRONMENT],
     ) {

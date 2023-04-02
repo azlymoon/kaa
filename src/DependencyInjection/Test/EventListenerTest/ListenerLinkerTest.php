@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace Kaa\DependencyInjection\Test\EventListenerTest;
 
-use Kaa\CodeGen\Contract\BoostrapProviderInterface;
+use Kaa\CodeGen\Contract\BootstrapProviderInterface;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\GenerationManager;
 use Kaa\DependencyInjection\Contract\InstanceProvider;
@@ -30,7 +30,7 @@ class ListenerLinkerTest extends TestCase
         $providedDependencies = $generationManager->generate();
         $this->instanceProvider = $providedDependencies->get(InstanceProviderInterface::class);
 
-        $bootstrapCode = $providedDependencies->get(BoostrapProviderInterface::class)->getCallBootstrapCode();
+        $bootstrapCode = $providedDependencies->get(BootstrapProviderInterface::class)->getCallBootstrapCode();
         Utils::eval($bootstrapCode);
     }
 

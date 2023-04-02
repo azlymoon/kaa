@@ -15,7 +15,7 @@ readonly class AsEventListener
         public string $event,
         public string $dispatcher = 'kernel.dispatcher',
         public int $priority = 0,
-        public string $method = '__invoke'
+        public string $method = 'invoke'
     ) {
     }
 }

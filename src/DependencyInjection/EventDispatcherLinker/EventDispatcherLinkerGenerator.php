@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Kaa\DependencyInjection\EventDispatcherLinker;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
-use Kaa\CodeGen\Contract\BoostrapProviderInterface;
+use Kaa\CodeGen\Contract\BootstrapProviderInterface;
 use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\CodeGenException;
 use Kaa\CodeGen\Exception\NoDependencyException;
@@ -37,7 +37,7 @@ PHP;
 
     private InstanceProvider $instanceProvider;
 
-    private BoostrapProviderInterface $bootstrapProvider;
+    private BootstrapProviderInterface $bootstrapProvider;
 
     private EventListenerProxyGenerator $eventListenerProxyGenerator;
 
@@ -93,17 +93,17 @@ PHP;
      * @throws NoDependencyException
      * @throws CodeGenException
      */
-    private function getBootstrapProvider(ProvidedDependencies $providedDependencies): BoostrapProviderInterface
+    private function getBootstrapProvider(ProvidedDependencies $providedDependencies): BootstrapProviderInterface
     {
-        if (!$providedDependencies->has(BoostrapProviderInterface::class)) {
+        if (!$providedDependencies->has(BootstrapProviderInterface::class)) {
             EventDispatcherLinkerException::throw(
                 '%s requires %s to be provided',
                 self::class,
-                BoostrapProviderInterface::class,
+                BootstrapProviderInterface::class,
             );
         }
 
-        return $providedDependencies->get(BoostrapProviderInterface::class);
+        return $providedDependencies->get(BootstrapProviderInterface::class);
     }
 
     /**
@@ -209,7 +209,8 @@ PHP;
         $parameters = $reflectionMethod->getParameters();
         if (count($parameters) !== 1) {
             EventDispatcherLinkerException::throw(
-                'Method "__invoke" of service "%s" must have single parameter - the event to be handled',
+                'Method "%s" of service "%s" must have single parameter - the event to be handled',
+                $reflectionMethod->name,
                 $service->name
             );
         }
@@ -218,7 +219,8 @@ PHP;
         $parameterType = $parameter->getType();
         if (!$parameterType instanceof ReflectionNamedType) {
             EventDispatcherLinkerException::throw(
-                'Parameter of method "__invoke" of service "%s" must have type and not be a union or intersection',
+                'Parameter of method "%s" of service "%s" must have type and not be a union or intersection',
+                $reflectionMethod->name,
                 $service->name
             );
         }
@@ -226,7 +228,8 @@ PHP;
         $parameterTypeName = $parameterType->getName();
         if (!is_a($parameterTypeName, EventInterface::class, true)) {
             EventDispatcherLinkerException::throw(
-                'Parameter of method "__invoke" of service "%s" must be a subclass of %s',
+                'Parameter of method "%s" of service "%s" must be a subclass of %s',
+                $reflectionMethod->name,
                 $service->name,
                 EventInterface::class
             );
