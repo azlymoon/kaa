@@ -85,7 +85,7 @@ PHP;
 
         $method->addBody(strtr($template, $replacements));
 
-        return sprintf('[%s::class, \'%s\']', $this->getFqnClassName(), $proxyMethodName);
+        return sprintf('[\%s::class, \'%s\']', $this->getFqnClassName(), $proxyMethodName);
     }
 
     private function getFqnClassName(): string
