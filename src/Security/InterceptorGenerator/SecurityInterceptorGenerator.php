@@ -43,7 +43,8 @@ readonly class SecurityInterceptorGenerator implements InterceptorGeneratorInter
         $code = [];
         $code[] = $newInstanceGenerator->getNewInstanceCode('securityUserContext', UserContextInterface::class);
 
-        if (empty(array_intersect(implode("", $this->roles), $securityUserContext->getRoles()))) {
+//        if (empty(array_intersect(implode("", $this->roles), $securityUserContext->getRoles()))) {
+        if (empty(array_intersect($this->roles, $securityUserContext->getRoles()))) {
             throw new NoDependencyException('Access denied: roles do not match');
 
         }
