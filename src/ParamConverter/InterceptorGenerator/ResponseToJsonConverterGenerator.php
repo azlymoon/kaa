@@ -7,11 +7,13 @@ namespace Kaa\ParamConverter\InterceptorGenerator;
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\ParamConverter\Exception\ParamConverterException;
 use Kaa\Router\Action;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Router\Interceptor\AvailableVars;
 use Kaa\Router\Interceptor\InterceptorGeneratorInterface;
+use Kaa\Validator\Exception\ValidatorReturnValueException;
 use ReflectionNamedType;
 
 #[PhpOnly]
@@ -19,6 +21,7 @@ readonly class ResponseToJsonConverterGenerator implements InterceptorGeneratorI
 {
     /**
      * @throws ParamConverterException
+     * @throws ValidatorReturnValueException
      */
     public function generate(
         AvailableVars $availableVars,
@@ -26,27 +29,9 @@ readonly class ResponseToJsonConverterGenerator implements InterceptorGeneratorI
         array $userConfig,
         ProvidedDependencies $providedDependencies
     ): string {
-        $controllerResultType = $action->reflectionMethod->getReturnType();
-        if (!$controllerResultType instanceof ReflectionNamedType) {
-            throw new ParamConverterException(
-                sprintf(
-                    '%s::%s must have return type and it must not be union or intersection',
-                    $action->reflectionClass->name,
-                    $action->reflectionMethod->name,
-                )
-            );
-        }
+        InterceptorUtils::checkValidClass($action);
 
-        if ($controllerResultType->isBuiltin()) {
-            throw new ParamConverterException(
-                sprintf(
-                    "Return type of %s::%s must not be build in, but is %s",
-                    $action->reflectionClass->name,
-                    $action->reflectionMethod->name,
-                    $controllerResultType->getName(),
-                )
-            );
-        }
+        $controllerResultType = $action->reflectionMethod->getReturnType();
 
         if (is_subclass_of($controllerResultType->getName(), ResponseInterface::class)) {
             return '';

@@ -6,6 +6,7 @@ namespace Kaa\Validator\InterceptorGenerator;
 
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Action;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Router\Interceptor\AvailableVars;
@@ -36,33 +37,12 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
     public function generate(
         AvailableVars $availableVars,
         Action $action,
-
-
         array $userConfig,
         ProvidedDependencies $providedDependencies
     ): string {
+        InterceptorUtils::checkValidClass($action);
+
         $validateResultType = $action->reflectionMethod->getReturnType();
-
-        if (!$validateResultType instanceof ReflectionNamedType) {
-            throw new ValidatorReturnValueException(
-                sprintf(
-                    '%s::%s must have return type and it must not be union or intersection',
-                    $action->reflectionClass->name,
-                    $action->reflectionMethod->name,
-                )
-            );
-        }
-
-        if ($validateResultType->isBuiltin()) {
-            throw new ValidatorReturnValueException(
-                sprintf(
-                    "Return type of %s::%s must not be build in, but is %s",
-                    $action->reflectionClass->name,
-                    $action->reflectionMethod->name,
-                    $validateResultType->getName(),
-                )
-            );
-        }
 
         if (is_a($validateResultType->getName(), ResponseInterface::class)) {
             return '';

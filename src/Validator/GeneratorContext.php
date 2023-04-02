@@ -23,6 +23,7 @@ use Kaa\Validator\Strategy\NotBlankGenerator;
 use Kaa\Validator\Strategy\NotNullGenerator;
 use Kaa\Validator\Strategy\PositiveGenerator;
 use Kaa\Validator\Strategy\PositiveOrZeroGenerator;
+use Kaa\Validator\Strategy\RangeGenerator;
 use Kaa\Validator\Strategy\TypeGenerator;
 use Kaa\Validator\Strategy\UrlGenerator;
 
@@ -53,6 +54,7 @@ class GeneratorContext
             new NegativeOrZeroGenerator(),
             new EmailGenerator(),
             new UrlGenerator(),
+            new RangeGenerator(),
         ];
     }
 

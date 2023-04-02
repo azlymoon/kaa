@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Kaa\InterceptorUtils;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
+use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\InterceptorUtils\Exception\InaccessiblePropertyException;
 use Kaa\InterceptorUtils\Exception\ParamNotFoundException;
 use Kaa\Router\Action;
+use Kaa\Validator\Exception\ValidatorReturnValueException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -152,5 +154,33 @@ class InterceptorUtils
         }
 
         return null;
+    }
+
+    /**
+     * @throws ValidatorReturnValueException
+     */
+    public static function checkValidClass(Action $action): void
+    {
+        $resultType = $action->reflectionMethod->getReturnType();
+        if (!$resultType instanceof ReflectionNamedType) {
+            throw new ValidatorReturnValueException(
+                sprintf(
+                    '%s::%s must have return type and it must not be union or intersection',
+                    $action->reflectionClass->name,
+                    $action->reflectionMethod->name,
+                )
+            );
+        }
+
+        if ($resultType->isBuiltin()) {
+            throw new ValidatorReturnValueException(
+                sprintf(
+                    "Return type of %s::%s must not be build in, but is %s",
+                    $action->reflectionClass->name,
+                    $action->reflectionMethod->name,
+                    $resultType->getName(),
+                )
+            );
+        }
     }
 }
