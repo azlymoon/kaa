@@ -74,17 +74,19 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                 );
                             }
                         }
-                        $code[] = str_repeat("\t", $depth + 2) . sprintf(
-                            "%s",
-                            $t->getRoute()->newInstanceCode
-                        );
-                        $code[] = str_repeat("\t", $depth + 2) . sprintf(
-                            <<<'PHP'
+                        if ($t->getRoute() !== null) {
+                            $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                                "%s",
+                                $t->getRoute()->newInstanceCode
+                            );
+                            $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                                <<<'PHP'
 $event->setAction([$%s, '%s']);
 PHP,
-                            $t->getRoute()->varName,
-                            $t->getRoute()->methodName
-                        );
+                                $t->getRoute()->varName,
+                                $t->getRoute()->methodName
+                            );
+                        }
                         $code[] = str_repeat("\t", $depth + 2) .
                             '$event->getRequest()->setUrlParams($matches);';
                         $code[] = str_repeat("\t", $depth + 2) .
