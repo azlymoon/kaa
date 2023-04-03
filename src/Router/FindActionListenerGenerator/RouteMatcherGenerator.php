@@ -74,24 +74,26 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                 );
                             }
                         }
-                        $routeCode = <<<'PHP'
-        %s
-        $event->setAction([$%s, '%s']);
-        $event->getRequest()->setUrlParams($matches);
-        $event->stopPropagation();
-        return;
-PHP;
-                        $routeCode = sprintf(
-                            $routeCode,
-                            $t->getRoute()->newInstanceCode,
-                            $t->getRoute()->varName,
-                            $t->getRoute()->methodName,
-                        );
                         $code[] = str_repeat("\t", $depth + 2) . sprintf(
                             '$Router_route_name = "%s";',
                             $t->getName()
                         );
-                        $code[] = str_repeat("\t", $depth + 2) . $routeCode;
+                        $code[] = str_repeat("\t", $depth) . sprintf(
+                            "%s",
+                            $t->getRoute()->newInstanceCode
+                        );
+                        $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                            <<<'PHP'
+        $event->setAction([$%s, '%s']);
+PHP,
+                            $t->getRoute()->newInstanceCode,
+                            $t->getRoute()->varName
+                        );
+                        $code[] = str_repeat("\t", $depth + 2) .
+                            '$event->getRequest()->setUrlParams($matches);';
+                        $code[] = str_repeat("\t", $depth + 2) .
+                        '$event->stopPropagation();';
+                        $code[] = str_repeat("\t", $depth + 2) . 'return;';
                         $code[] = str_repeat("\t", $depth + 1) . '}';
                     }
                     if (!empty($t->getNext())) { // Если у текущей ноды есть следующие
