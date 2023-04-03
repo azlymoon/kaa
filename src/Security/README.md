@@ -8,13 +8,13 @@ Uses codegen to generate code based on attributes and/or YAML Security config fi
 
 Voter returns one of three values:
 
-- SecurityVote::Grant
-- SecurityVote::Abstain
-- SecurityVote::Deny
+- ```SecurityVote::Grant```
+- ```SecurityVote::Abstain```
+- ```SecurityVote::Deny```
 
 ## Strategy
 
-Strategy is a set of rules which is applied when choosing to grant or deny access.
+Strategy is a set of rules which is applied when choosing to grant or deny access to a user.
 
 Strategies use voters to collect votes and then make the decision.
 
