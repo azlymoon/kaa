@@ -95,6 +95,7 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 if ($%s === '%s') {
     %s
     $event->setAction([$%s, '%s']);
+    $event->getRequest()->addUrlParams($matches);
     $event->stopPropagation();
     return;
 }
