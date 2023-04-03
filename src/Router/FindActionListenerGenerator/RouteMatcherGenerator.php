@@ -65,10 +65,19 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                 $depth + 1
                             );
                         }
+                        if ($t->getKeys() !== null) { // Записываем в массив все переменные
+                            foreach ($t->getKeys() as $k => $v) {
+                                $code[] = str_repeat("\t", $depth + 2) . sprintf(
+                                    '$matches["%s"] = $nodes[%d];',
+                                    $v,
+                                    $k
+                                );
+                            }
+                        }
                         $routeCode = <<<'PHP'
     %s
     $event->setAction([$%s, '%s']);
-    $event->getRequest()->addUrlParams($matches);
+    $event->getRequest()->setUrlParams($matches);
     $event->stopPropagation();
     return;
 PHP;
@@ -83,15 +92,6 @@ PHP;
                             $t->getName()
                         );
                         $code[] = str_repeat("\t", $depth + 2) . $routeCode;
-                        if ($t->getKeys() !== null) { // Записываем в массив все переменные
-                            foreach ($t->getKeys() as $k => $v) {
-                                $code[] = str_repeat("\t", $depth + 2) . sprintf(
-                                    '$matches["%s"] = $nodes[%d];',
-                                    $v,
-                                    $k
-                                );
-                            }
-                        }
                         $code[] = str_repeat("\t", $depth + 1) . '}';
                     }
                     if (!empty($t->getNext())) { // Если у текущей ноды есть следующие
