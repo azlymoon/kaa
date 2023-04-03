@@ -75,11 +75,11 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                             }
                         }
                         $routeCode = <<<'PHP'
-    %s
-    $event->setAction([$%s, '%s']);
-    $event->getRequest()->setUrlParams($matches);
-    $event->stopPropagation();
-    return;
+        %s
+        $event->setAction([$%s, '%s']);
+        $event->getRequest()->setUrlParams($matches);
+        $event->stopPropagation();
+        return;
 PHP;
                         $routeCode = sprintf(
                             $routeCode,
