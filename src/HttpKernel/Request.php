@@ -152,8 +152,8 @@ class Request
     }
 
     /** @param string[] $urlParams */
-    public function addUrlParams(array $urlParams): void
+    public function setUrlParams(array $urlParams): void
     {
-        $this->urlParams += $this->urlParams;
+        $this->urlParams = $urlParams;
     }
 }

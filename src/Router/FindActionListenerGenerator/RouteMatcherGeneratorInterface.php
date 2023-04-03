@@ -6,6 +6,7 @@ namespace Kaa\Router\FindActionListenerGenerator;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
 use Kaa\CodeGen\ProvidedDependencies;
+use Kaa\Router\CallableRoute;
 use Kaa\Router\HttpRoute;
 
 #[PhpOnly]
@@ -15,7 +16,7 @@ interface RouteMatcherGeneratorInterface
      * @param string $targetVarName
      * @param string $routeVarName
      * @param string $methodVarName
-     * @param HttpRoute[] $routes
+     * @param CallableRoute[] $routes
      * @param mixed[] $userConfig
      * @param ProvidedDependencies $providedDependencies
      * @return string

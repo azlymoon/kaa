@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kaa\Router\FindActionListenerGenerator;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
+use Kaa\Router\CallableRoute;
 use Kaa\Router\Exception\EmptyPathException;
 use Kaa\Router\Exception\PathAlreadyExistsException;
 
@@ -32,8 +33,11 @@ class Tree implements TreeInterface
      * @throws EmptyPathException
      * @throws PathAlreadyExistsException
      */
-    public function addElement(string $path, string $name, string $method): void
+    public function addElement(CallableRoute $route): void
     {
+        $path = $route->path;
+        $name = $route->name;
+        $method = $route->method;
         $nodes = self::parse($path); // Разбиваем строку на массив
         if (count($nodes) === 0) {
             throw new EmptyPathException();
@@ -53,6 +57,7 @@ class Tree implements TreeInterface
                 if ($realisedElement->getName() === null) { // Если похожий путь есть, но он ни к чему не ведёт - меняем
                     $realisedElement->setName($name);
                     $realisedElement->setKeys($keys);
+                    $realisedElement->setRoute($route);
                     return;
                 }
                 if ($realisedElement->getName() === $name) { // Если есть путь с таким же именем - ничего не делаем
@@ -79,7 +84,7 @@ class Tree implements TreeInterface
             }
             $prevKey = "$prevKey/$nodes[$i]";
         }
-        $prom = new TreeNode($nodes[count($nodes) - 1], $name, $keys);
+        $prom = new TreeNode($nodes[count($nodes) - 1], $name, $keys, $route);
         /** @var TreeNode $realisedElement */
         $realisedElement = $this->realisedElements[count($nodes) - 1][$prevKey];
         $realisedElement->addNext($prom);

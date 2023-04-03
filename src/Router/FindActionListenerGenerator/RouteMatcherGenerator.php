@@ -29,7 +29,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
         $parents = [];
         $mathTree = new Tree();
         foreach ($routes as $route) { // Строим дерево
-            $mathTree->addElement($route->path, $route->name, $route->method);
+            $mathTree->addElement($route);
         }
         $code[] = '$Router_route_name = null;'; // Добавляем в код разбиение строки на массив
         $code[] = '$matches = [];';
@@ -65,10 +65,24 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                                 $depth + 1
                             );
                         }
+                        $routeCode = <<<'PHP'
+    %s
+    $event->setAction([$%s, '%s']);
+    $event->getRequest()->addUrlParams($matches);
+    $event->stopPropagation();
+    return;
+PHP;
+                        $routeCode = sprintf(
+                            $routeCode,
+                            $t->getRoute()->newInstanceCode,
+                            $t->getRoute()->varName,
+                            $t->getRoute()->methodName,
+                        );
                         $code[] = str_repeat("\t", $depth + 2) . sprintf(
                             '$Router_route_name = "%s";',
                             $t->getName()
                         );
+                        $code[] = str_repeat("\t", $depth + 2) . $routeCode;
                         if ($t->getKeys() !== null) { // Записываем в массив все переменные
                             foreach ($t->getKeys() as $k => $v) {
                                 $code[] = str_repeat("\t", $depth + 2) . sprintf(

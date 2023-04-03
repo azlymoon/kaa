@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kaa\Router\FindActionListenerGenerator;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
+use Kaa\Router\CallableRoute;
 
 #[PhpOnly]
 class TreeNode implements TreeNodeInterface
@@ -20,7 +21,8 @@ class TreeNode implements TreeNodeInterface
     public function __construct(
         private readonly string $data,
         private ?string $name = null,
-        private ?array $keys = null
+        private ?array $keys = null,
+        private ?CallableRoute $route = null
     ) {
         $this->next = [];
     }
@@ -67,5 +69,15 @@ class TreeNode implements TreeNodeInterface
         } else {
             array_unshift($this->next, $nextNode);
         }
+    }
+
+    public function setRoute(CallableRoute $route): void
+    {
+        $this->route = $route;
+    }
+
+    public function getRoute(): ?CallableRoute
+    {
+        return $this->route;
     }
 }

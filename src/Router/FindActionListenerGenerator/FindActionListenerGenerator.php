@@ -44,17 +44,18 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 
         $method->addBody('$route = $event->getRequest()->getRoute();');
         $method->addBody('$method = $event->getRequest()->method();');
-
+/*
         $routes = array_map(
             static fn(CallableRoute $route) => new HttpRoute($route->path, $route->method, $route->name),
             $callableRoutes
         );
+ */
         $method->addBody(
             $routeMatcherGenerator->generateMatchCode(
                 self::ROUTE_NAME_VAR,
                 'route',
                 'method',
-                $routes,
+                $callableRoutes,
                 $userConfig,
                 $providedDependencies,
             )
@@ -95,7 +96,6 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 if ($%s === '%s') {
     %s
     $event->setAction([$%s, '%s']);
-    $event->getRequest()->addUrlParams($matches);
     $event->stopPropagation();
     return;
 }
