@@ -6,6 +6,6 @@ namespace Kaa\CodeGen\Exception;
 
 use Exception;
 
-class NoDependencyException extends Exception
+class NoDependencyException extends CodeGenException
 {
 }

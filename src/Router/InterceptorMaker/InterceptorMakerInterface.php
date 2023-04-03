@@ -17,7 +17,7 @@ interface InterceptorMakerInterface
      * @param mixed[] $userConfig
      * @return CallableAction[]
      */
-    public function makeInterceptors(
+    public function makeInterceptor(
         array $actions,
         array $userConfig,
         ProvidedDependencies $providedDependencies
