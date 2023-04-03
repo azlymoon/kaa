@@ -13,6 +13,7 @@ class Tree implements TreeInterface
 {
     /** @var TreeNode[] */
     private array $head;
+
     /** @var TreeNode[][] */
     private array $realisedElements;
 
