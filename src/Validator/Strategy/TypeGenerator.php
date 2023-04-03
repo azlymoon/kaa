@@ -84,6 +84,7 @@ PHP;
                         $code,
                         self::VALIDATION_FUNCTIONS[$type],
                         $accessCode,
+                        $type,
                         $violationListVarName,
                         $modelVar->type,
                         $reflectionProperty->name,
@@ -97,6 +98,7 @@ if (null !== %s && !(%s instanceof \%s)){
 PHP;
                     $code = sprintf(
                         $code,
+                        $accessCode,
                         $accessCode,
                         $type,
                         $violationListVarName,
@@ -116,6 +118,7 @@ PHP;
                         $code,
                         self::VALIDATION_FUNCTIONS[$type],
                         $accessCode,
+                        $type,
                         $violationListVarName,
                         $modelVar->type,
                         $reflectionProperty->name,

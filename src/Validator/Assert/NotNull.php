@@ -9,8 +9,11 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[PhpOnly]
 readonly class NotNull extends Assert
 {
+    /**
+     * @param string|null $message
+     */
     public function __construct(
-        public string|null $message = null,
+        public ?string $message = null,
     ) {
     }
 
@@ -19,8 +22,11 @@ readonly class NotNull extends Assert
         return true;
     }
 
+    /**
+     * @return string[]
+     */
     public function getAllowTypes(): array
     {
-        return $this->allowTypes;
+        return [];
     }
 }
