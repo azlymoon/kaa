@@ -24,8 +24,7 @@ class AttributeActionFinder implements ActionFinderInterface
     public function find(array $userConfig): array
     {
         $controllerClasses = $this->findClassesInNamespaces(
-            $userConfig['router']['controller_namespaces'],
-            $userConfig['router']['scan_vendor'] ?? false,
+            $userConfig['router']['controller_namespaces']
         );
 
         return $this->buildActions($controllerClasses);
@@ -36,11 +35,9 @@ class AttributeActionFinder implements ActionFinderInterface
      * @return string[]
      * @throws Exception
      */
-    private function findClassesInNamespaces(array $namespaces, bool $includeVendor): array
+    private function findClassesInNamespaces(array $namespaces): array
     {
-        if (!$includeVendor) {
-            ClassFinder::disablePSR4Vendors();
-        }
+        ClassFinder::disablePSR4Vendors();
 
         $classesInNamespaces = [];
         foreach ($namespaces as $namespace) {

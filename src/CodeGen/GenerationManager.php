@@ -19,12 +19,26 @@ readonly class GenerationManager
      * Если два модуля предоставляют зависимость одинакового интерфейса,
      * то следующим модулям будет передана последняя из них
      */
-    public function generate(): void
+    public function generate(): ProvidedDependencies
     {
         $providedDependencies = new ProvidedDependencies();
 
         foreach ($this->config->getGenerators() as $generator) {
             $generator->generate($this->config->getUserConfig(), $providedDependencies);
         }
+
+        foreach ($this->config->getGenerators() as $generator) {
+            if ($generator instanceof DumpableInterface) {
+                $generator->dump();
+            }
+        }
+
+        foreach ($providedDependencies as $providedDependency) {
+            if ($providedDependency instanceof DumpableInterface) {
+                $providedDependency->dump();
+            }
+        }
+
+        return $providedDependencies;
     }
 }

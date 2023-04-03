@@ -4,3 +4,4 @@
 /var
 .phpunit.result.cache
 coverage.cobertura.xml
+src/*/Test/Generated

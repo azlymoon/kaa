@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Kaa\Router\InterceptorMaker;
 
 use Kaa\CodeGen\Attribute\PhpOnly;
-use Kaa\CodeGen\Contract\NewInstanceGeneratorInterface;
+use Kaa\CodeGen\Contract\InstanceProviderInterface;
 use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Request;
 use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\Router\Action;
 use Kaa\Router\CallableAction;
-use Kaa\Router\Contract\DefaultNewInstanceGenerator;
+use Kaa\Router\Contract\DefaultInstanceProvider;
 use Kaa\Router\Exception\BadActionException;
 use Kaa\Router\Exception\InterceptorException;
 use Kaa\Router\Interceptor\AvailableVar;
@@ -28,7 +28,6 @@ use Symfony\Component\Filesystem\Filesystem;
 #[PhpOnly]
 class InterceptorMaker implements InterceptorMakerInterface
 {
-    private const CONTROLLER_VAR_NAME = 'Router_controller';
     private const CONTROLLER_RESULT_VAR_NAME = 'Router_controller_result';
 
     /**
@@ -39,7 +38,7 @@ class InterceptorMaker implements InterceptorMakerInterface
      * @throws BadActionException
      * @throws NoDependencyException
      */
-    public function makeInterceptors(
+    public function makeInterceptor(
         array $actions,
         array $userConfig,
         ProvidedDependencies $providedDependencies
@@ -124,7 +123,6 @@ class InterceptorMaker implements InterceptorMakerInterface
         }
 
         $availableVars
-            ->add(new AvailableVar(self::CONTROLLER_VAR_NAME, $action->reflectionClass->name))
             ->add(
                 new AvailableVar(
                     self::CONTROLLER_RESULT_VAR_NAME,
@@ -220,25 +218,19 @@ class InterceptorMaker implements InterceptorMakerInterface
             );
         }
 
+        /** @var InstanceProviderInterface $newInstanceGenerator */
         $newInstanceGenerator = $providedDependencies->get(
-            NewInstanceGeneratorInterface::class,
-            new DefaultNewInstanceGenerator()
+            InstanceProviderInterface::class,
+            new DefaultInstanceProvider()
         );
 
-        $newInstanceCode = $newInstanceGenerator->getNewInstanceCode(
-            self::CONTROLLER_VAR_NAME,
-            $action->reflectionClass->name
-        );
-
-        $callCode = sprintf(
-            '$%s = $%s->%s(%s);',
+        return sprintf(
+            '$%s = %s->%s(%s);',
             self::CONTROLLER_RESULT_VAR_NAME,
-            self::CONTROLLER_VAR_NAME,
+            $newInstanceGenerator->provideInstanceCode($action->reflectionClass->name),
             $action->reflectionMethod->name,
             implode(',', $parameters),
         );
-
-        return $newInstanceCode . "\n" . $callCode;
     }
 
     /**

@@ -7,13 +7,13 @@ parameters:
   checkGenericClassInNonGenericObjectType: false
 
   ignoreErrors:
-    - '#Parameter \#1 $objectOrClass of class ReflectionClass constructor expects class-string<T of object>|T of object, string given.#'
+    - '#Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class-string<T of object>\|T of object, string given.#'
+    - '#Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class-string<T of object>\|T of object, string\|null given.#'
     - '#Method Kaa\\Validator\\Assert\\Type::__construct\(\) has parameter \$type with no value type specified in iterable type array.#'
     - '#Parameter \#1 \$assert (.*) of method Kaa\\Validator\\Strategy\\.*::generateAssert\(\) should be contravariant with parameter \$assert.*#'
-    -
-      messages:
+    - '#Argument of an invalid type mixed supplied for foreach, only iterables are supported.#'
+    - messages:
         - '#Calling sha1\(\) is forbidden, use hash\(\) with at least SHA-256 for secure hash, or password_hash\(\) for passwords#'
-        - '#Call to an undefined method object::getNewInstanceCode\(\).#'
       paths:
         - ./src/Router/*
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
@@ -36,6 +36,16 @@ parameters:
     -
       message: '#Method Kaa\\HttpKernel\\Event\\FindActionEvent::getAction\(\) should return callable\(Kaa\\HttpKernel\\Request\): Kaa\\HttpKernel\\Response\\ResponseInterface but returns \(callable\(Kaa\\HttpKernel\\Request\): Kaa\\HttpKernel\\Response\\ResponseInterface\)\|null.#'
       path: src/HttpKernel/Event/FindActionEvent.php
+    -
+      message: '#Calling sha1\(\) is forbidden, use hash\(\) with at least SHA-256 for secure hash, or password_hash\(\) for passwords#'
+      path: src/DependencyInjection/*
+    - '#Method Kaa\\CodeGen\\ProvidedDependencies::get\(\) should return T of object but returns object.#'
+    -
+      messages:
+        - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$isEnvVar is already assigned.#'
+        - '#Readonly property Kaa\\DependencyInjection\\Collection\\Parameter\\Parameter::\$envVarName is already assigned.#'
+      path: src/DependencyInjection/Collection/Parameter/Parameter.php
+    - '#Cannot access an offset on mixed.#'
 
 includes:
   - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon

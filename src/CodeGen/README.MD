@@ -58,7 +58,7 @@ public class DependencyInjectionGenerator implements \Kaa\CodeGen\GeneratorInter
     {
         // Какой-то длинный код для кодогенерации...
         
-        $newInstanceGenerator = new class($userConfig) : \Kaa\CodeGen\Contract\NewInstanceGeneratorInterface {
+        $newInstanceGenerator = new class($userConfig) : \Kaa\CodeGen\Contract\InstanceProviderInterface {
             public function __construct(
                 private readonly array $userConfig,
             ) {
@@ -69,7 +69,7 @@ public class DependencyInjectionGenerator implements \Kaa\CodeGen\GeneratorInter
             }
         };
         
-        return [\Kaa\CodeGen\Contract\NewInstanceGeneratorInterface::class => $newInstanceGenerator];
+        return [\Kaa\CodeGen\Contract\InstanceProviderInterface::class => $newInstanceGenerator];
     }
 }
 ```
@@ -96,8 +96,8 @@ public class RouterGenerator implements \Kaa\CodeGen\GeneratorInterface
     {
         // Проверка нужна, потому что этот генератор может быть вызван раньше,
         // чем генераторы предоставляющие реализацию интерфейса, либо таких генераторов может вообще не быть в конфигурации
-        if (isset($providedDependencies[\Kaa\CodeGen\Contract\NewInstanceGeneratorInterface::class])) {
-            return $userConfig[\Kaa\CodeGen\Contract\NewInstanceGeneratorInterface::class]->getNewInstanceCode($className);
+        if (isset($providedDependencies[\Kaa\CodeGen\Contract\InstanceProviderInterface::class])) {
+            return $userConfig[\Kaa\CodeGen\Contract\InstanceProviderInterface::class]->getNewInstanceCode($className);
         }
         
         return "new $className()";
