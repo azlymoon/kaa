@@ -51,7 +51,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
             while (true) {
                 if ($indexes[$depth] < count($parents[$depth])) { // Проверяем что ещё не все блоки для родителей готовы
                     $t = $parents[$depth][$indexes[$depth]];
-                    if ($t->getName() !== null) { // Если у ноды есть имя доюавляем проверку и примвоение
+                    if ($t->getName() !== null) { // Если у ноды есть имя добавляем проверку и присвоение
                         if (!str_contains($t->getData(), "{")) { // Если нода - переменная
                             $code[] = str_repeat("\t", $depth + 1) . sprintf(
                                 'if(($nodes[%d] === "%s") && ($count_nodes === %d)){',
@@ -121,9 +121,9 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
                     }
                 } else { // Когда все блоки для родительских элементов текущей глубины готовы
                     $code[] = str_repeat("\t", $depth) . '}';
-                    if ($depth === 0) { // Заканчиваем как только это произло для нод из head
+                    if ($depth === 0) { // Заканчиваем как только это произошло для нод из head
                         break;
-                    } else { // ПОднимаемся на уровень выше в ином случае
+                    } else { // Поднимаемся на уровень выше в ином случае
                         unset($parents[$depth]);
                         $depth--;
                     }
