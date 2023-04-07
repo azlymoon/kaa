@@ -118,7 +118,6 @@ PHP;
                         $code,
                         self::VALIDATION_FUNCTIONS[$type],
                         $accessCode,
-                        $type,
                         $violationListVarName,
                         $modelVar->type,
                         $reflectionProperty->name,
