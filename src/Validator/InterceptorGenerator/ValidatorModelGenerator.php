@@ -25,8 +25,8 @@ class ValidatorModelGenerator
     }
 
     public function parseDocComment(string $docComment) : string {
-        preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $docComment, $mathes);
-        return trim($mathes[0][0]);
+        preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $docComment, $matches);
+        return trim($matches[0][0]);
     }
 
     /**
