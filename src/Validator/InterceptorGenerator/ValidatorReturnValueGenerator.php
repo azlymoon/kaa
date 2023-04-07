@@ -23,8 +23,7 @@ use ReflectionNamedType;
 class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
 {
     public function __construct(
-        private string $exceptionClass,
-        private GeneratorContext $generatorContext,
+        private ValidatorModelGenerator $validatorModelGenerator,
     ) {
     }
 
@@ -57,61 +56,17 @@ class ValidatorReturnValueGenerator implements InterceptorGeneratorInterface
             )
         );
 
-        $generatedCode = [];
-        $reflectionClass = new ReflectionClass($varToValidate->type);
-        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            $assertAttributes = $reflectionProperty->getAttributes(
-                Assert::class,
-                ReflectionAttribute::IS_INSTANCEOF,
-            );
+        $generatedCode = $this->validatorModelGenerator->generate($varToValidate);
 
-            foreach ($assertAttributes as $assertAttribute) {
-                $attribute = $assertAttribute->newInstance();
-
-                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
-                    $allowTypes = implode(", ", $attribute->getAllowTypes());
-
-                    throw new InvalidArgumentException(
-                        sprintf(
-                            'Type of $%s is %s but should be %s.',
-                            $reflectionProperty->getName(),
-                            $reflectionProperty->getType()->getName(),
-                            $allowTypes,
-                        )
-                    );
-                }
-
-                $generator = $this->generatorContext->getStrategy($attribute);
-                if ($generator === null) {
-                    throw new UnsupportedAssertException(
-                        sprintf(
-                            'Could not find strategy that supports %s',
-                            $attribute::class,
-                        )
-                    );
-                }
-
-                $constraintGeneratedCode = $generator->generateAssert(
-                    $attribute,
-                    $reflectionProperty,
-                    $varToValidate,
-                    'postViolationList',
-                );
-
-                $generatedCode[] = $constraintGeneratedCode;
-            }
-        }
-
-        $generatedCode = array_merge(...$generatedCode);
         array_unshift($generatedCode, '$postViolationList = [];');
         $availableVars->add(new AvailableVar('postViolationList', 'array'));
 
         $throwCode = <<<'PHP'
 if (!empty($postViolationList)) {
-    throw new \%s($postViolationList);
+    throw new \Kaa\Validator\ValidationException($postViolationList);
 }
 PHP;
-        $generatedCode[] = sprintf($throwCode, $this->exceptionClass);
+        $generatedCode[] = $throwCode;
 
         return implode("\n", $generatedCode);
     }

@@ -24,7 +24,7 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
 {
     public function __construct(
         private string $modelName,
-        private GeneratorContext $generatorContext,
+        private ValidatorModelGenerator $validatorModelGenerator,
     ) {
     }
 
@@ -50,52 +50,8 @@ readonly class ValidatorGenerator implements InterceptorGeneratorInterface
                 )
             );
 
-        $generatedCode = [];
-        $reflectionClass = new ReflectionClass($varToValidate->type);
-        foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-            $assertAttributes = $reflectionProperty->getAttributes(
-                Assert::class,
-                ReflectionAttribute::IS_INSTANCEOF
-            );
+        $generatedCode = $this->validatorModelGenerator->generate($varToValidate);
 
-            foreach ($assertAttributes as $assertAttribute) {
-                $attribute = $assertAttribute->newInstance();
-
-                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
-                    $allowTypes = implode(", ", $attribute->getAllowTypes());
-
-                    throw new InvalidArgumentException(
-                        sprintf(
-                            'Type of $%s is %s but should be %s.',
-                            $reflectionProperty->getName(),
-                            $reflectionProperty->getType()->getName(),
-                            $allowTypes,
-                        )
-                    );
-                }
-
-                $generator = $this->generatorContext->getStrategy($attribute);
-                if ($generator === null) {
-                    throw new UnsupportedAssertException(
-                        sprintf(
-                            'Could not find strategy that supports %s',
-                            $attribute::class,
-                        )
-                    );
-                }
-
-                $constraintGeneratedCode = $generator->generateAssert(
-                    $attribute,
-                    $reflectionProperty,
-                    $varToValidate,
-                    'violationList',
-                );
-
-                $generatedCode[] = $constraintGeneratedCode;
-            }
-        }
-
-        $generatedCode = array_merge(...$generatedCode);
         array_unshift($generatedCode, '$violationList = [];');
         $availableVars->add(new AvailableVar('violationList', 'array'));
 
