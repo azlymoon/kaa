@@ -28,11 +28,17 @@ class ValidatorModelGenerator
     /**
      * @throws InvalidTypeException
      */
-    public function getTypeFromDocComment(string $docComment) : string {
-        preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $docComment, $matches);
+    public function getTypeFromDocComment(\ReflectionProperty $reflectionProperty) : string {
+        preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $reflectionProperty->getDocComment(), $matches);
         $type = trim($matches[0][0]);
         if (!class_exists($type)) {
-            throw new InvalidTypeException('Type of property should have full path');
+            throw new InvalidTypeException(
+                sprintf (
+                    'Type of %s::%s should have full path in a doc comment',
+                    $reflectionProperty->getType(),
+                    $type,
+                )
+            );
         }
         return $type;
     }
@@ -125,7 +131,7 @@ PHP;
             } elseif ($typeProperty->getName() === 'array') {
                 $newVarToValidate = new AvailableVar(
                     $varToValidate->name . "_" . $reflectionProperty->getName(),
-                    self::getTypeFromDocComment($reflectionProperty->getDocComment()),
+                    self::getTypeFromDocComment($reflectionProperty),
                 );
                 $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
                 $code = <<<'PHP'
