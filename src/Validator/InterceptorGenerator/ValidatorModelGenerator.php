@@ -9,6 +9,7 @@ use Kaa\InterceptorUtils\InterceptorUtils;
 use Kaa\Router\Interceptor\AvailableVar;
 use Kaa\Validator\Assert\Assert;
 use Kaa\Validator\Exception\InvalidArgumentException;
+use Kaa\Validator\Exception\InvalidTypeException;
 use Kaa\Validator\Exception\UnsupportedAssertException;
 use Kaa\Validator\Exception\ValidatorReturnValueException;
 use Kaa\Validator\GeneratorContext;
@@ -24,9 +25,16 @@ class ValidatorModelGenerator
     ) {
     }
 
-    public function parseDocComment(string $docComment) : string {
+    /**
+     * @throws InvalidTypeException
+     */
+    public function getTypeFromDocComment(string $docComment) : string {
         preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $docComment, $matches);
-        return trim($matches[0][0]);
+        $type = trim($matches[0][0]);
+        if (!class_exists($type)) {
+            throw new InvalidTypeException('Type of property should have full path');
+        }
+        return $type;
     }
 
     /**
@@ -34,7 +42,7 @@ class ValidatorModelGenerator
      * @throws InvalidArgumentException
      * @throws UnsupportedAssertException
      * @throws ValidatorReturnValueException
-     * @throws InaccessiblePropertyException
+     * @throws InaccessiblePropertyException|InvalidTypeException
      */
     public function generate(AvailableVar $varToValidate) : array {
         $generatedCode = [];
@@ -81,8 +89,8 @@ class ValidatorModelGenerator
                 $generatedCode[] = $constraintGeneratedCode;
             }
 
-            $type = $reflectionProperty->getType();
-            if (!$type instanceof ReflectionNamedType) {
+            $typeProperty = $reflectionProperty->getType();
+            if (!$typeProperty instanceof ReflectionNamedType) {
                 throw new ValidatorReturnValueException(
                     sprintf(
                         '%s::%s must have type and it must not be union or intersection',
@@ -91,9 +99,11 @@ class ValidatorModelGenerator
                     )
                 );
             }
-            if (class_exists($type->getName()) && $varToValidate->type !== $type->getName()) {
-                $modelName = $varToValidate->name . "_" . $reflectionProperty->getName();
-                $newVarToValidate = new AvailableVar($modelName, $type->getName());
+            if (class_exists($typeProperty->getName()) && $varToValidate->type !== $typeProperty->getName()) {
+                $newVarToValidate = new AvailableVar(
+                    $varToValidate->name . "_" . $reflectionProperty->getName(),
+                    $typeProperty->getName(),
+                );
                 $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
                 $code = <<<'PHP'
 /**
@@ -112,10 +122,11 @@ PHP;
                 )];
                 $generatedCode[] = self::generate($newVarToValidate);
                 $generatedCode[] = ['}'];
-            } elseif ($type->getName() === 'array') {
-                $modelName = $varToValidate->name . "_" . $reflectionProperty->getName();
-                $modelType = self::parseDocComment($reflectionProperty->getDocComment());
-                $newVarToValidate = new AvailableVar($modelName, $modelType);
+            } elseif ($typeProperty->getName() === 'array') {
+                $newVarToValidate = new AvailableVar(
+                    $varToValidate->name . "_" . $reflectionProperty->getName(),
+                    self::getTypeFromDocComment($reflectionProperty->getDocComment()),
+                );
                 $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
                 $code = <<<'PHP'
 /**
