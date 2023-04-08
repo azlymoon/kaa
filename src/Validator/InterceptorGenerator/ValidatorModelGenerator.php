@@ -35,8 +35,8 @@ class ValidatorModelGenerator
             throw new InvalidTypeException(
                 sprintf (
                     'Type of %s::%s should have full path in a doc comment',
-                    $reflectionProperty->getType(),
-                    $type,
+                    $reflectionProperty->getDeclaringClass()->getName(),
+                    $reflectionProperty->getName(),
                 )
             );
         }
