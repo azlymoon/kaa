@@ -81,7 +81,7 @@ class YamlActionFinder implements ActionFinderInterface
                 new Head($data["path"], $name)];
         } else {
             $routes = [];
-            $methods = explode("|", $data["path"]);
+            $methods = explode("|", $data["methods"]);
             foreach ($methods as $method) {
                 $routes[] = match ($method) {
                     "GET" => new Get($data["path"], $name),
