@@ -10,6 +10,7 @@ use Kaa\CodeGen\GeneratorInterface;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\Router\ActionFinder\ActionFinderInterface;
 use Kaa\Router\ActionFinder\AttributeActionFinder;
+use Kaa\Router\ActionFinder\YamlActionFinder;
 use Kaa\Router\Attribute\Route;
 use Kaa\Router\FindActionListenerGenerator\FindActionListenerGenerator;
 use Kaa\Router\FindActionListenerGenerator\FindActionListenerGeneratorInterface;
@@ -25,7 +26,7 @@ final readonly class RouterGenerator implements GeneratorInterface
      * @param ActionFinderInterface[] $actionFinders
      */
     public function __construct(
-        private array $actionFinders = [new AttributeActionFinder()],
+        private array $actionFinders = [new AttributeActionFinder(), new YamlActionFinder()],
         private InterceptorMakerInterface $interceptorMaker = new InterceptorMaker(),
         private FindActionListenerGeneratorInterface $findActionListenerGenerator = new FindActionListenerGenerator(),
         private RouteMatcherGeneratorInterface $routeMatcherGenerator = new RouteMatcherGenerator(),
