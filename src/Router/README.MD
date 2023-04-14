@@ -67,6 +67,29 @@ When the match occurs, the application runs the `healthcheck()` method of the `H
 > **⚠ WARNING**  
 > Controller methods must return instance of some class and not union or intersection
 
+You can add several routes for controller class method:
+
+```php
+<?php
+
+namespace Kaa\SampleProject\Controller;
+
+use Kaa\HttpKernel\Request;
+use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\Router\Attribute\Get;
+use Kaa\Router\Attribute\Post;
+
+class HealthCheckController
+{
+    #[Get('/healthcheck', 'healthcheck')]
+    #[Post('/posthealthcheck', 'post_healthcheck')]
+    public function healthcheck(): ResponseInterface
+    {
+        // ...
+    }
+}
+```
+
 You also can add `Route` for class, if you want to add some prefix for url:
 ```php
 <?php
@@ -119,20 +142,12 @@ router:
 api_post_show:
   path:       /blog
   controller: Kaa\SampleProject\Controller\BlogApiController::show
-```
-
-### Matching HTTP methods
-By default, routes match any HTTP verb (GET, POST, PUT, etc.) Use the `methods` option to restrict the verbs each route should respond to:
-```yaml
-router:
-  controller_namespaces:
-    - Kaa\SampleProject\Controller
-
-api_post_show:
-  path:       /blog
-  controller: Kaa\SampleProject\Controller\BlogApiController::show
   methods:    GET|HEAD
 ```
+
+> **⚠ WARNING**  
+> You **must** explicitly indicate HTTP methods for routes
+
 
 ## Variables
 

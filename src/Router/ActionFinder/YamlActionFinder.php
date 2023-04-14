@@ -35,6 +35,14 @@ class YamlActionFinder implements ActionFinderInterface
      * @throws YamlParseException
      * @throws ReflectionException
      */
+
+    /**
+     * @param string $routeName
+     * @param (?string)[] $data
+     * @return Action
+     * @throws ReflectionException
+     * @throws YamlParseException
+     */
     private function buildAction(string $routeName, array $data): Action
     {
         if ($data["controller"] === null) {
@@ -63,6 +71,13 @@ class YamlActionFinder implements ActionFinderInterface
     /**
      * @param string $name
      * @param array $data
+     * @return Route[]
+     * @throws YamlParseException
+     */
+
+    /**
+     * @param string $name
+     * @param (?string)[] $data
      * @return Route[]
      * @throws YamlParseException
      */
