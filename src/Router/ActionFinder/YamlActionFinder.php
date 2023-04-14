@@ -72,13 +72,7 @@ class YamlActionFinder implements ActionFinderInterface
             throw new YamlParseException("Path can't be empty");
         }
         if ($data["methods"] === null) {
-            return [
-                new Get($data["path"], $name),
-                new Post($data["path"], $name),
-                new Put($data["path"], $name),
-                new Patch($data["path"], $name),
-                new Delete($data["path"], $name),
-                new Head($data["path"], $name)];
+            throw new YamlParseException("Methods can't be null");
         } else {
             $routes = [];
             $methods = explode("|", $data["methods"]);
