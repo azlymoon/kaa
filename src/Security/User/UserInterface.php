@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Kaa\Security;
+namespace Kaa\Security\User;
 
-interface UserContextInterface
+interface UserInterface
 {
     /**
      * @return string[]

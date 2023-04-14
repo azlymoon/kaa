@@ -2,11 +2,15 @@
 
 Helps to check and grant or deny access to particular route to users.
 
-Uses codegen to generate code based on attributes and/or YAML Security config file.
+Generates code based on attributes and/or YAML Security config file.
+
+## User
 
 ## Voter
 
-Voter returns one of three values:
+For now, only RoleVoter is implemented. It checks whether the user has all required roles.
+
+Voter has method ```vote``` which returns one of three values:
 
 - ```SecurityVote::Grant```
 - ```SecurityVote::Abstain```
