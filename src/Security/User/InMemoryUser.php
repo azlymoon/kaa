@@ -62,14 +62,17 @@ class InMemoryUser implements UserInterface
         $this->roles = $roles;
     }
 
-    public function setRole(string $role): void
+    public function setRole(string $newRole): void
     {
-        $this->roles[] = $role; // TODO
+        if (in_array($newRole, $this->roles, true)) {
+            return;
+        }
+        $this->roles[] = $newRole;
     }
 
-    public function unsetRole(string $role): void
+    public function unsetRole(string $roleToUnset): void
     {
-        $this->roles[] = $role; // TODO
+        unset($this->roles, $roleToUnset);
     }
 
     public function setIdentifier(string $identifier): void
