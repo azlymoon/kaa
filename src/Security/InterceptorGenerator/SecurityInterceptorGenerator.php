@@ -38,6 +38,11 @@ PHP;
 $verdict = $voter->vote($userRoles, $requiredRoles);
 
 if ($verdict != SecurityVote::grant) {
+    if ($token->getUser == null) {
+        \Kaa\Security\Exception\AccessDeniedException::throw('Access denied: you have to log in.');
+    }
+    \Kaa\Security\Exception\AccessDeniedException::throw('Access denied: user \'%s\' does not have required roles.',
+                                                         $token->getUserIdentifier);
     throw new \Kaa\Security\Exception\AccessDeniedException("Access denied");
 }
 PHP;
