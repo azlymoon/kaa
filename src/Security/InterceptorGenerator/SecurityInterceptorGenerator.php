@@ -16,6 +16,35 @@ use Kaa\Security\User\InMemoryUser;
 #[PhpOnly]
 readonly class SecurityInterceptorGenerator implements InterceptorGeneratorInterface
 {
+    private const SECURITY_INTERCEPTOR_INIT_CODE = <<<'PHP'
+
+$token = %tokenCode%;
+
+$voter = %voterCode%;
+
+/**
+ * $@var string[] $userRoles
+ */
+$userRoles = $token->getRoles();
+
+/**
+ * @var string[] $requiredRoles
+ */
+$requiredRoles = [];
+PHP;
+
+    private const SECURITY_INTERCEPTOR_VOTER_CODE = <<<'PHP'
+
+$verdict = $voter->vote($userRoles, $requiredRoles);
+
+if ($verdict != SecurityVote::grant) {
+    throw new \Kaa\Security\Exception\AccessDeniedException("Access denied");
+}
+PHP;
+
+    /**
+     * @var string[] $roles
+     */
     private array $roles;
 
     /**
@@ -43,54 +72,31 @@ readonly class SecurityInterceptorGenerator implements InterceptorGeneratorInter
         /** @var InstanceProviderInterface $newInstanceGenerator */
         $newInstanceGenerator = $providedDependencies->get(InstanceProviderInterface::class);
 
-        $code = [];
-
-        $code[] = <<<PHP
-/**
-* @var \Kaa\Security\User\InMemoryUser $user
- */
-PHP;
-        $code[] = '$user = ' . $newInstanceGenerator->provideInstanceCode('InMemoryUser');
-
-        $code[] = <<<PHP
-/**
-* @var string[] $requiredRoles
- */
-PHP;
-        foreach ($this->roles as $role) {
-            $code[] = sprintf('$requiredRoles[] = \'%s\';', $role);
-        }
 //        $voters = $userConfig['security']['voters'];
 //        if (empty(array_intersect(implode("", $this->roles), $securityUserContext->getRoles()))) {
 //        if (empty(array_intersect($this->roles, $securityUserContext->getRoles()))) {
 //            throw new NoDependencyException('Access denied: roles do not match');
 //        }
-        $code[] = <<<PHP
-/**
-* @var string[] $userRoles
- */
-PHP;
-        $code[] = '$userRoles = $user->getRoles()';
+        $newInstanceGenerator->provideInstanceCode('RoleVoter');
 
-        $code[] = <<<PHP
-/**
-* @var \Kaa\Security\Voter\RoleVoter $voter
- */
-PHP;
-        $code[] = '$voter = ' . $newInstanceGenerator->provideInstanceCode('RoleVoter');
+        $replacements = [
+            '%tokenCode%' => $newInstanceGenerator->provideInstanceCode('AbstractToken'),
+            '%voterCode%' => $newInstanceGenerator->provideInstanceCode('RoleVoter'),
+        ];
 
-        $code[] = <<<PHP
-/**
-* @var \Kaa\Security\SecurityVote $verdict
- */
-PHP;
-        $code[] = '$verdict = $voter->vote($userRoles, $requiredRoles)';
-        $code[] = <<<PHP
-if ($verdict != SecurityVote::grant) {
-    //??????????
-}
-PHP;
+        /**
+         * @param string[] $code
+         */
+        $code = [];
 
-        return implode('\n', $code);
+        $code[] = strtr(self::SECURITY_INTERCEPTOR_INIT_CODE, $replacements);
+
+        foreach ($this->roles as $role) {
+            $code[] = sprintf('$requiredRoles[] = \'%s\';', $role);
+        }
+
+        $code[] = self::SECURITY_INTERCEPTOR_VOTER_CODE;
+
+        return implode("\n", $code);
     }
 }

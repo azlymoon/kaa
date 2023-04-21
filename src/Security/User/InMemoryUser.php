@@ -8,19 +8,10 @@ use Kaa\Security\Exception\InvalidArgumentException;
 
 class InMemoryUser implements UserInterface
 {
-    /**
-     * @var string $username
-     */
     private string $username;
 
-    /**
-     * @var ?string $password
-     */
     private ?string $password;
 
-    /**
-     * @var bool $enabled
-     */
     private bool $enabled;
 
     /**
@@ -29,10 +20,7 @@ class InMemoryUser implements UserInterface
     private array $roles;
 
     /**
-     * @param string|null $username
-     * @param string|null $password
-     * @param array $roles
-     * @param bool $enabled
+     * @param string[] $roles
      * @throws InvalidArgumentException
      */
     public function __construct(?string $username, ?string $password, array $roles = [], bool $enabled = true)
@@ -46,35 +34,65 @@ class InMemoryUser implements UserInterface
         $this->roles = $roles;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getRoles(): array
     {
         return $this->roles;
     }
 
-    /**
-     * @return string
-     */
-    public function getUserIdentifier(): string
+    public function getIdentifier(): string
     {
         return $this->username;
     }
 
-    /**
-     * @return ?string
-     */
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    /**
-     * @return bool
-     */
     public function isEnabled(): bool
     {
         return $this->enabled;
+    }
+
+    /**
+     * @param string[] $roles
+     */
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
+    }
+
+    public function setRole(string $role): void
+    {
+        $this->roles[] = $role; // TODO
+    }
+
+    public function unsetRole(string $role): void
+    {
+        $this->roles[] = $role; // TODO
+    }
+
+    public function setIdentifier(string $identifier): void
+    {
+        if ($this->username != $identifier) {
+            $this->username = $identifier;
+        };
+    }
+
+    public function setPassword(string $password): void
+    {
+        if ($this->password != $password) {
+            $this->password = $password;
+        }
+    }
+
+    public function setEnabled(): void
+    {
+        $this->enabled = true;
+    }
+
+    public function setDisabled(): void
+    {
+        $this->enabled = false;
     }
 }
