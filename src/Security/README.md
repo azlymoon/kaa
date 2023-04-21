@@ -6,6 +6,14 @@ Generates code based on attributes and/or YAML Security config file.
 
 ## User
 
+Basic user has identifier and roles.
+
+InMemoryUser also has password and a bool which represents if the user is banned.
+
+## Token
+
+Token is a session identifier which contains current user and his roles.
+
 ## Voter
 
 For now, only RoleVoter is implemented. It checks whether the user has all required roles.
