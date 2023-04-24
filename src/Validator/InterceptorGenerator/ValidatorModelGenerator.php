@@ -16,9 +16,17 @@ use Kaa\Validator\GeneratorContext;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
+use Nette\Utils\Reflection;
 
 class ValidatorModelGenerator
 {
+    private const ALLOW_TYPES = [
+        'bool',
+        'int',
+        'float',
+        'string',
+        'null',
+    ];
     public function __construct(
         private GeneratorContext $generatorContext,
         private string $violationList,
@@ -28,19 +36,17 @@ class ValidatorModelGenerator
     /**
      * @throws InvalidTypeException
      */
-    public function getTypeFromDocComment(\ReflectionProperty $reflectionProperty) : string {
+    private function getTypeFromDocComment(\ReflectionProperty $reflectionProperty) : string {
         preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $reflectionProperty->getDocComment(), $matches);
-        $type = trim($matches[0][0]);
-        if (!class_exists($type)) {
-            throw new InvalidTypeException(
-                sprintf (
-                    'Type of %s::%s should have full path in a doc comment',
-                    $reflectionProperty->getDeclaringClass()->getName(),
-                    $reflectionProperty->getName(),
-                )
-            );
+        return trim($matches[0][0]);
+    }
+
+    private function getFullTypeFromNamespace(\ReflectionClass $reflectionClass, string $type) : ?string {
+        $useStatements = Reflection::getUseStatements($reflectionClass);
+        if (array_key_exists($type, $useStatements)) {
+            return $useStatements[$type];
         }
-        return $type;
+        return null;
     }
 
     /**
@@ -58,41 +64,133 @@ class ValidatorModelGenerator
                 Assert::class,
                 ReflectionAttribute::IS_INSTANCEOF,
             );
+            if ($reflectionProperty->getType()->getName() !== 'array') {
+                foreach ($assertAttributes as $assertAttribute) {
+                    $attribute = $assertAttribute->newInstance();
 
-            foreach ($assertAttributes as $assertAttribute) {
-                $attribute = $assertAttribute->newInstance();
+                    if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
+                        $allowTypes = implode(", ", $attribute->getAllowTypes());
 
-                if ($attribute->supportsType($reflectionProperty->getType()->getName()) === false) {
-                    $allowTypes = implode(", ", $attribute->getAllowTypes());
+                        throw new InvalidArgumentException(
+                            sprintf(
+                                'Type of $%s is %s but should be %s.',
+                                $reflectionProperty->getName(),
+                                $reflectionProperty->getType()->getName(),
+                                $allowTypes,
+                            )
+                        );
+                    }
 
-                    throw new InvalidArgumentException(
-                        sprintf(
-                            'Type of $%s is %s but should be %s.',
-                            $reflectionProperty->getName(),
-                            $reflectionProperty->getType()->getName(),
-                            $allowTypes,
-                        )
+                    $generator = $this->generatorContext->getStrategy($attribute);
+                    if ($generator === null) {
+                        throw new UnsupportedAssertException(
+                            sprintf(
+                                'Could not find strategy that supports %s',
+                                $attribute::class,
+                            )
+                        );
+                    }
+
+                    $constraintGeneratedCode = $generator->generateAssert(
+                        $attribute,
+                        $reflectionProperty,
+                        $varToValidate,
+                        $this->violationList,
                     );
-                }
 
-                $generator = $this->generatorContext->getStrategy($attribute);
-                if ($generator === null) {
-                    throw new UnsupportedAssertException(
-                        sprintf(
-                            'Could not find strategy that supports %s',
-                            $attribute::class,
-                        )
+                    $generatedCode[] = $constraintGeneratedCode;
+                }
+            }
+
+            if ($reflectionProperty->getType()->getName() === 'array') {
+                $typeOfElements = self::getTypeFromDocComment($reflectionProperty);
+                if (in_array($typeOfElements, self::ALLOW_TYPES)) {
+                    foreach ($assertAttributes as $assertAttribute) {
+                        $attribute = $assertAttribute->newInstance();
+
+                        if ($attribute->supportsType($typeOfElements) === false) {
+                            $allowTypes = implode(", ", $attribute->getAllowTypes());
+
+                            throw new InvalidArgumentException(
+                                sprintf(
+                                    'Type of $%s is %s but should be %s.',
+                                    $reflectionProperty->getName(),
+                                    $typeOfElements,
+                                    $allowTypes,
+                                )
+                            );
+                        }
+
+                        $generator = $this->generatorContext->getStrategy($attribute);
+                        if ($generator === null) {
+                            throw new UnsupportedAssertException(
+                                sprintf(
+                                    'Could not find strategy that supports %s',
+                                    $attribute::class,
+                                )
+                            );
+                        }
+
+                        $newVarToValidate = new AvailableVar(
+                            $varToValidate->name . "_" . $reflectionProperty->getName(),
+                            $typeOfElements,
+                        );
+
+                        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
+                        $code = <<<'PHP'
+foreach (%s as $%s) {
+PHP;
+                        $generatedCode[] = [
+                            sprintf(
+                                $code,
+                                $accessCode,
+                                $newVarToValidate->name,
+                            )
+                        ];
+
+                        $constraintGeneratedCode = $generator->generateAssert(
+                            $attribute,
+                            $reflectionProperty,
+                            $newVarToValidate,
+                            $this->violationList,
+                        );
+
+                        $generatedCode[] = $constraintGeneratedCode;
+                        $generatedCode[] = ['}'];
+
+                    }
+                } else {
+                    $fullType = $this->getFullTypeFromNamespace($reflectionClass, $typeOfElements);
+                    if ($fullType === null) {
+                        $fullType = $reflectionClass->getNamespaceName() . "\\" . $typeOfElements;
+                    }
+                    $newVarToValidate = new AvailableVar(
+                        $varToValidate->name . "_" . $reflectionProperty->getName(),
+                        $fullType,
                     );
+
+                    $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
+                    $code = <<<'PHP'
+/**
+* @var \%s $%s
+*/
+foreach (%s as $%s) {
+    if ($%s !== null) {
+PHP;
+                    $generatedCode[] = [
+                        sprintf(
+                            $code,
+                            $newVarToValidate->type,
+                            $newVarToValidate->name,
+                            $accessCode,
+                            $newVarToValidate->name,
+                            $newVarToValidate->name,
+                        )
+                    ];
+                    $generatedCode[] = self::generate($newVarToValidate);
+                    $generatedCode[] = ['}'];
+                    $generatedCode[] = ['}'];
                 }
-
-                $constraintGeneratedCode = $generator->generateAssert(
-                    $attribute,
-                    $reflectionProperty,
-                    $varToValidate,
-                    $this->violationList,
-                );
-
-                $generatedCode[] = $constraintGeneratedCode;
             }
 
             $typeProperty = $reflectionProperty->getType();
@@ -105,11 +203,18 @@ class ValidatorModelGenerator
                     )
                 );
             }
+
             if (class_exists($typeProperty->getName()) && $varToValidate->type !== $typeProperty->getName()) {
+                $fullType = $this->getFullTypeFromNamespace($reflectionClass, $typeProperty->getName());
+                if ($fullType === null) {
+                    $fullType = $reflectionClass->getNamespaceName() . "\\" . $typeProperty->getName();
+                }
+
                 $newVarToValidate = new AvailableVar(
                     $varToValidate->name . "_" . $reflectionProperty->getName(),
-                    $typeProperty->getName(),
+                    $fullType,
                 );
+
                 $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
                 $code = <<<'PHP'
 /**
@@ -118,38 +223,21 @@ class ValidatorModelGenerator
 if (%s !== null){
     $%s = %s;
 PHP;
-                $generatedCode[] = [sprintf(
+                $generatedCode[] = [
+                    sprintf(
                     $code,
-                    $newVarToValidate->type,
+                    $fullType,
                     $newVarToValidate->name,
                     $accessCode,
                     $newVarToValidate->name,
                     $accessCode,
-                )];
-                $generatedCode[] = self::generate($newVarToValidate);
-                $generatedCode[] = ['}'];
-            } elseif ($typeProperty->getName() === 'array') {
-                $newVarToValidate = new AvailableVar(
-                    $varToValidate->name . "_" . $reflectionProperty->getName(),
-                    self::getTypeFromDocComment($reflectionProperty),
-                );
-                $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
-                $code = <<<'PHP'
-/**
-* @var %s $%s
-*/
-foreach (%s as $%s) {
-PHP;
-                $generatedCode[] = [sprintf(
-                    $code,
-                    $newVarToValidate->type,
-                    $newVarToValidate->name,
-                    $accessCode,
-                    $newVarToValidate->name,
-                )];
+                    )
+                ];
                 $generatedCode[] = self::generate($newVarToValidate);
                 $generatedCode[] = ['}'];
             }
+
+
 
         }
         return array_merge(...$generatedCode);
