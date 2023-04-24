@@ -30,7 +30,8 @@ class NegativeOrZeroGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
         return (new LessThanOrEqualGenerator())->generateAssert(
             new LessThanOrEqual(
@@ -40,6 +41,7 @@ class NegativeOrZeroGenerator implements AssertGeneratorInterface
             $reflectionProperty,
             $modelVar,
             $violationListVarName,
+            $accessCode,
         );
     }
 }

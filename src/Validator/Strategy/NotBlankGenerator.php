@@ -31,9 +31,8 @@ class NotBlankGenerator implements AssertGeneratorInterface
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
         string $violationListVarName,
+        string $accessCode,
     ): array {
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
-
         if ($reflectionProperty->getType()->allowsNull()) {
             $code = <<<'PHP'
 if (null !== %s && (empty(%s) && '0' !== %s)) {

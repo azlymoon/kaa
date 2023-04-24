@@ -30,10 +30,9 @@ class GreaterThanOrEqualGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
-
         $code = <<<'PHP'
 if (%s < %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');

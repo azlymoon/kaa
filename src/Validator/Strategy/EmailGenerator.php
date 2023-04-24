@@ -42,10 +42,10 @@ class EmailGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
         $resultCode = [];
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
 
         if (!isset(self::EMAIL_PATTERNS[$assert->mode])) {
             throw new InvalidArgumentException(

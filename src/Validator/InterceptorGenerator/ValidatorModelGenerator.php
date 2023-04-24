@@ -91,11 +91,13 @@ class ValidatorModelGenerator
                         );
                     }
 
+                    $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
                     $constraintGeneratedCode = $generator->generateAssert(
                         $attribute,
                         $reflectionProperty,
                         $varToValidate,
                         $this->violationList,
+                        $accessCode,
                     );
 
                     $generatedCode[] = $constraintGeneratedCode;
@@ -137,6 +139,7 @@ class ValidatorModelGenerator
                         );
 
                         $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $varToValidate->name);
+                        $accessCodeToValidateVar = '$' . $newVarToValidate->name;
                         $code = <<<'PHP'
 foreach (%s as $%s) {
 PHP;
@@ -153,6 +156,7 @@ PHP;
                             $reflectionProperty,
                             $newVarToValidate,
                             $this->violationList,
+                            $accessCodeToValidateVar,
                         );
 
                         $generatedCode[] = $constraintGeneratedCode;

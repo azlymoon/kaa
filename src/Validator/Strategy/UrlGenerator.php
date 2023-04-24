@@ -53,10 +53,11 @@ class UrlGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
         $resultCode = [];
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
+
         $pattern = $assert->relativeProtocol ? str_replace('(%s):', '(?:(%s):)?', static::PATTERN) : static::PATTERN;
         $pattern = sprintf($pattern, implode('|', $assert->protocols));
 

@@ -62,11 +62,10 @@ class TypeGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
         $resultCode = [];
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
-
         $types = (array)$assert->type;
         foreach ($types as $type) {
             $type = strtolower($type);

@@ -30,10 +30,9 @@ class BlankGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
-        $accessCode = InterceptorUtils::generateGetCode($reflectionProperty, $modelVar->name);
-
         if ($reflectionProperty->getType()->allowsNull()) {
             $code = <<<'PHP'
 if ('' !== %s && null !== %s) {

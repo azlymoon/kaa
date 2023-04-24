@@ -30,7 +30,8 @@ class PositiveGenerator implements AssertGeneratorInterface
         Assert $assert,
         ReflectionProperty $reflectionProperty,
         AvailableVar $modelVar,
-        string $violationListVarName
+        string $violationListVarName,
+        string $accessCode,
     ): array {
         return (new GreaterThanGenerator())->generateAssert(
             new GreaterThan(
@@ -40,6 +41,7 @@ class PositiveGenerator implements AssertGeneratorInterface
             $reflectionProperty,
             $modelVar,
             $violationListVarName,
+            $accessCode,
         );
     }
 }
