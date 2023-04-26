@@ -11,8 +11,6 @@ use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Event\FindActionEvent;
 use Kaa\HttpKernel\HttpKernelEvents;
-use Kaa\Router\CallableRoute;
-use Kaa\Router\HttpRoute;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
@@ -61,8 +59,6 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
             )
         );
 
-        $method->addBody($this->generateSetCode($callableRoutes));
-
         $this->saveFile($phpFile, $userConfig);
 
         if ($providedDependencies->has(ServiceStorageInterface::class)) {
@@ -82,38 +78,6 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 
             $providedDependencies->get(ServiceStorageInterface::class)->addService($serviceInfo);
         }
-    }
-
-    /**
-     * @param CallableRoute[] $callableRoutes
-     */
-    private function generateSetCode(array $callableRoutes): string
-    {
-        $code = [];
-
-        foreach ($callableRoutes as $callableRoute) {
-            $routeCode = <<<'PHP'
-if ($%s === '%s') {
-    %s
-    $event->setAction([$%s, '%s']);
-    $event->stopPropagation();
-    return;
-}
-PHP;
-
-            $routeCode = sprintf(
-                $routeCode,
-                self::ROUTE_NAME_VAR,
-                $callableRoute->name,
-                $callableRoute->newInstanceCode,
-                $callableRoute->varName,
-                $callableRoute->methodName,
-            );
-
-            $code[] = $routeCode;
-        }
-
-        return implode("\n\n", $code);
     }
 
     /**
