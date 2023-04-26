@@ -2,39 +2,46 @@
 
 namespace Kaa\HttpKernel\Event;
 
-use Kaa\EventDispatcher\Event;
-use Kaa\HttpFoundation\Request;
-use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\HttpFoundation\Response;
 
-class RequestEvent extends Event
+/**
+ * Allows to create a response for a request.
+ *
+ * Call setResponse() to set the response that will be returned for the
+ * current request. The propagation of this event is stopped as soon as a
+ * response is set.
+ *
+ */
+class RequestEvent extends KernelEvent
 {
-    private Request $request;
-
     private ?Response $response = null;
 
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-    }
-
-    public function getRequest(): Request
-    {
-        return $this->request;
-    }
-
-    public function hasResponse(): bool
-    {
-        return $this->response !== null;
-    }
-
+    /**
+     * Returns the response object.
+     */
     public function getResponse(): ?Response
     {
         return $this->response;
     }
 
-    public function setResponse(?Response $response): void
+    /**
+     * Sets a response and stops event propagation.
+     *
+     * @param Response $response
+     * @return void
+     */
+    public function setResponse(Response $response): void
     {
         $this->response = $response;
+
+        $this->stopPropagation();
+    }
+
+    /**
+     * Returns whether a response was set.
+     */
+    public function hasResponse(): bool
+    {
+        return null !== $this->response;
     }
 }

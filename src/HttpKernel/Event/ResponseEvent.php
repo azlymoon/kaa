@@ -2,26 +2,26 @@
 
 namespace Kaa\HttpKernel\Event;
 
-use Kaa\EventDispatcher\Event;
 use Kaa\HttpFoundation\Request;
-use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\HttpFoundation\Response;
+use Kaa\HttpKernel\HttpKernelInterface;
 
-class ResponseEvent extends Event
+/**
+ * Allows to filter a Response object.
+ *
+ * You can call getResponse() to retrieve the current response. With
+ * setResponse() you can set a new response that will be returned to the
+ * browser.
+ */
+final class ResponseEvent extends KernelEvent
 {
-    private Request $request;
-
     private Response $response;
 
-    public function __construct(Request $request, Response $response)
+    public function __construct(HttpKernelInterface $kernel, Request $request, int $requestType, Response $response)
     {
-        $this->request = $request;
-        $this->response = $response;
-    }
+        parent::__construct($kernel, $request, $requestType);
 
-    public function getRequest(): Request
-    {
-        return $this->request;
+        $this->setResponse($response);
     }
 
     public function getResponse(): Response
