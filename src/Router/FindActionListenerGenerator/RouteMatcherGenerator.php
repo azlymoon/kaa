@@ -31,7 +31,6 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
         foreach ($routes as $route) { // Строим дерево
             $mathTree->addElement($route);
         }
-        $code[] = '$Router_route_name = null;'; // Добавляем в код разбиение строки на массив
         $code[] = '$matches = [];';
         $code[] = '$nodes = explode("/", $route);';
         $code[] = 'if ($nodes[0] === ""){';
