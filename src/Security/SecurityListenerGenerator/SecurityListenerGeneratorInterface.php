@@ -6,5 +6,4 @@ namespace Kaa\Security\SecurityListenerGenerator;
 
 interface SecurityListenerGeneratorInterface
 {
-
 }
