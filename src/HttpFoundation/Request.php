@@ -40,6 +40,8 @@ class Request
             'form' => ['application/x-www-form-urlencoded', 'multipart/form-data'],
         ];
 
+    private static $httpMethodParameterOverride = false;
+
     /**
      * Custom parameters.
      */
@@ -101,6 +103,7 @@ class Request
     private ?string $method;
 
     private ?string $format;
+
     private bool $isHostValid = true;
 
     /**
@@ -312,44 +315,111 @@ class Request
         return new static($query, $request, [], $cookies, $files, $server, $content);
     }
 
-//    /**
-//     * Clones the current request.
-//     *
-//     * Note that the session is not cloned as duplicated requests
-//     * are most of the time sub-requests of the main one.
-//     */
-//    public function __clone()
-//    {
-//        $this->query = clone $this->query;
-//        $this->request = clone $this->request;
-//        $this->attributes = clone $this->attributes;
-//        $this->cookies = clone $this->cookies;
-//        $this->files = clone $this->files;
-//        $this->server = clone $this->server;
-//        $this->headers = clone $this->headers;
-//    }
-//
-//    public function __toString(): string
-//    {
-//        $content = $this->getContent();
-//
-//        $cookieHeader = '';
-//        $cookies = [];
-//
-////        foreach ($this->cookies as $k => $v) {
-////            $cookies[] = \is_array($v) ? http_build_query([$k => $v], '', '; ', \PHP_QUERY_RFC3986) : "$k=$v";
-////        }
-//
+    /**
+     * Clones a request and overrides some of its parameters.
+     *
+     * @param ?string[] $query      The GET parameters
+     * @param ?string[] $request    The POST parameters
+     * @param ?string[] $attributes The request attributes (parameters parsed from the PATH_INFO, ...)
+     * @param ?string[] $cookies    The COOKIE parameters
+     * @param ?string[] $files      The FILES parameters
+     * @param ?string[] $server     The SERVER parameters
+     */
+    public function duplicate(
+        $query = null,
+        $request = null,
+        $attributes = null,
+        $cookies = null,
+        $files = null,
+        $server = null
+    ): static {
+        $dup = clone $this;
+        if ($query !== null) {
+            $dup->query = new InputBag($query);
+        }
+        if ($request !== null) {
+            $dup->request = new InputBag($request);
+        }
+        if ($attributes !== null) {
+            $dup->attributes = new ParameterBag($attributes);
+        }
+        if ($cookies !== null) {
+            $dup->cookies = new InputBag($cookies);
+        }
+        if ($files !== null) {
+            $dup->files = new FileBag($files);
+        }
+        if ($server !== null) {
+            $dup->server = new ServerBag($server);
+            $dup->headers = new HeaderBag($dup->server->getHeaders());
+        }
+        $dup->languages = null;
+        $dup->charsets = null;
+        $dup->encodings = null;
+        $dup->acceptableContentTypes = null;
+        $dup->pathInfo = null;
+        $dup->requestUri = null;
+        $dup->baseUrl = null;
+        $dup->basePath = null;
+        $dup->method = null;
+        $dup->format = null;
+
+        if (!(bool)$dup->get('_format') && (bool)$this->get('_format')) {
+            $dup->attributes->set('_format', (string)$this->get('_format'));
+        }
+
+        if (!(bool)$dup->getRequestFormat(null)) {
+            $dup->setRequestFormat($this->getRequestFormat(null));
+        }
+
+        return $dup;
+    }
+
+    /**
+     * Clones the current request.
+     *
+     * Note that the session is not cloned as duplicated requests
+     * are most of the time sub-requests of the main one.
+     */
+    public function __clone()
+    {
+        $this->query = clone $this->query;
+        $this->request = clone $this->request;
+        $this->attributes = clone $this->attributes;
+        $this->cookies = clone $this->cookies;
+        $this->files = clone $this->files;
+        $this->server = clone $this->server;
+        $this->headers = clone $this->headers;
+    }
+
+    public function __toString(): string
+    {
+        $content = $this->getContent();
+
+        $cookieHeader = '';
+        $cookies = [];
+
+        // fixme: Add support for cookies
+//        foreach ($this->cookies as $k => $v) {
+//            $cookies[] = \is_array($v) ? http_build_query([$k => $v], '', '; ', \PHP_QUERY_RFC3986) : "$k=$v";
+//        }
+
 //        if ($cookies) {
 //            $cookieHeader = 'Cookie: ' . implode('; ', $cookies) . "\r\n";
 //        }
-//
-//        return
-//            sprintf('%s %s %s', $this->getMethod(), $this->getRequestUri(), $this->server->get('SERVER_PROTOCOL')) . "\r\n" .
-//            $this->headers .
-//            $cookieHeader . "\r\n" .
-//            $content;
-//    }
+
+        return
+            sprintf(
+                '%s %s %s',
+                $this->getMethod(),
+                $this->getRequestUri(),
+                $this->server->get('SERVER_PROTOCOL')
+            ) .
+            "\r\n" .
+            (string)$this->headers .
+            $cookieHeader . "\r\n" .
+            $content;
+    }
 
     /**
      * Normalizes a query string.
@@ -369,36 +439,37 @@ class Request
         return http_build_query($qs, '', '&', \PHP_QUERY_RFC3986);
     }
 
-//    /**
-//     * Gets a "parameter" value from any bag.
-//     *
-//     * This method is mainly useful for libraries that want to provide some flexibility. If you don't need the
-//     * flexibility in controllers, it is better to explicitly get request parameters from the appropriate
-//     * public property instead (attributes, query, request).
-//     *
-//     * Order of precedence: PATH (routing placeholders or custom attributes), GET, POST
-//     *
-//     * @internal use explicit input sources instead
-//     * @param mixed $default
-//     * @return mixed|Request
-//     */
-//    public function get(string $key, $default = null)
-//    {
-//        $result = $this->attributes->get($key, $this);
-//        if ($this !== $result) {
-//            return $result;
-//        }
-//
-//        if ($this->query->has($key)) {
-//            return $this->query->all()[$key];
-//        }
-//
-//        if ($this->request->has($key)) {
-//            return $this->request->all()[$key];
-//        }
-//
-//        return $default;
-//    }
+    /**
+     * Gets a "parameter" value from any bag.
+     *
+     * This method is mainly useful for libraries that want to provide some flexibility. If you don't need the
+     * flexibility in controllers, it is better to explicitly get request parameters from the appropriate
+     * public property instead (attributes, query, request).
+     *
+     * Order of precedence: PATH (routing placeholders or custom attributes), GET, POST
+     *
+     *@internal use explicit input sources instead
+     */
+    public function get(string $key, ?string $default = null): ?string
+    {
+        $result = $this->attributes->get($key, (string)$this);
+        if ((string)$this !== $result) {
+            return $result;
+        }
+
+        $qAll = $this->query->all();
+        if ($this->query->has($key) && \is_array($qAll)) {
+            return (string)$qAll[$key];
+        }
+
+        $rAll = $this->request->all();
+        if ($this->request->has($key) && \is_array($rAll)) {
+            return (string)$rAll[$key];
+        }
+
+        return $default;
+    }
+
 ////
 ////    /**
 ////     * Gets the Session.
@@ -894,53 +965,67 @@ class Request
 //        $this->server->set('REQUEST_METHOD', $method);
 //    }
 //
-//    /**
-//     * Gets the request "intended" method.
-//     *
-//     * If the X-HTTP-Method-Override header is set, and if the method is a POST,
-//     * then it is used to determine the "real" intended HTTP method.
-//     *
-//     * The _method request parameter can also be used to determine the HTTP method,
-//     * but only if enableHttpMethodParameterOverride() has been called.
-//     *
-//     * The method is always an uppercased string.
-//     *
-//     * @see getRealMethod()
-//     */
-//    public function getMethod(): ?string
-//    {
-//        if (null !== $this->method) {
-//            return $this->method;
-//        }
-//
-//        $this->method = strtoupper($this->server->get('REQUEST_METHOD', 'GET'));
-//
-//        if ('POST' !== $this->method) {
-//            return $this->method;
-//        }
-//
-//        $method = $this->headers->get('X-HTTP-METHOD-OVERRIDE');
-//
-////        if (!$method && self::$httpMethodParameterOverride) {
-////            $method = $this->request->get('_method', $this->query->get('_method', 'POST'));
-////        }
-//
-//        if (!\is_string($method)) {
-//            return $this->method;
-//        }
-//
-//        $method = strtoupper($method);
-//
-//        if (\in_array($method, ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'PATCH', 'PURGE', 'TRACE'], true)) {
-//            return $this->method = $method;
-//        }
-//
-////        if (!preg_match('/^[A-Z]++$/D', $method)) {
-////            throw new SuspiciousOperationException(sprintf('Invalid method override "%s".', $method));
-////        }
-//
-//        return $this->method = $method;
-//    }
+
+    /**
+     * Gets the request "intended" method.
+     *
+     * If the X-HTTP-Method-Override header is set, and if the method is a POST,
+     * then it is used to determine the "real" intended HTTP method.
+     *
+     * The _method request parameter can also be used to determine the HTTP method,
+     * but only if enableHttpMethodParameterOverride() has been called.
+     *
+     * The method is always an uppercased string.
+     *
+     * @see getRealMethod()
+     */
+    public function getMethod(): ?string
+    {
+        if ($this->method !== null) {
+            return $this->method;
+        }
+
+        $this->method = strtoupper((string)$this->server->get('REQUEST_METHOD', 'GET'));
+
+        if ($this->method !== 'POST') {
+            return $this->method;
+        }
+
+        $method = $this->headers->get('X-HTTP-METHOD-OVERRIDE');
+
+        if (!(bool)$method && self::$httpMethodParameterOverride) {
+            $method = $this->request->get('_method', $this->query->get('_method', 'POST'));
+        }
+
+        if (!\is_string($method)) {
+            return $this->method;
+        }
+
+        $method = strtoupper($method);
+
+        if (
+            \in_array(
+                $method,
+                ['GET', 'HEAD', 'POST',
+                'PUT', 'DELETE', 'CONNECT',
+                'OPTIONS', 'PATCH', 'PURGE',
+                'TRACE'],
+                true
+            )
+        ) {
+            return $this->method = $method;
+        }
+
+        if (!(bool)preg_match('/^[A-Z]++$/D', $method, $matches)) {
+            return sprintf('Invalid method override "%s".', $method);
+
+            // TODO: Add exception handling
+            // throw new SuspiciousOperationException(sprintf('Invalid method override "%s".', $method));
+        }
+
+        return $this->method = $method;
+    }
+
 //
 //    /**
 //     * Gets the "real" request method.
@@ -1021,32 +1106,32 @@ class Request
 ////        static::$formats[$format] = \is_array($mimeTypes) ? $mimeTypes : [$mimeTypes];
 ////    }
 ////
-//    /**
-//     * Gets the request format.
-//     *
-//     * Here is the process to determine the format:
-//     *
-//     *  * format defined by the user (with setRequestFormat())
-//     *  * _format request attribute
-//     *  * $default
-//     *
-//     * @see getPreferredFormat
-//     */
-//    public function getRequestFormat(?string $default = 'html'): ?string
-//    {
-//        $this->format ??= (string)$this->attributes->get('_format');
-//
-//        return $this->format ?? $default;
-//    }
-//
-//    /**
-//     * Sets the request format.
-//     */
-//    public function setRequestFormat(?string $format)
-//    {
-//        $this->format = $format;
-//    }
 
+    /**
+     * Gets the request format.
+     *
+     * Here is the process to determine the format:
+     *
+     *  * format defined by the user (with setRequestFormat())
+     *  * _format request attribute
+     *  * $default
+     *
+     * @see getPreferredFormat
+     */
+    public function getRequestFormat(?string $default = 'html'): ?string
+    {
+        $this->format ??= (string)$this->attributes->get('_format');
+
+        return $this->format ?? $default;
+    }
+
+    /**
+     * Sets the request format.
+     */
+    public function setRequestFormat(?string $format): void
+    {
+        $this->format = $format;
+    }
 
     /**
      * Gets the usual name of the format associated with the request's media type (provided in the Content-Type header).
@@ -1057,6 +1142,7 @@ class Request
     {
         return $this->getFormat($this->headers->get('CONTENT_TYPE', ''));
     }
+
 //
 //
 //    /**
@@ -1128,6 +1214,7 @@ class Request
 //     * @psalm-return ($asResource is true ? resource : string)
 //     */
 //    public function getContent(bool $asResource = false)
+
     /**
      * Returns the request body content.
      *
@@ -1144,6 +1231,7 @@ class Request
 
         return $this->content;
     }
+
 //
 //    /**
 //     * Gets the request body decoded as array, typically from a JSON payload.
@@ -1608,7 +1696,7 @@ class Request
 //
 // - TODO [+] Finalise ServerBag.php functionality for all headers
 
-// TODO [] Make methods to retrieve the values of the Request object
+// TODO [+] Make methods to retrieve the values of the Request object
 //  - [+] getUri()
 //      - [+] Pass through Vietnam
 //      - [+] Write a HeaderUtils::ParseQuery() method for KPHP
@@ -1635,4 +1723,9 @@ class Request
 //      - Unfortunately, it was not possible to fully implement the functionality either,
 //        we need to come up with a replacement for the filter_var() method
 //  - [+] getRequestUri()
-//  - [] getContent()
+//  - [+] getContent()
+
+// TODO [+] Make a duplicate() method and tests for it
+//  - [+] get()
+//      - [+] __toString()
+//          - [] Add support for cookies

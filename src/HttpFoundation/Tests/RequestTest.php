@@ -120,7 +120,7 @@ class RequestTest extends TestCase
         $server = ['HTTP_CONTENT_TYPE' => 'application/json'];
         $request = new Request([], [], [], [], [], $server);
         $this->assertEquals('json', $request->getContentTypeFormat());
-
+https://git.miem.hse.ru/kaa/kaa/-/tree/HttpFoundation
         $server = ['HTTP_CONTENT_TYPE' => 'text/html'];
         $request = new Request([], [], [], [], [], $server);
         $this->assertEquals('html', $request->getContentTypeFormat());

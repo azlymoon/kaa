@@ -29,45 +29,45 @@ class HeaderBag
         }
     }
 
-//    /**
-//     * Returns the headers as a string.
-//     */
-//    public function __toString(): string
-//    {
-//        $headers = $this->all();
-//        if ($headers == []) {
-//            return '';
-//        }
-//
-//        ksort($headers);
-//        $max = max(array_map(static function ($key) {
-//            if (is_string($key)) {
-//                return strlen($key);
-//            }
-//            return 0;
-//        }, array_keys($headers))) + 1;
-//
-//        $content = '';
-//        foreach ($headers as $name => $values) {
-//            $name = strtolower($name);
-//            $delimiters = ['-'];
-//            foreach ($delimiters as $delimiter) {
-//                $words = explode($delimiter, $name);
-//                $newWords = array();
-//                foreach ($words as $word) {
-//                    $newWords[] = ucfirst($word);
-//                }
-//                $name = implode($delimiter, $newWords);
-//            }
-//            if (is_array($values)) {
-//                foreach ($values as $value) {
-//                    $content .= sprintf("%-{$max}s %s\r\n", $name . ':', $value);
-//                }
-//            }
-//        }
-//
-//        return $content;
-//    }
+    /**
+     * Returns the headers as a string.
+     */
+    public function __toString(): string
+    {
+        $headers = $this->all();
+        if ($headers == []) {
+            return '';
+        }
+
+        ksort($headers);
+        $max = max(array_map(static function ($key) {
+            if (is_string($key)) {
+                return strlen($key);
+            }
+            return 0;
+        }, array_keys($headers))) + 1;
+
+        $content = '';
+        foreach ($headers as $name => $values) {
+            $name = strtolower($name);
+            $delimiters = ['-'];
+            foreach ($delimiters as $delimiter) {
+                $words = explode($delimiter, $name);
+                $newWords = array();
+                foreach ($words as $word) {
+                    $newWords[] = ucfirst($word);
+                }
+                $name = implode($delimiter, $newWords);
+            }
+            if (is_array($values)) {
+                foreach ($values as $value) {
+                    $content .= sprintf("%-{$max}s %s\r\n", $name . ':', $value);
+                }
+            }
+        }
+
+        return $content;
+    }
 
     /**
      * Returns the headers.
