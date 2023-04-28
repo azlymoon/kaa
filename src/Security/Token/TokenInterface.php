@@ -15,6 +15,11 @@ interface TokenInterface
      */
     public function getRoles(): array;
 
+    /**
+     * @return string[]
+     */
+    public function getAttributes(): array;
+
     public function getUser(): ?UserInterface;
 
     public function setUser(UserInterface $user): void;

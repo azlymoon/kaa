@@ -15,15 +15,15 @@ class InMemoryUser implements UserInterface
     private bool $enabled;
 
     /**
-     * @var string[] $roles
+     * @var string[] $attributes
      */
-    private array $roles;
+    private array $attributes;
 
     /**
-     * @param string[] $roles
+     * @param string[] $attributes
      * @throws InvalidArgumentException
      */
-    public function __construct(?string $username, ?string $password, array $roles = [], bool $enabled = true)
+    public function __construct(?string $username, ?string $password, array $attributes = [], bool $enabled = true)
     {
         if ('' === $username || null === $username) {
             throw new InvalidArgumentException('The username cannot be empty.');
@@ -31,12 +31,27 @@ class InMemoryUser implements UserInterface
         $this->username = $username;
         $this->password = $password;
         $this->enabled = $enabled;
-        $this->roles = $roles;
+        $this->attributes = $attributes;
+    }
+
+    public function getAttributes(): array
+    {
+        return $this->attributes;
     }
 
     public function getRoles(): array
     {
-        return $this->roles;
+        /**
+         * @var string[] $roles
+         */
+        $roles = [];
+
+        foreach ($this->attributes as $attribute) {
+            if (str_starts_with($attribute, 'ROLE_')) {
+                $roles[] = $attribute;
+            }
+        }
+        return $roles;
     }
 
     public function getIdentifier(): string
@@ -55,24 +70,24 @@ class InMemoryUser implements UserInterface
     }
 
     /**
-     * @param string[] $roles
+     * @param string[] $attributes
      */
-    public function setRoles(array $roles): void
+    public function setAttributes(array $attributes): void
     {
-        $this->roles = $roles;
+        $this->attributes = $attributes;
     }
 
-    public function setRole(string $newRole): void
+    public function addAttribute(string $newAttribute): void
     {
-        if (in_array($newRole, $this->roles, true)) {
+        if (in_array($newAttribute, $this->attributes, true)) {
             return;
         }
-        $this->roles[] = $newRole;
+        $this->attributes[] = $newAttribute;
     }
 
-    public function unsetRole(string $roleToUnset): void
+    public function unsetAttribute(string $attributeToUnset): void
     {
-        unset($this->roles, $roleToUnset);
+        unset($this->attributes, $attributeToUnset);
     }
 
     public function setIdentifier(string $identifier): void

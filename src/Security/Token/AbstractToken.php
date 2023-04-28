@@ -11,16 +11,20 @@ class AbstractToken implements TokenInterface
     private ?UserInterface $user = null;
 
     /**
+     * @var string[] $attributes
+     */
+    private array $attributes = [];
+
+    /**
      * @var string[] $roles
      */
     private array $roles = [];
-
-//    private array $attributes = [];
 
     public function __construct(?UserInterface $user)
     {
         if ($user != null) {
             $this->user = $user;
+            $this->attributes = $user->getAttributes();
             $this->roles = $user->getRoles();
         }
     }
@@ -28,6 +32,11 @@ class AbstractToken implements TokenInterface
     public function getUserIdentifier(): ?string
     {
         return ($this->user == null) ? null : $this->user->getIdentifier();
+    }
+
+    public function getAttributes(): array
+    {
+        return $this->attributes;
     }
 
     public function getRoles(): array
@@ -43,6 +52,7 @@ class AbstractToken implements TokenInterface
     public function setUser(UserInterface $user): void
     {
         $this->user = $user;
+        $this->attributes = $user->getAttributes();
         $this->roles = $user->getRoles();
     }
 }

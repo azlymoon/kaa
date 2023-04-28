@@ -9,6 +9,11 @@ interface UserInterface
     /**
      * @return string[]
      */
+    public function getAttributes(): array;
+
+    /**
+     * @return string[]
+     */
     public function getRoles(): array;
 
     public function getIdentifier(): string;
