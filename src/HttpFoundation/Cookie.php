@@ -3,10 +3,9 @@
 namespace Kaa\HttpFoundation;
 
 /**
- * Класс Cookie пока обеспичивает минимальный функционал
- * - Большая проблема с timestamp, нужно исправлять. DateTimeInterface отсутствует в KPHP
- *
  * Represents a cookie.
+ *
+ * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class Cookie
 {
@@ -35,9 +34,6 @@ class Cookie
 
     /** @var bool  */
     protected $httpOnly;
-
-    /** @var bool  */
-    private bool $raw;
     private ?string $sameSite = null;
     private const RESERVED_CHARS_LIST = "=,; \t\r\n\v\f";
 
@@ -106,25 +102,25 @@ class Cookie
         return $cookie;
     }
 
-//    /**
-//     * TODO: пофиксить \DateTimeInterface
-//     * Converts expires formats to a unix timestamp.
-//     */
-//    private static function expiresTimestamp(int|string|\DateTimeInterface $expire = 0): int
-//    {
-//        // convert expiration time to a Unix timestamp
-//        if ($expire instanceof \DateTimeInterface) {
-//            $expire = $expire->format('U');
-//        } elseif (!is_numeric($expire)) {
-//            $expire = strtotime($expire);
-//
-//            if (false === $expire) {
-//                throw new \InvalidArgumentException('The cookie expiration time is not valid.');
-//            }
-//        }
-//
-//        return 0 < $expire ? (int) $expire : 0;
-//    }
+    /**
+     * TODO: пофиксить \DateTimeInterface
+     * Converts expires formats to a unix timestamp.
+     */
+    private static function expiresTimestamp(int|string|\DateTimeInterface $expire = 0): int
+    {
+        // convert expiration time to a Unix timestamp
+        if ($expire instanceof \DateTimeInterface) {
+            $expire = $expire->format('U');
+        } elseif (!is_numeric($expire)) {
+            $expire = strtotime($expire);
+
+            if (false === $expire) {
+                throw new \InvalidArgumentException('The cookie expiration time is not valid.');
+            }
+        }
+
+        return 0 < $expire ? (int) $expire : 0;
+    }
 
     /**
      * Creates a cookie copy with SameSite attribute.

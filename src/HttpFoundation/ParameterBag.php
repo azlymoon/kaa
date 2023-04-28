@@ -14,32 +14,30 @@ class ParameterBag
 {
     /**
      * Parameter storage.
-     * @var mixed $parameters
+     * @var string[] $parameters
      */
     protected $parameters;
 
-    /** @param mixed $parameters */
+    /** @param string[] $parameters */
     public function __construct($parameters = [])
     {
         $this->parameters = $parameters;
     }
 
+    // TODO add BadRequestException
     /**
      * Returns the parameters.
      *
-     * @param string|null $key The name of the parameter to return or null to get them all
-     * @return mixed
+     * @param ?string $key The name of the parameter to return or null to get them all
+     * @return string|string[]
      */
-    // TODO add BadRequestException
     public function all($key = null)
     {
-        if (null === $key) {
+        if ($key === null) {
             return $this->parameters;
         }
 
-        $value = $this->parameters[$key] ?? [];
-
-        return $value;
+        return $this->parameters[$key] ?? [];
     }
 
     /**
@@ -51,32 +49,32 @@ class ParameterBag
     }
 
     /**
+     * @param string[] $parameters
      * Replaces the current parameters by a new set.
      */
-    public function replace(array $parameters = [])
+    public function replace($parameters = []): void
     {
         $this->parameters = $parameters;
     }
 
     /**
+     * @param string[] $parameters
      * Adds parameters.
      */
-    public function add(array $parameters = [])
+    public function add($parameters = []): void
     {
         $this->parameters = array_replace($this->parameters, $parameters);
     }
 
-    /**
-     * @param mixed $default
-     * @return mixed
-     */
-    public function get(string $key, $default = null)
+    public function get(string $key, ?string $default = null): ?string
     {
-        return \array_key_exists($key, $this->parameters) ? $this->parameters[$key] : $default;
+        if (\array_key_exists($key, $this->parameters)) {
+            return $this->parameters[$key];
+        }
+        return $default;
     }
 
-    /** @param mixed $value */
-    public function set(string $key, $value)
+    public function set(string $key, string $value): void
     {
         $this->parameters[$key] = $value;
     }
@@ -92,7 +90,7 @@ class ParameterBag
     /**
      * Removes a parameter.
      */
-    public function remove(string $key)
+    public function remove(string $key): void
     {
         unset($this->parameters[$key]);
     }
