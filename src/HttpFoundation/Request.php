@@ -26,7 +26,8 @@ class Request
     /** @var string[] */
     protected static $trustedHosts = [];
 
-    public const FORMATS = [
+    /** @var string[][] */
+    private static $formats = [
             'html' => ['text/html', 'application/xhtml+xml'],
             'txt' => ['text/plain'],
             'js' => ['application/javascript', 'application/x-javascript', 'text/javascript'],
@@ -90,7 +91,7 @@ class Request
     private $encodings;
 
     /** @var string[] */
-    private $acceptableContentTypes;
+    private $acceptableContentTypes = [];
 
     private ?string $pathInfo;
 
@@ -442,6 +443,30 @@ class Request
     }
 
     /**
+     * Enables support for the _method request parameter to determine the intended HTTP method.
+     *
+     * Be warned that enabling this feature might lead to CSRF issues in your code.
+     * Check that you are using CSRF tokens when required.
+     * If the HTTP method parameter override is enabled, an html-form with method "POST" can be altered
+     * and used to send a "PUT" or "DELETE" request via the _method request parameter.
+     * If these methods are not protected against CSRF, this presents a possible vulnerability.
+     *
+     * The HTTP method can only be overridden when the real HTTP method is POST.
+     */
+    public static function enableHttpMethodParameterOverride(): void
+    {
+        self::$httpMethodParameterOverride = true;
+    }
+
+    /**
+     * Checks whether support for the _method request parameter is enabled.
+     */
+    public static function getHttpMethodParameterOverride(): bool
+    {
+        return self::$httpMethodParameterOverride;
+    }
+
+    /**
      * Gets a "parameter" value from any bag.
      *
      * This method is mainly useful for libraries that want to provide some flexibility. If you don't need the
@@ -715,22 +740,23 @@ class Request
         return $this->headers->get('PHP_AUTH_PW');
     }
 
-//    /**
-//     * Gets the user info.
-//     *
-//     * @return string|null A user name if any and, optionally, scheme-specific information about how to gain authorization to access the server
-//     */
-//    public function getUserInfo(): ?string
-//    {
-//        $userinfo = $this->getUser();
-//
-//        $pass = $this->getPassword();
-//        if ('' != $pass) {
-//            $userinfo .= ":$pass";
-//        }
-//
-//        return $userinfo;
-//    }
+    /**
+     * Gets the user info.
+     *
+     * @return ?string A user name if any and, optionally,
+     * scheme-specific information about how to gain authorization to access the server
+     */
+    public function getUserInfo(): ?string
+    {
+        $userinfo = $this->getUser();
+
+        $pass = $this->getPassword();
+        if ($pass != '') {
+            $userinfo .= ":{$pass}";
+        }
+
+        return $userinfo;
+    }
 
     /**
      * Returns the HTTP host being requested.
@@ -789,69 +815,75 @@ class Request
         return $this->getSchemeAndHttpHost() . $this->getBaseUrl() . $this->getPathInfo() . $qs;
     }
 
-////    /**
-////     * Generates a normalized URI for the given path.
-////     *
-////     * @param string $path A path to use instead of the current one
-////     */
-////    public function getUriForPath(string $path): string
-////    {
-////        return $this->getSchemeAndHttpHost().$this->getBaseUrl().$path;
-////    }
-////
-//    /**
-//     * Returns the path as relative reference from the current Request path.
-//     *
-//     * Only the URIs path component (no schema, host etc.) is relevant and must be given.
-//     * Both paths must be absolute and not contain relative parts.
-//     * Relative URLs from one resource to another are useful when generating self-contained downloadable document archives.
-//     * Furthermore, they can be used to reduce the link size in documents.
-//     *
-//     * Example target paths, given a base path of "/a/b/c/d":
-//     * - "/a/b/c/d"     -> ""
-//     * - "/a/b/c/"      -> "./"
-//     * - "/a/b/"        -> "../"
-//     * - "/a/b/c/other" -> "other"
-//     * - "/a/x/y"       -> "../../x/y"
-//     */
-//    public function getRelativeUriForPath(string $path): string
-//    {
-//        // be sure that we are dealing with an absolute path
-////        if (!isset($path[0]) || '/' !== $path[0]) {
-////            return $path;
-////        }
-//
-//        $basePath = $this->getPathInfo();
-//        if ($path === $basePath) {
-//            return '';
-//        }
-//
-//        //TODO Check isset($basePath[0])
-//        $sourceDirs = explode('/', isset($basePath) && '/' === $basePath[0] ? substr($basePath, 1) : $basePath);
-//        $targetDirs = explode('/', substr($path, 1));
-//        array_pop($sourceDirs);
-//        $targetFile = array_pop($targetDirs);
-//
-//        foreach ($sourceDirs as $i => $dir) {
-//            if (isset($targetDirs[$i]) && $dir === $targetDirs[$i]) {
-//                unset($sourceDirs[$i], $targetDirs[$i]);
-//            } else {
-//                break;
-//            }
-//        }
-//
-//        $targetDirs[] = $targetFile;
-//        $path = str_repeat('../', \count($sourceDirs)) . implode('/', $targetDirs);
-//
-//        // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
-//        // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
-//        // as the first segment of a relative-path reference, as it would be mistaken for a scheme name
-//        // (see https://tools.ietf.org/html/rfc3986#section-4.2).
-////        return !isset($path[0]) || '/' === $path[0]
-////        || false !== ($colonPos = strpos($path, ':')) && ($colonPos < ($slashPos = strpos($path, '/')) || false === $slashPos)
-////            ? "./$path" : $path;
-//        return $path;
-//    }
+    /**
+     * Generates a normalized URI for the given path.
+     *
+     * @param string $path A path to use instead of the current one
+     */
+    public function getUriForPath(string $path): string
+    {
+        return $this->getSchemeAndHttpHost() . $this->getBaseUrl() . $path;
+    }
+
+    /**
+     * Returns the path as relative reference from the current Request path.
+     *
+     * Only the URIs path component (no schema, host etc.) is relevant and must be given.
+     * Both paths must be absolute and not contain relative parts.
+     * Relative URLs from one resource to another are useful when generating self-contained downloadable document archives.
+     * Furthermore, they can be used to reduce the link size in documents.
+     *
+     * Example target paths, given a base path of "/a/b/c/d":
+     * - "/a/b/c/d"     -> ""
+     * - "/a/b/c/"      -> "./"
+     * - "/a/b/"        -> "../"
+     * - "/a/b/c/other" -> "other"
+     * - "/a/x/y"       -> "../../x/y"
+     */
+    public function getRelativeUriForPath(string $path): string
+    {
+        // be sure that we are dealing with an absolute path
+        if (strlen($path) === 0 || $path[0] !== '/') {
+            return $path;
+        }
+
+        $basePath = $this->getPathInfo();
+        if ($path === $basePath) {
+            return '';
+        }
+
+        if (isset($basePath) && $basePath[0] === '/') {
+            $sourceDirs = explode('/', substr($basePath, 1));
+        } else {
+            $sourceDirs = explode('/', (string)$basePath);
+        }
+        $targetDirs = explode('/', substr($path, 1));
+        array_pop($sourceDirs);
+        $targetFile = array_pop($targetDirs);
+
+        foreach ($sourceDirs as $i => $dir) {
+            if (isset($targetDirs[$i]) && $dir === $targetDirs[$i]) {
+                unset($sourceDirs[$i], $targetDirs[$i]);
+            } else {
+                break;
+            }
+        }
+
+        $targetDirs[] = $targetFile;
+        $path = str_repeat('../', \count($sourceDirs)) . implode('/', $targetDirs);
+
+        // A reference to the same base directory or an empty subdirectory must be prefixed with "./".
+        // This also applies to a segment with a colon character (e.g., "file:colon") that cannot be used
+        // as the first segment of a relative-path reference, as it would be mistaken for a scheme name
+        // (see https://tools.ietf.org/html/rfc3986#section-4.2).
+        if (
+            $path[0] === '/' || ($colonPos = strpos($path, ':')) !== false
+            && ($colonPos < ($slashPos = strpos($path, '/')) || $slashPos === false)
+        ) {
+            return "./{$path}";
+        }
+        return $path;
+    }
 
     /**
      * Generates the normalized query string for the Request.
@@ -958,15 +990,14 @@ class Request
         return $host;
     }
 
-//    /**
-//     * Sets the request method.
-//     */
-//    public function setMethod(string $method)
-//    {
-//        $this->method = null;
-//        $this->server->set('REQUEST_METHOD', $method);
-//    }
-//
+    /**
+     * Sets the request method.
+     */
+    public function setMethod(string $method): void
+    {
+        $this->method = null;
+        $this->server->set('REQUEST_METHOD', $method);
+    }
 
     /**
      * Gets the request "intended" method.
@@ -1038,33 +1069,27 @@ class Request
 //    {
 //        return strtoupper($this->server->get('REQUEST_METHOD', 'GET'));
 //    }
-//
-////    // TODO замени на ссылки просто
-////    /**
-////     * Gets the mime type associated with the format.
-////     */
-////    public function getMimeType(string $format): ?string
-////    {
-////        if (null === static::$formats) {
-////            static::initializeFormats();
-////        }
-////
-////        return isset(static::$formats[$format]) ? static::$formats[$format][0] : null;
-////    }
-//
-////    /**
-////     * Gets the mime types associated with the format.
-////     *
-////     * @return string[]
-////     */
-////    public static function getMimeTypes(string $format): array
-////    {
-////        if (null === static::$formats) {
-////            static::initializeFormats();
-////        }
-////
-////        return static::$formats[$format] ?? [];
-////    }
+
+    /**
+     * Gets the mime type associated with the format.
+     */
+    public function getMimeType(string $format): ?string
+    {
+        if (isset(self::$formats[$format])) {
+            return self::$formats[$format][0];
+        }
+        return null;
+    }
+
+    /**
+     * Gets the mime types associated with the format.
+     *
+     * @return string[]
+     */
+    public static function getMimeTypes(string $format)
+    {
+        return self::$formats[$format] ?? [];
+    }
 
     /**
      * Gets the format associated with the mime type.
@@ -1082,7 +1107,7 @@ class Request
 //            static::initializeFormats();
 //        }
 
-        foreach (self::FORMATS as $format => $mimeTypes) {
+        foreach (self::$formats as $format => $mimeTypes) {
             if (\in_array($mimeType, $mimeTypes, true)) {
                 return (string)$format;
             }
@@ -1094,20 +1119,21 @@ class Request
         return null;
     }
 
-////    /**
-////     * Associates a format with mime types.
-////     *
-////     * @param string|string[] $mimeTypes The associated mime types (the preferred one must be the first as it will be used as the content type)
-////     */
-////    public function setFormat(?string $format, string|array $mimeTypes)
-////    {
-////        if (null === static::$formats) {
-////            static::initializeFormats();
-////        }
-////
-////        static::$formats[$format] = \is_array($mimeTypes) ? $mimeTypes : [$mimeTypes];
-////    }
-////
+    /**
+     * Associates a format with mime types.
+     *
+     * @param string|string[] $mimeTypes2 The associated mime types (the preferred one must be the first as it will be used as the content type)
+     */
+    public function setFormat(string $format, $mimeTypes2): void
+    {
+        if (\is_array($mimeTypes2)) {
+            /** @var string[] $mimeTypes */
+            $mimeTypes = array_map('strval', $mimeTypes2);
+            self::$formats[$format] = $mimeTypes;
+        } else {
+            self::$formats[$format][] = (string)$mimeTypes2;
+        }
+    }
 
     /**
      * Gets the request format.
@@ -1743,3 +1769,21 @@ class Request
 // TODO [+] Add getPreferredFormat() method
 //  - [+] Basic functionality for the AcceptHeader class
 //      - [+] Basic functionality for the AcceptHeaderItem class
+
+// TODO [+] Provide functions for working with MimeTypes
+//  - Changed $formats to an already assigned variable, got rid of the initialize() method for $formats
+//  - [+] getFormat() method
+//  - [+] setFormat() method
+//  - [+] getMimeType() method
+//  - [+] getMimeTypes() method
+
+// TODO [+] getRelativeUriForPath()
+
+// TODO [+] Add advanced work with getMethod(), setMethod()
+//  - [+] Add InputBag class.
+//       I allowed myself to rewrite the logic of this class,
+//       now it is not inherited from ParameterBag, because I wanted to leave in HeaderBag
+//       the ability to store $parameters as string[], but in InputBag the same variable is
+//       already of mixed type
+
+
