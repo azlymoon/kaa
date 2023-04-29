@@ -89,7 +89,7 @@ class Request
     /** @var ?string[] */
     private $encodings;
 
-    /** @var ?string[] */
+    /** @var string[] */
     private $acceptableContentTypes;
 
     private ?string $pathInfo;
@@ -103,6 +103,8 @@ class Request
     private ?string $method;
 
     private ?string $format;
+
+    private ?string $preferredFormat = null;
 
     private bool $isHostValid = true;
 
@@ -161,7 +163,7 @@ class Request
         $this->languages = null;
         $this->charsets = null;
         $this->encodings = null;
-        $this->acceptableContentTypes = null;
+        $this->acceptableContentTypes = [];
         $this->pathInfo = null;
         $this->requestUri = null;
         $this->baseUrl = null;
@@ -356,7 +358,7 @@ class Request
         $dup->languages = null;
         $dup->charsets = null;
         $dup->encodings = null;
-        $dup->acceptableContentTypes = null;
+        $dup->acceptableContentTypes = [];
         $dup->pathInfo = null;
         $dup->requestUri = null;
         $dup->baseUrl = null;
@@ -1120,7 +1122,7 @@ class Request
      */
     public function getRequestFormat(?string $default = 'html'): ?string
     {
-        $this->format ??= (string)$this->attributes->get('_format');
+        $this->format ??= $this->attributes->get('_format');
 
         return $this->format ?? $default;
     }
@@ -1276,29 +1278,33 @@ class Request
             || $this->headers->get('Pragma') == 'no-cache';
     }
 
-//    /**
-//     * Gets the preferred format for the response by inspecting, in the following order:
-//     *   * the request format set using setRequestFormat;
-//     *   * the values of the Accept HTTP header.
-//     *
-//     * Note that if you use this method, you should send the "Vary: Accept" header
-//     * in the response to prevent any issues with intermediary HTTP caches.
-//     */
-//    public function getPreferredFormat(?string $default = 'html'): ?string
-//    {
-//        if (null !== $this->preferredFormat || null !== $this->preferredFormat = $this->getRequestFormat(null)) {
-//            return $this->preferredFormat;
-//        }
-//
-//        foreach ($this->getAcceptableContentTypes() as $mimeType) {
-//            if ($this->preferredFormat = $this->getFormat($mimeType)) {
-//                return $this->preferredFormat;
-//            }
-//        }
-//
-//        return $default;
-//    }
-//
+    /**
+     * Gets the preferred format for the response by inspecting, in the following order:
+     *   * the request format set using setRequestFormat;
+     *   * the values of the Accept HTTP header.
+     *
+     * Note that if you use this method, you should send the "Vary: Accept" header
+     * in the response to prevent any issues with intermediary HTTP caches.
+     */
+    public function getPreferredFormat(?string $default = 'html'): ?string
+    {
+        if ($this->preferredFormat === null) {
+            $this->preferredFormat = $this->getRequestFormat(null);
+        }
+        if ($this->preferredFormat !== null) {
+            return $this->preferredFormat;
+        }
+
+        foreach ($this->getAcceptableContentTypes() as $mimeType) {
+            $this->preferredFormat = $this->getFormat($mimeType);
+            if ((bool)$this->preferredFormat) {
+                return $this->preferredFormat;
+            }
+        }
+
+        return $default;
+    }
+
 //    /**
 //     * Returns the preferred language.
 //     *
@@ -1400,21 +1406,25 @@ class Request
 //
 //        return $this->encodings = array_map('strval', array_keys(AcceptHeader::fromString($this->headers->get('Accept-Encoding'))->all()));
 //    }
-//
-//    /**
-//     * Gets a list of content types acceptable by the client browser in preferable order.
-//     *
-//     * @return string[]
-//     */
-//    public function getAcceptableContentTypes(): array
-//    {
-//        if (null !== $this->acceptableContentTypes) {
-//            return $this->acceptableContentTypes;
-//        }
-//
-//        return $this->acceptableContentTypes = array_map('strval', array_keys(AcceptHeader::fromString($this->headers->get('Accept'))->all()));
-//    }
-//
+
+    /**
+     * Gets a list of content types acceptable by the client browser in preferable order.
+     *
+     * @return string[]
+     */
+    public function getAcceptableContentTypes()
+    {
+        if ($this->acceptableContentTypes === []) {
+            return $this->acceptableContentTypes = array_map(
+                'strval',
+                array_keys(
+                    AcceptHeader::fromString($this->headers->get('Accept'))->all()
+                )
+            );
+        }
+        return $this->acceptableContentTypes;
+    }
+
 //    /**
 //     * Returns true if the request is an XMLHttpRequest.
 //     *
@@ -1729,3 +1739,7 @@ class Request
 //  - [+] get()
 //      - [+] __toString()
 //          - [] Add support for cookies
+
+// TODO [+] Add getPreferredFormat() method
+//  - [+] Basic functionality for the AcceptHeader class
+//      - [+] Basic functionality for the AcceptHeaderItem class
