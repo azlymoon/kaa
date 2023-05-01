@@ -2,6 +2,8 @@
 
 namespace Kaa\HttpFoundation;
 
+use _PHPStan_aed93193a\Nette\PhpGenerator\Parameter;
+
 /**
  * Request represents an HTTP request.
  *
@@ -19,6 +21,11 @@ class Request
 {
     # In KPHP, there is not yet a predefined constant directory_separator
     public const DIRECTORY_SEPARATOR = "/";
+
+    public const HEADER_X_FORWARDED_FOR = 0b000010;
+
+    /** @var string[] */
+    protected static $trustedProxies = [];
 
     /** @var string[] */
     protected static $trustedHostPatterns = [];
@@ -108,6 +115,8 @@ class Request
     private ?string $preferredFormat = null;
 
     private bool $isHostValid = true;
+
+    private static int $trustedHeaderSet = -1;
 
     /**
      * @param string[]             $query      The GET parameters
@@ -425,6 +434,40 @@ class Request
     }
 
     /**
+     * Sets a list of trusted proxies.
+     *
+     * You should only list the reverse proxies that you manage directly.
+     *
+     * @param ?string[] $proxies
+     * A list of trusted proxies, the string 'REMOTE_ADDR' will be replaced with $_SERVER['REMOTE_ADDR']
+     *
+     * @param int       $trustedHeaderSet
+     * A bit field of Request::HEADER_*, to set which headers to trust from your proxies
+     */
+    public static function setTrustedProxies($proxies, int $trustedHeaderSet): void
+    {
+        if ($proxies === null) {
+            $proxies = [];
+        }
+
+        /** @var mixed $proxiesMixed */
+        $proxiesMixed = array_reduce($proxies, static function ($proxies, $proxy) {
+            if ($proxy !== 'REMOTE_ADDR') {
+                $proxies = $proxy;
+            } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+                $proxies = $_SERVER['REMOTE_ADDR'];
+            }
+
+            return $proxies;
+        }, []);
+
+        $proxies = (string)$proxiesMixed;
+
+        self::$trustedProxies = [$proxies];
+        self::$trustedHeaderSet = $trustedHeaderSet;
+    }
+
+    /**
      * Normalizes a query string.
      *
      * It builds a normalized query string, where keys/value pairs are alphabetized,
@@ -555,52 +598,55 @@ class Request
 ////    {
 ////        $this->session = $factory;
 ////    }
-////
-////    /**
-////     * Returns the client IP addresses.
-////     *
-////     * In the returned array the most trusted IP address is first, and the
-////     * least trusted one last. The "real" client IP address is the last one,
-////     * but this is also the least trusted one. Trusted proxies are stripped.
-////     *
-////     * Use this method carefully; you should use getClientIp() instead.
-////     *
-////     * @see getClientIp()
-////     */
-////    public function getClientIps(): array
-////    {
-////        $ip = $this->server->get('REMOTE_ADDR');
-////
-////        if (!$this->isFromTrustedProxy()) {
-////            return [$ip];
-////        }
-////
-////        return $this->getTrustedValues(self::HEADER_X_FORWARDED_FOR, $ip) ?: [$ip];
-////    }
-////
-////    /**
-////     * Returns the client IP address.
-////     *
-////     * This method can read the client IP address from the "X-Forwarded-For" header
-////     * when trusted proxies were set via "setTrustedProxies()". The "X-Forwarded-For"
-////     * header value is a comma+space separated list of IP addresses, the left-most
-////     * being the original client, and each successive proxy that passed the request
-////     * adding the IP address where it received the request from.
-////     *
-////     * If your reverse proxy uses a different header name than "X-Forwarded-For",
-////     * ("Client-Ip" for instance), configure it via the $trustedHeaderSet
-////     * argument of the Request::setTrustedProxies() method instead.
-////     *
-////     * @see getClientIps()
-////     * @see https://wikipedia.org/wiki/X-Forwarded-For
-////     */
-////    public function getClientIp(): ?string
-////    {
-////        $ipAddresses = $this->getClientIps();
-////
-////        return $ipAddresses[0];
-////    }
-////
+
+    /**
+     * Returns the client IP addresses.
+     *
+     * In the returned array the most trusted IP address is first, and the
+     * least trusted one last. The "real" client IP address is the last one,
+     * but this is also the least trusted one. Trusted proxies are stripped.
+     *
+     * Use this method carefully; you should use getClientIp() instead.
+     *
+     * @see getClientIp()
+     * @return string[]
+     */
+    public function getClientIps()
+    {
+        $ip = $this->server->get('REMOTE_ADDR');
+
+        if ($ip === null) {
+            return [''];
+        }
+
+        return [$ip];
+
+        // fixme: this method has reduced functionality
+    }
+
+    /**
+     * Returns the client IP address.
+     *
+     * This method can read the client IP address from the "X-Forwarded-For" header
+     * when trusted proxies were set via "setTrustedProxies()". The "X-Forwarded-For"
+     * header value is a comma+space separated list of IP addresses, the left-most
+     * being the original client, and each successive proxy that passed the request
+     * adding the IP address where it received the request from.
+     *
+     * If your reverse proxy uses a different header name than "X-Forwarded-For",
+     * ("Client-Ip" for instance), configure it via the $trustedHeaderSet
+     * argument of the Request::setTrustedProxies() method instead.
+     *
+     * @see getClientIps()
+     * @see https://wikipedia.org/wiki/X-Forwarded-For
+     */
+    public function getClientIp(): ?string
+    {
+        $ipAddresses = $this->getClientIps();
+
+        return $ipAddresses[0];
+    }
+
 //    /**
 //     * Returns current script name.
 //     */
@@ -1786,4 +1832,14 @@ class Request
 //       the ability to store $parameters as string[], but in InputBag the same variable is
 //       already of mixed type
 
+// TODO [+] Implement basic functionality for obtaining IP addresses of requests
+//  - [+] getClientIps() and getClientIp() methods
+//  - [+] Request::setTrustedProxies() method to generate variable IP address for the request
 
+// TODO [-] Extended functionality for handling IP address requests.
+//  - More importantly, make proxy address configuration options available.
+//    For example, set $_SERVER['HTTP_X_FORWARDED_FOR'] to first accept a request from 88.88.88.88
+//    but specify that the original source address is 127.0.0.1 and if 127.0.0.1 is a trusted proxy,
+//    we can respond to the original 88.88.88.88
+//  - Unfortunately, I am postponing this task for now, as it requires working with IpUtils.php,
+//    which uses the unsupported filter_var() function of KPHP
