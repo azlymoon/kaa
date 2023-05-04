@@ -14,8 +14,7 @@ class HeaderBag
     protected const UPPER = '_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     protected const LOWER = '-abcdefghijklmnopqrstuvwxyz';
 
-    # Set() shows, that headers can be string|string[]|array[string[]], so its mixed
-    /** @var mixed $headers */
+    /** @var string[][] $headers */
     protected $headers;
 
     /** @var string[] $cacheControl */
@@ -143,7 +142,7 @@ class HeaderBag
         $key = strtr((string)$key, self::UPPER, self::LOWER);
 
         if (is_array($values)) {
-            $values = array_values($values);
+            $values = array_map('strval', array_values($values));
 
             if ($replace === true || !isset($this->headers[$key])) {
                 $this->headers[$key] = $values;
@@ -152,9 +151,9 @@ class HeaderBag
             }
         } else {
             if ($replace === true || !isset($this->headers[$key])) {
-                $this->headers[$key] = [$values];
+                $this->headers[$key] = [(string)$values];
             } else {
-                $this->headers[$key][] = $values;
+                $this->headers[$key][] = (string)$values;
             }
         }
 //
@@ -163,14 +162,14 @@ class HeaderBag
 //        }
     }
 
-//    /**
-//     * Returns true if the HTTP header is defined.
-//     */
-//    public function has(string $key): bool
-//    {
-//        return \array_key_exists(strtr($key, self::UPPER, self::LOWER), $this->all());
-//    }
-//
+    /**
+     * Returns true if the HTTP header is defined.
+     */
+    public function has(string $key): bool
+    {
+        return \array_key_exists(strtr($key, self::UPPER, self::LOWER), $this->all());
+    }
+
 //    /**
 //     * Returns true if the given HTTP header contains the given value.
 //     */
@@ -178,21 +177,21 @@ class HeaderBag
 //    {
 //        return \in_array($value, $this->all($key));
 //    }
-//
-//    /**
-//     * Removes a header.
-//     */
-//    public function remove(string $key): void
-//    {
-//        $key = strtr($key, self::UPPER, self::LOWER);
-//
-//        unset($this->headers[$key]);
-//
-//        if ('cache-control' === $key) {
-//            $this->cacheControl = [];
-//        }
-//    }
-//
+
+    /**
+     * Removes a header.
+     */
+    public function remove(string $key): void
+    {
+        $key = strtr($key, self::UPPER, self::LOWER);
+
+        unset($this->headers[$key]);
+
+        if ($key === 'cache-control') {
+            $this->cacheControl = [];
+        }
+    }
+
 //    /**
 //     * Returns the HTTP header value converted to a date.
 //     *

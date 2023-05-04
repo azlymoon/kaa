@@ -126,4 +126,12 @@ class InputBag
     {
         return \array_key_exists($key, $this->parameters);
     }
+
+    /**
+     * Removes a parameter.
+     */
+    public function remove(string $key): void
+    {
+        unset($this->parameters[$key]);
+    }
 }
