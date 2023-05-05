@@ -71,15 +71,15 @@ class AcceptHeader
 //    {
 //        return implode(',', $this->items);
 //    }
-//
-//    /**
-//     * Tests if header has given value.
-//     */
-//    public function has(string $value): bool
-//    {
-//        return isset($this->items[$value]);
-//    }
-//
+
+    /**
+     * Tests if header has given value.
+     */
+    public function has(string $value): bool
+    {
+        return isset($this->items[$value]);
+    }
+
 //    /**
 //     * Returns given value's item, if exists.
 //     */

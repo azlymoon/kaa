@@ -123,14 +123,14 @@ class Request
 
     private ?string $format;
 
-    private ?Session $session = null;
-
+//    private ?Session $session = null;
     private ?string $preferredFormat = null;
 
     private bool $isHostValid = true;
 
 //    private bool $isForwardedValid = true;
 
+    private bool $isSafeContentPreferred;
     private static int $trustedHeaderSet = -1;
 
 //    private const FORWARDED_PARAMS = [
@@ -701,13 +701,13 @@ class Request
 //     */
 //    public function hasSession(bool $skipIfUninitialized = false): bool
 //    {
-//        return $this->session !== null && (!$skipIfUninitialized || $this->session instanceof SessionInterface);
+//        return $this->session !== null && !$skipIfUninitialized;
 //    }
 
-////    public function setSession(SessionInterface $session)
-////    {
-////        $this->session = $session;
-////    }
+//    public function setSession(Session $session): void
+//    {
+//        $this->session = $session;
+//    }
 
     /**
      * Returns the client IP addresses.
@@ -1326,67 +1326,65 @@ class Request
         return $this->getFormat($this->headers->get('CONTENT_TYPE', ''));
     }
 
-//
-//
-//    /**
-//     * Checks if the request method is of specified type.
-//     *
-//     * @param string $method Uppercase request method (GET, POST etc)
-//     */
-//    public function isMethod(string $method): bool
-//    {
-//        return $this->getMethod() === strtoupper($method);
-//    }
-//
-//    /**
-//     * Checks whether or not the method is safe.
-//     *
-//     * @see https://tools.ietf.org/html/rfc7231#section-4.2.1
-//     */
-//    public function isMethodSafe(): bool
-//    {
-//        return \in_array($this->getMethod(), ['GET', 'HEAD', 'OPTIONS', 'TRACE']);
-//    }
-//
-//    /**
-//     * Checks whether or not the method is idempotent.
-//     */
-//    public function isMethodIdempotent(): bool
-//    {
-//        return \in_array($this->getMethod(), ['HEAD', 'GET', 'PUT', 'DELETE', 'TRACE', 'OPTIONS', 'PURGE']);
-//    }
-//
-//    /**
-//     * Checks whether the method is cacheable or not.
-//     *
-//     * @see https://tools.ietf.org/html/rfc7231#section-4.2.3
-//     */
-//    public function isMethodCacheable(): bool
-//    {
-//        return \in_array($this->getMethod(), ['GET', 'HEAD']);
-//    }
-//
-//    /**
-//     * Returns the protocol version.
-//     *
-//     * If the application is behind a proxy, the protocol version used in the
-//     * requests between the client and the proxy and between the proxy and the
-//     * server might be different. This returns the former (from the "Via" header)
-//     * if the proxy is trusted (see "setTrustedProxies()"), otherwise it returns
-//     * the latter (from the "SERVER_PROTOCOL" server parameter).
-//     */
-//    public function getProtocolVersion(): ?string
-//    {
-////        if ($this->isFromTrustedProxy()) {
-//        preg_match('~^(HTTP/)?([1-9]\.[0-9]) ~', $this->headers->get('Via') ?? '', $matches);
-//
-//        if ($matches) {
-//            return 'HTTP/' . $matches[2];
+    /**
+     * Checks if the request method is of specified type.
+     *
+     * @param string $method Uppercase request method (GET, POST etc)
+     */
+    public function isMethod(string $method): bool
+    {
+        return $this->getMethod() === strtoupper($method);
+    }
+
+    /**
+     * Checks whether or not the method is safe.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-4.2.1
+     */
+    public function isMethodSafe(): bool
+    {
+        return \in_array($this->getMethod(), ['GET', 'HEAD', 'OPTIONS', 'TRACE'], true);
+    }
+
+    /**
+     * Checks whether or not the method is idempotent.
+     */
+    public function isMethodIdempotent(): bool
+    {
+        return \in_array($this->getMethod(), ['HEAD', 'GET', 'PUT', 'DELETE', 'TRACE', 'OPTIONS', 'PURGE'], true);
+    }
+
+    /**
+     * Checks whether the method is cacheable or not.
+     *
+     * @see https://tools.ietf.org/html/rfc7231#section-4.2.3
+     */
+    public function isMethodCacheable(): bool
+    {
+        return \in_array($this->getMethod(), ['GET', 'HEAD'], true);
+    }
+
+    /**
+     * Returns the protocol version.
+     *
+     * If the application is behind a proxy, the protocol version used in the
+     * requests between the client and the proxy and between the proxy and the
+     * server might be different. This returns the former (from the "Via" header)
+     * if the proxy is trusted (see "setTrustedProxies()"), otherwise it returns
+     * the latter (from the "SERVER_PROTOCOL" server parameter).
+     */
+    public function getProtocolVersion(): ?string
+    {
+//        if ($this->isFromTrustedProxy()) {
+        preg_match('~^(HTTP/)?([1-9]\.[0-9]) ~', $this->headers->get('Via') ?? '', $matches);
+
+        if ($matches) {
+            return 'HTTP/' . $matches[2];
+        }
 //        }
-////        }
-//
-//        return (string)$this->server->get('SERVER_PROTOCOL');
-//    }
+
+        return (string)$this->server->get('SERVER_PROTOCOL');
+    }
 
 //    /**
 //     * Returns the request body content.
@@ -1652,24 +1650,25 @@ class Request
         return $this->headers->get('X-Requested-With') == 'XMLHttpRequest';
     }
 
-//    /**
-//     * Checks whether the client browser prefers safe content or not according to RFC8674.
-//     *
-//     * @see https://tools.ietf.org/html/rfc8674
-//     */
-//    public function preferSafeContent(): bool
-//    {
-//        if (isset($this->isSafeContentPreferred)) {
-//            return $this->isSafeContentPreferred;
-//        }
-//
-//        if (!$this->isSecure()) {
-//            // see https://tools.ietf.org/html/rfc8674#section-3
-//            return $this->isSafeContentPreferred = false;
-//        }
-//
-//        return $this->isSafeContentPreferred = AcceptHeader::fromString($this->headers->get('Prefer'))->has('safe');
-//    }
+    /**
+     * Checks whether the client browser prefers safe content or not according to RFC8674.
+     *
+     * @see https://tools.ietf.org/html/rfc8674
+     */
+    public function preferSafeContent(): bool
+    {
+        if (isset($this->isSafeContentPreferred)) {
+            return $this->isSafeContentPreferred;
+        }
+
+        if (!$this->isSecure()) {
+            // see https://tools.ietf.org/html/rfc8674#section-3
+            return $this->isSafeContentPreferred = false;
+        }
+
+        $this->isSafeContentPreferred = AcceptHeader::fromString($this->headers->get('Prefer'))->has('safe');
+        return $this->isSafeContentPreferred;
+    }
 
     /*
      * The following methods are derived from code of the Zend Framework (1.10dev - 2010-01-24)

@@ -2,12 +2,9 @@
 
 namespace Kaa\HttpFoundation;
 
-use Kaa\HttpFoundation\Request;
+use Kaa\HttpFoundation\Exception\BadRequestException;
 
 /**
- * Реализован полный функционал, за исключением функции filter()
- * Т.к. в KPHP нет функции filter_var(), нужно попробовать прикрутить наш валидатор
- *
  * ParameterBag is a container for key/value pairs.
  */
 class ParameterBag
@@ -24,12 +21,12 @@ class ParameterBag
         $this->parameters = $parameters;
     }
 
-    // TODO add BadRequestException
     /**
      * Returns the parameters.
      *
      * @param ?string $key The name of the parameter to return or null to get them all
      * @return string|string[]
+     * @throws BadRequestException
      */
     public function all($key = null)
     {
@@ -37,15 +34,26 @@ class ParameterBag
             return $this->parameters;
         }
 
+        if (\is_array($value = $this->parameters[$key] ?? '')) {
+            throw new BadRequestException(
+                sprintf(
+                    'Unexpected value for parameter "%s": expecting "string", got "%s".',
+                    $key,
+                    gettype($value)
+                )
+            );
+        }
+
         return $this->parameters[$key] ?? [];
     }
 
     /**
      * Returns the parameter keys.
+     * @return string[]
      */
-    public function keys(): array
+    public function keys()
     {
-        return array_keys($this->parameters);
+        return array_map('strval', array_keys($this->parameters));
     }
 
     /**
@@ -112,23 +120,36 @@ class ParameterBag
     }
 
     /**
+     * Returns the digits of the parameter value.
+     */
+    public function getDigits(string $key): string
+    {
+        if (!isset($this->parameters[$key])) {
+            return '';
+        }
+
+        return (string)preg_replace('/\D/', '', $this->parameters[$key]);
+    }
+
+    /**
      * Returns the parameter value converted to integer.
      */
     public function getInt(string $key, int $default = 0): int
     {
-        return (int) $this->get($key, $default);
+        return (int)$this->get($key, (string)$default);
     }
 
     /**
-     * Returns an iterator for headers.
+     * Returns the parameter value converted to boolean.
      */
-    public function getIterator(): array
+    public function getBoolean(string $key, bool $default = false): bool
     {
-        $iterator = [];
-        foreach ($this->parameters as $name => $values) {
-            $iterator[$name] = $values;
+        if (isset($this->parameters[$key])) {
+            $value = strtolower($this->parameters[$key]);
+            return $value === 'true';
         }
-        return $iterator;
+
+        return $default;
     }
 
     /**
@@ -139,3 +160,12 @@ class ParameterBag
         return \count($this->parameters);
     }
 }
+
+// TODO: [] сделать тесты для ParameterBag
+// TODO: [] тест getAll показывает, что в parameters должен быть тип (?string[])[],
+//          но это нигде не использовалось в Request, так что не понятно зачем так сделано,
+//          я пока это пропустил
+// TODO: [] не работает метод getIteror, в KPHP тупо нет глобального класса \IteratorAggregate, \Countable
+// TODO: [] не работает метод filter(), в KPHP нет функции filter_var()
+//          - [+] реализовать метод getDigits() без filter()
+//          - [+] реализовать метод getBoolean() без filter() - нужно для Николая

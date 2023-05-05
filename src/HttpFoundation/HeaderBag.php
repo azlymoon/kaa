@@ -92,25 +92,27 @@ class HeaderBag
 //    {
 //        return array_keys($this->all());
 //    }
-//
-//    /**
-//     * Replaces the current HTTP headers by a new set.
-//     */
-//    public function replace(array $headers = [])
-//    {
-//        $this->headers = [];
-//        $this->add($headers);
-//    }
-//
-//    /**
-//     * Adds new headers the current HTTP headers set.
-//     */
-//    public function add(array $headers)
-//    {
-//        foreach ($headers as $key => $values) {
-//            $this->set($key, $values);
-//        }
-//    }
+
+    /**
+     * Replaces the current HTTP headers by a new set.
+     * @param mixed $headers
+     */
+    public function replace($headers = [])
+    {
+        $this->headers = [];
+        $this->add($headers);
+    }
+
+    /**
+     * Adds new headers the current HTTP headers set.
+     * @param mixed $headers
+     */
+    public function add($headers): void
+    {
+        foreach ($headers as $key => $values) {
+            $this->set($key, $values);
+        }
+    }
 
     /**
      * Returns the first header by name or the default one.
