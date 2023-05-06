@@ -2,6 +2,9 @@
 
 namespace Kaa\HttpFoundation;
 
+use InvalidArgumentException;
+use Kaa\HttpFoundation\Exception\BadRequestException;
+
 /**
  * InputBag is a container for user input values such as $_GET, $_POST, $_REQUEST, and $_COOKIE.
  */
@@ -9,11 +12,11 @@ class InputBag
 {
     /**
      * Parameter storage.
-     * @var mixed $parameters
+     * @var ?mixed[] $parameters
      */
     private $parameters;
 
-    /** @param mixed $parameters */
+    /** @param ?mixed[] $parameters */
     public function __construct($parameters = null)
     {
         $this->parameters = $parameters;
@@ -22,27 +25,27 @@ class InputBag
     /**
      * Returns a scalar input value by name.
      *
-     * @param mixed $default The default value if the input key does not exist
+     * @param ?mixed $default The default value if the input key does not exist
      * @return mixed
+     * @throws InvalidArgumentException
+     * @throws BadRequestException
      */
     public function get(string $key, $default = null)
     {
-        // TODO: Add exception handling
-//        if (null !== $default && !\is_scalar($default) && !$default instanceof \Stringable) {
-//            throw new \InvalidArgumentException(sprintf('Expected a scalar value as a 2nd argument to "%s()",
-//              "%s" given.', __METHOD__, get_debug_type($default)));
-//        }
+        if ($default !== null && !\is_scalar($default)) {
+            throw new InvalidArgumentException(sprintf('Expected a scalar value as a 2nd argument to "%s()",
+              "%s" given.', __METHOD__, gettype($default)));
+        }
 
-        if (\array_key_exists($key, $this->parameters)) {
+        if ($this->parameters !== null && \array_key_exists($key, $this->parameters)) {
             $value = $this->parameters[$key];
         } else {
             $value = $default;
         }
 
-        // TODO: Add exception handling
-//        if (null !== $value && $this !== $value && !\is_scalar($value) && !$value instanceof \Stringable) {
-//            throw new BadRequestException(sprintf('Input value "%s" contains a non-scalar value.', $key));
-//        }
+        if ($value !== null && $this !== $value && !\is_scalar($value)) {
+            throw new BadRequestException(sprintf('Input value "%s" contains a non-scalar value.', $key));
+        }
 
         return $value;
     }
@@ -69,15 +72,15 @@ class InputBag
     /**
      * Sets an input by name.
      *
-     * @param mixed $value
+     * @param ?mixed[] $value
+     * @throws InvalidArgumentException
      */
     public function set(string $key, $value): void
     {
-        // TODO: Add exception handling
-//        if (null !== $value && !\is_scalar($value) && !\is_array($value) && !$value instanceof \Stringable) {
-//            throw new \InvalidArgumentException(sprintf('Expected a scalar, or an array as a 2nd argument to "%s()",
-//            "%s" given.', __METHOD__, get_debug_type($value)));
-//        }
+        if ($value !== null && !\is_scalar($value) && !\is_array($value)) {
+            throw new InvalidArgumentException(sprintf('Expected a scalar, or an array as a 2nd argument to "%s()",
+            "%s" given.', __METHOD__, gettype($value)));
+        }
         $this->parameters[$key] = $value;
     }
 
@@ -135,3 +138,7 @@ class InputBag
         unset($this->parameters[$key]);
     }
 }
+
+//TODO: [+] Add exception handling for InputBag
+//TODO: [-] Add a check that the object passed to InputBag->paramaters implements the \Stringable interface
+//          - Unfortunately, KPHP does not allow storing objects in arrays without a known type
