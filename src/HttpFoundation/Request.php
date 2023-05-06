@@ -2,8 +2,10 @@
 
 namespace Kaa\HttpFoundation;
 
+use Kaa\HttpFoundation\Exception\BadRequestException;
 use Kaa\HttpFoundation\Exception\JsonException;
-use Kaa\HttpFoundation\Session\Session;
+use Kaa\HttpFoundation\Exception\SuspiciousOperationException;
+use InvalidArgumentException;
 
 /**
  * Request represents an HTTP request.
@@ -129,8 +131,8 @@ class Request
     private bool $isHostValid = true;
 
 //    private bool $isForwardedValid = true;
-
     private bool $isSafeContentPreferred;
+
     private static int $trustedHeaderSet = -1;
 
 //    private const FORWARDED_PARAMS = [
@@ -986,7 +988,8 @@ class Request
      *
      * Only the URIs path component (no schema, host etc.) is relevant and must be given.
      * Both paths must be absolute and not contain relative parts.
-     * Relative URLs from one resource to another are useful when generating self-contained downloadable document archives.
+     * Relative URLs from one resource to another are useful when generating self-contained
+     * downloadable document archives.
      * Furthermore, they can be used to reduce the link size in documents.
      *
      * Example target paths, given a base path of "/a/b/c/d":
@@ -1082,7 +1085,7 @@ class Request
      *
      * The "X-Forwarded-Host" header must contain the client host name.
      *
-//     * @throws SuspiciousOperationException when the host name is invalid or not trusted
+     * @throws SuspiciousOperationException when the host name is invalid or not trusted
      */
     public function getHost(): string
     {
@@ -1111,10 +1114,7 @@ class Request
             }
             $this->isHostValid = false;
 
-            return sprintf('Invalid Host "%s".', $host);
-
-            // TODO: Add exception handling
-            // throw new SuspiciousOperationException(sprintf('Invalid Host "%s".', $host));
+            throw new SuspiciousOperationException(sprintf('Invalid Host "%s".', $host));
         }
 
         if (\count(self::$trustedHostPatterns) > 0) {
@@ -1137,10 +1137,7 @@ class Request
             }
             $this->isHostValid = false;
 
-            return sprintf('Untrusted Host "%s".', $host);
-
-            // TODO: Add exception handling
-            // throw new SuspiciousOperationException(sprintf('Untrusted Host "%s".', $host));
+            throw new SuspiciousOperationException(sprintf('Untrusted Host "%s".', $host));
         }
 
         return $host;
@@ -1166,6 +1163,10 @@ class Request
      *
      * The method is always an uppercased string.
      *
+     * @throws SuspiciousOperationException
+     * @throws BadRequestException
+     * @throws InvalidArgumentException
+     *
      * @see getRealMethod()
      */
     public function getMethod(): ?string
@@ -1183,7 +1184,7 @@ class Request
         $method = $this->headers->get('X-HTTP-METHOD-OVERRIDE');
 
         if (!(bool)$method && self::$httpMethodParameterOverride) {
-            $method = $this->request->get('_method', $this->query->get('_method', 'POST'));
+            $method = $this->request->get('_method', (string)$this->query->get('_method', 'POST'));
         }
 
         if (!\is_string($method)) {
@@ -1206,10 +1207,7 @@ class Request
         }
 
         if (!(bool)preg_match('/^[A-Z]++$/D', $method, $matches)) {
-            return sprintf('Invalid method override "%s".', $method);
-
-            // TODO: Add exception handling
-            // throw new SuspiciousOperationException(sprintf('Invalid method override "%s".', $method));
+            throw new SuspiciousOperationException(sprintf('Invalid method override "%s".', $method));
         }
 
         return $this->method = $method;

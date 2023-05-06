@@ -12,11 +12,11 @@ class InputBag
 {
     /**
      * Parameter storage.
-     * @var ?mixed[] $parameters
+     * @var ?mixed $parameters
      */
     private $parameters;
 
-    /** @param ?mixed[] $parameters */
+    /** @param ?mixed $parameters */
     public function __construct($parameters = null)
     {
         $this->parameters = $parameters;
@@ -43,7 +43,7 @@ class InputBag
             $value = $default;
         }
 
-        if ($value !== null && $this !== $value && !\is_scalar($value)) {
+        if ($value !== null && !\is_scalar($value)) {
             throw new BadRequestException(sprintf('Input value "%s" contains a non-scalar value.', $key));
         }
 
@@ -72,7 +72,7 @@ class InputBag
     /**
      * Sets an input by name.
      *
-     * @param ?mixed[] $value
+     * @param ?mixed $value
      * @throws InvalidArgumentException
      */
     public function set(string $key, $value): void
