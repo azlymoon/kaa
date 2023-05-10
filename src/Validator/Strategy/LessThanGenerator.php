@@ -38,7 +38,7 @@ if (%s >= %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'This value should be less than {{ compared_value }}.';
+        $message = $assert->message;
         $message = preg_replace('/{{ compared_value }}/', (string)$assert->value, $message);
         $code = sprintf(
             $code,

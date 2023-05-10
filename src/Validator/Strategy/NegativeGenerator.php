@@ -36,7 +36,7 @@ class NegativeGenerator implements AssertGeneratorInterface
         return (new LessThanGenerator())->generateAssert(
             new LessThan(
                 value: 0,
-                message: $assert->message ?? 'This value should be negative.',
+                message: $assert->message,
             ),
             $reflectionProperty,
             $modelVar,

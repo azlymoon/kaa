@@ -36,7 +36,7 @@ class NegativeOrZeroGenerator implements AssertGeneratorInterface
         return (new LessThanOrEqualGenerator())->generateAssert(
             new LessThanOrEqual(
                 value: 0,
-                message: $assert->message ?? 'This value should be negative or zero.',
+                message: $assert->message,
             ),
             $reflectionProperty,
             $modelVar,

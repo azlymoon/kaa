@@ -39,7 +39,7 @@ if ('' !== %s && null !== %s) {
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-            $message = $assert->message ?? 'This value should be blank.';
+            $message = $assert->message;
             $code = sprintf(
                 $code,
                 $accessCode,
@@ -55,7 +55,7 @@ if ('' !== %s) {
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-            $message = $assert->message ?? 'This value should be blank.';
+            $message = $assert->message;
             $code = sprintf(
                 $code,
                 $accessCode,

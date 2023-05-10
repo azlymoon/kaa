@@ -36,7 +36,7 @@ class PositiveGenerator implements AssertGeneratorInterface
         return (new GreaterThanGenerator())->generateAssert(
             new GreaterThan(
                 value: 0,
-                message: $assert->message ?? 'This value should be positive.',
+                message: $assert->message,
             ),
             $reflectionProperty,
             $modelVar,

@@ -11,12 +11,12 @@ readonly class Email extends Assert
 {
     /**
      * @param string $mode
-     * @param string|null $message
+     * @param string $message
      * @param string[] $allowTypes
      */
     public function __construct(
         public string $mode = 'loose',
-        public ?string $message = null,
+        public string $message = 'This value is not a valid email address.',
         protected array $allowTypes = ['string'],
     ) {
     }

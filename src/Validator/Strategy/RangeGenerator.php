@@ -38,7 +38,7 @@ if (%s >= %s && %s <= %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'The value must lie in the range from {{ min }} to {{ max }}';
+        $message = $assert->message;
         $message = preg_replace('/{{ min }}/', (string)$assert->min, $message);
         $message = preg_replace('/{{ max }}/', (string)$assert->max, $message);
         $code = sprintf(

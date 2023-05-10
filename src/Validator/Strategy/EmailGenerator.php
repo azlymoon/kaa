@@ -60,7 +60,7 @@ if (!preg_match("%s", %s)){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-            $message = $assert->message ?? 'This value is not a valid email address.';
+            $message = $assert->message;
             $code  = sprintf(
                 $code,
                 self::EMAIL_PATTERNS[$assert->mode],

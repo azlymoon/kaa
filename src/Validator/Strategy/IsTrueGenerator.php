@@ -38,7 +38,7 @@ if (true !== %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'This value should be true.';
+        $message = $assert->message;
         $code = sprintf(
             $code,
             $accessCode,

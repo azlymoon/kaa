@@ -10,13 +10,13 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class LessThanOrEqual extends Assert
 {
     /**
-     * @param int $value
-     * @param string|null $message
+     * @param int|float $value
+     * @param string $message
      * @param string[] $allowTypes
      */
     public function __construct(
-        public int $value,
-        public ?string $message = null,
+        public int|float $value,
+        public string $message = 'This value should be less than or equal to {{ compared_value }}.',
         protected array $allowTypes = ['int', 'float'],
     ) {
     }

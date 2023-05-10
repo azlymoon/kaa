@@ -14,13 +14,13 @@ readonly class Url extends Assert
     /**
      * @param string[] $protocols
      * @param bool $relativeProtocol
-     * @param string|null $message
+     * @param string $message
      * @param string[] $allowTypes
      */
     public function __construct(
         public array $protocols = ['http', 'https'],
         public bool $relativeProtocol = false,
-        public ?string $message = null,
+        public string $message = 'This value is not a valid URL.',
         protected array $allowTypes = ['string'],
     ) {
     }

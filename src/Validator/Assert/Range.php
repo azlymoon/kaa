@@ -10,15 +10,15 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Range extends Assert
 {
     /**
-     * @param int $min
-     * @param int $max
-     * @param string|null $message
+     * @param int|float $min
+     * @param int|float $max
+     * @param string $message
      * @param string[] $allowTypes
      */
     public function __construct(
-        public int $min,
-        public int $max,
-        public ?string $message = null,
+        public int|float $min,
+        public int|float $max,
+        public string $message = 'The value must lie in the range from {{ min }} to {{ max }}',
         protected array $allowTypes = ['int', 'float'],
     ) {
     }

@@ -10,12 +10,12 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class Blank extends Assert
 {
     /**
-     * @param string|null $message
+     * @param string $message
      * @param bool $allowNull
      * @param string[] $allowTypes
      */
     public function __construct(
-        public ?string $message = null,
+        public string $message = 'This value should be blank.',
         public bool $allowNull = false,
         private array $allowTypes = ['string'],
     ) {

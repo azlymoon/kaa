@@ -10,11 +10,11 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 readonly class PositiveOrZero extends Assert
 {
     /**
-     * @param string|null $message
+     * @param string $message
      * @param string[] $allowTypes
      */
     public function __construct(
-        public ?string $message = null,
+        public string $message = 'This value should be positive or zero.',
         protected array $allowTypes = ['int', 'float'],
     ) {
     }

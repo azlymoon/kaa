@@ -38,7 +38,7 @@ if (null === %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
-        $message = $assert->message ?? 'This value should not be null.';
+        $message = $assert->message;
         $code = sprintf(
             $code,
             $accessCode,
