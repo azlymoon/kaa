@@ -465,6 +465,49 @@ class Response
         return $this->charset;
     }
 
+    public function hasVary(): bool
+    {
+        return null !== $this->headers->get('Vary');
+    }
+
+    /**
+     * Returns an array of header names given in the Vary header.
+     * @return string[]
+     * @final
+     */
+    public function getVary(): array
+    {
+        if (!$vary = $this->headers->all('Vary')) {
+            return [];
+        }
+
+        $ret = [];
+        foreach ($vary as $item) {
+            $ret[] = preg_split('/[\s,]+/', $item);
+        }
+        if ($ret[0] === false) {
+            $ret = [];
+        }
+
+        return array_merge([], ...$ret);
+    }
+
+    /**
+     * Sets the Vary header.
+     * @param string|string[] $headers
+     * @param bool $replace Whether to replace the actual value or not (true by default)
+     *
+     * @return Response $this
+     *
+     * @final
+     */
+    public function setVary(array|string $headers, bool $replace = true): Response
+    {
+        $this->headers->set('Vary', $headers, $replace);
+
+        return $this;
+    }
+
     /**
      * Returns true if the response includes headers that can be used to validate
      * the response with the origin server using a conditional GET request.
