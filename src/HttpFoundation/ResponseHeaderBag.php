@@ -16,9 +16,8 @@ class ResponseHeaderBag extends HeaderBag
     public const DISPOSITION_ATTACHMENT = 'attachment';
     public const DISPOSITION_INLINE = 'inline';
 
-
-    /** @var mixed $computedCacheControl */
-    protected $computedCacheControl = [];
+    /** @var (string|true|false)[] $computedCacheControl */
+    protected array $computedCacheControl = [];
 
     /** @var mixed $cookies */
     protected $cookies = [];
@@ -52,6 +51,11 @@ class ResponseHeaderBag extends HeaderBag
         }
 
         return $headers;
+    }
+
+    public function getCacheControlDirective(string $key): bool|string|null
+    {
+        return $this->computedCacheControl[$key] ?? null;
     }
 
     public function allPreserveCaseWithoutCookies(): array

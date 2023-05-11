@@ -2,6 +2,10 @@
 
 namespace Kaa\HttpFoundation;
 
+use RuntimeException;
+
+use function in_array;
+
 /**
  * Многое уже сделано, чтобы обеспечить функционал чуть выше минимального.
  * Многое нужно ещё сделать для безопасности и удобства использования.
@@ -477,10 +481,10 @@ class Response
      */
     public function getVary(): array
     {
-        if (!$vary = $this->headers->all('Vary')) {
+        $vary = $this->headers->all('Vary');
+        if (empty($vary)) {
             return [];
         }
-
         $ret = [];
         foreach ($vary as $item) {
             $ret[] = preg_split('/[\s,]+/', $item);
@@ -488,8 +492,102 @@ class Response
         if ($ret[0] === false) {
             $ret = [];
         }
-
         return array_merge([], ...$ret);
+    }
+
+    /**
+     * Returns true if the response may safely be kept in a shared (surrogate) cache.
+     *
+     * Responses marked "private" with an explicit Cache-Control directive are
+     * considered uncacheable.
+     *
+     * Responses with neither a freshness lifetime (Expires, max-age) nor cache
+     * validator (Last-Modified, ETag) are considered uncacheable because there is
+     * no way to tell when or how to remove them from the cache.
+     *
+     * Note that RFC 7231 and RFC 7234 possibly allow for a more permissive implementation,
+     * for example "status codes that are defined as cacheable by default [...]
+     * can be reused by a cache with heuristic expiration unless otherwise indicated"
+     * (https://tools.ietf.org/html/rfc7231#section-6.1)
+     *
+     * @final
+     */
+    public function isCacheable(): bool
+    {
+        if (!in_array($this->statusCode, [200, 203, 300, 301, 302, 404, 410])) {
+            return false;
+        }
+
+        if (
+            $this->headers->hasCacheControlDirective('no-store') ||
+            !empty($this->headers->getCacheControlDirective('private'))
+        ) {
+            return false;
+        }
+
+        return $this->isValidateable() || $this->isFresh();
+    }
+
+    public function isFresh(): bool
+    {
+        return $this->getTtl() > 0;
+    }
+
+    public function getTtl(): ?int
+    {
+        $maxAge = $this->getMaxAge();
+
+        return null !== $maxAge ? max($maxAge - $this->getAge(), 0) : null;
+    }
+
+    public function getAge(): int
+    {
+        if (null !== $age = $this->headers->get('Age')) {
+            return (int) $age;
+        }
+
+        return max(time() - (int) $this->getDate()->format('U'), 0);
+    }
+
+    /**
+     * Returns the Date header as a DateTime instance.
+     *
+     * @throws RuntimeException When the header is not parseable
+     *
+     * @final
+     */
+    public function getDate(): ?\DateTimeInterface
+    {
+        return $this->headers->getDate('Date');
+    }
+
+    public function getMaxAge(): ?int
+    {
+        if ($this->headers->hasCacheControlDirective('s-maxage')) {
+            return (int) $this->headers->getCacheControlDirective('s-maxage');
+        }
+
+        if ($this->headers->hasCacheControlDirective('max-age')) {
+            return (int) $this->headers->getCacheControlDirective('max-age');
+        }
+
+        if (null !== $expires = $this->getExpires()) {
+            $maxAge = (int) $expires->format('U') - (int) $this->getDate()->format('U');
+
+            return max($maxAge, 0);
+        }
+
+        return null;
+    }
+
+    public function getExpires(): ?\DateTimeInterface
+    {
+        try {
+            return $this->headers->getDate('Expires');
+        } catch (\RuntimeException) {
+            // according to RFC 2616 invalid date formats (e.g. "0" and "-1") must be treated as in the past
+            return \DateTime::createFromFormat('U', time() - 172800);
+        }
     }
 
     /**
@@ -610,6 +708,6 @@ class Response
      */
     public function isEmpty(): bool
     {
-        return \in_array($this->statusCode, [204, 304]);
+        return in_array($this->statusCode, [204, 304]);
     }
 }
