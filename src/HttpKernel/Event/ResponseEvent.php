@@ -2,10 +2,8 @@
 
 namespace Kaa\HttpKernel\Event;
 
-use Kaa\EventDispatcher\Event;
 use Kaa\HttpFoundation\Request;
 use Kaa\HttpKernel\HttpKernelInterface;
-use Kaa\HttpKernel\Response\ResponseInterface;
 use Kaa\HttpFoundation\Response;
 
 class ResponseEvent extends KernelEvent
