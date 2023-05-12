@@ -144,12 +144,13 @@ class HeaderBag
         $key = strtr((string)$key, self::UPPER, self::LOWER);
 
         if (is_array($values)) {
-            $values = array_map('strval', array_values($values));
+            /** @var string[] $str_values */
+            $str_values = array_map('strval', array_values($values));
 
             if ($replace === true || !isset($this->headers[$key])) {
-                $this->headers[$key] = $values;
+                $this->headers[$key] = $str_values;
             } else {
-                $this->headers[$key] = array_merge($this->headers[$key], $values);
+                $this->headers[$key] = array_merge($this->headers[$key], $str_values);
             }
         } else {
             if ($replace === true || !isset($this->headers[$key])) {

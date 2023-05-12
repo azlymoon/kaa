@@ -146,7 +146,7 @@ class ParameterBag
     {
         if (isset($this->parameters[$key])) {
             $value = strtolower($this->parameters[$key]);
-            return $value === 'true';
+            return $value === 'true' || $value === 'on' || $value === '1' || $value === 'yes';
         }
 
         return $default;
