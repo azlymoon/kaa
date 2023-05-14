@@ -73,7 +73,7 @@ class IpUtils
             return self::$checkedIps[$cacheKey];
         }
 
-        $regexIpV4 = '(?:\d{1,3}\.){3}\d{1,3}';
+        $regexIpV4 = '([0-9]{1,3}[\.]){3}[0-9]{1,3}';
 
         if (!(bool)preg_match("/^{$regexIpV4}$/", $requestIp)) {
             return self::$checkedIps[$cacheKey] = false;
