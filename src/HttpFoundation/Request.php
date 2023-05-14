@@ -246,7 +246,7 @@ class Request
         /** @var string[] $filesArray */
         $filesArray = array_map('strval', $filesStringValues);
 
-        /** @var array $serverStringValues */
+        /** @var mixed $serverStringValues */
         $serverStringValues = array_filter($_SERVER, function ($value) {
             return !\is_array($value);
         });
