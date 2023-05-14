@@ -3,6 +3,7 @@
 namespace Kaa\HttpFoundation;
 
 //use DateTime;
+use DateTime;
 
 /**
  * Компонент полностью реализован в соответствии с HttpFoundation
@@ -195,28 +196,29 @@ class HeaderBag
         }
     }
 
-//    /**
-//     * Returns the HTTP header value converted to a date.
-//     *
-//     *
-//     *
-//     * @throws \RuntimeException When the HTTP header is not parseable
-//     */
-//    public function getDate(string $key, ?DateTime $default = null): DateTime|false|null
-//    {
-//        $value = $this->get($key);
-//        if ($value === null) {
-//            return $default;
-//        }
-//
-//        # The KPHP create from format function returns null|\DateTime
-//        $date = DateTime::createFromFormat(\DATE_RFC2822, $value);
-//        if (!isset($date)) {
-//            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
-//        }
-//
-//        return $date;
-//    }
+    /**
+     * Returns the HTTP header value converted to a date.
+     *
+     *
+     *
+     * @throws \RuntimeException When the HTTP header is not parseable
+     */
+    public function getDate(string $key, ?DateTime $default = null): DateTime|null
+    {
+        $value = $this->get($key);
+        if ($value === null) {
+            return $default;
+        }
+
+        # The KPHP create from format function returns null|\DateTime
+        $date = DateTime::createFromFormat(\DATE_RFC2822, $value);
+        if (!(bool)$date) {
+            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
+        }
+
+        return $date;
+    }
+
 //
 //    /**
 //     * Adds a custom Cache-Control directive.

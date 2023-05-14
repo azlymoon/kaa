@@ -14,7 +14,7 @@ use Kaa\HttpFoundation\Response;
 use Kaa\HttpFoundation\Request;
 use Throwable;
 
-class HttpKernel
+class HttpKernel implements HttpKernelInterface
 {
     private EventDispatcherInterface $eventDispatcher;
 

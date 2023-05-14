@@ -2,26 +2,18 @@
 
 namespace Kaa\HttpKernel\Event;
 
-use Kaa\EventDispatcher\Event;
 use Kaa\HttpFoundation\Request;
-use Kaa\HttpKernel\Response\ResponseInterface;
+use Kaa\HttpKernel\HttpKernelInterface;
 use Kaa\HttpFoundation\Response;
 
-class ResponseEvent extends Event
+class ResponseEvent extends KernelEvent
 {
-    private Request $request;
-
     private Response $response;
 
-    public function __construct(Request $request, Response $response)
+    public function __construct(HttpKernelInterface $kernel, Request $request, int $requestType, Response $response)
     {
-        $this->request = $request;
-        $this->response = $response;
-    }
-
-    public function getRequest(): Request
-    {
-        return $this->request;
+        parent::__construct($kernel, $request, $requestType);
+        $this->setResponse($response);
     }
 
     public function getResponse(): Response
