@@ -82,9 +82,10 @@ class ParameterBag
         return $default;
     }
 
-    public function set(string $key, string $value): void
+    /** @param boolean|string $value */
+    public function set(string $key, $value): void
     {
-        $this->parameters[$key] = $value;
+        $this->parameters[$key] = (string)$value;
     }
 
     /**

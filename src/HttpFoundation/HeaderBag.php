@@ -15,7 +15,7 @@ class HeaderBag
     protected const LOWER = '-abcdefghijklmnopqrstuvwxyz';
 
     /** @var string[][] $headers */
-    protected $headers;
+    protected $headers = [];
 
     /** @var string[] $cacheControl */
     protected $cacheControl = [];
@@ -72,7 +72,7 @@ class HeaderBag
      * Returns the headers.
      *
      * @param ?string $key The name of the headers to return or null to get them all
-     * @return mixed
+     * @return string[]|string[][]
      */
     public function all(?string $key = null)
     {
@@ -121,10 +121,6 @@ class HeaderBag
     {
         $headers = $this->all($key);
 
-        if (is_string($headers)) {
-            return $headers;
-        }
-
         if (count($headers) === 0) {
             return $default;
         }
@@ -152,12 +148,10 @@ class HeaderBag
             } else {
                 $this->headers[$key] = array_merge($this->headers[$key], $str_values);
             }
+        } elseif ($replace === true || !isset($this->headers[$key])) {
+            $this->headers[$key] = [(string)$values];
         } else {
-            if ($replace === true || !isset($this->headers[$key])) {
-                $this->headers[$key] = [(string)$values];
-            } else {
-                $this->headers[$key][] = (string)$values;
-            }
+            $this->headers[$key][] = (string)$values;
         }
 //
 //        if ('cache-control' === $key) {

@@ -2,6 +2,7 @@
 
 namespace Kaa\HttpFoundation;
 
+use Kaa\HttpFoundation\Exception\ConflictingHeadersException;
 use Kaa\HttpFoundation\Exception\BadRequestException;
 use Kaa\HttpFoundation\Exception\JsonException;
 use Kaa\HttpFoundation\Exception\SuspiciousOperationException;
@@ -25,17 +26,26 @@ class Request
     # In KPHP, there is not yet a predefined constant directory_separator
     public const DIRECTORY_SEPARATOR = "/";
 
-//    public const HEADER_FORWARDED = 0b000001; // When using RFC 7239
-
-    public const HEADER_X_FORWARDED_PROTO = 0b001000;
-
-//    public const HEADER_X_FORWARDED_PORT = 0b010000;
-//
-//    public const HEADER_X_FORWARDED_PREFIX = 0b100000;
-
+    public const HEADER_FORWARDED = 0b000001; // When using RFC 7239
     public const HEADER_X_FORWARDED_FOR = 0b000010;
+    public const HEADER_X_FORWARDED_HOST = 0b000100;
+    public const HEADER_X_FORWARDED_PROTO = 0b001000;
+    public const HEADER_X_FORWARDED_PORT = 0b010000;
+    public const HEADER_X_FORWARDED_PREFIX = 0b100000;
 
-//    public const HEADER_X_FORWARDED_HOST = 0b000100;
+    public const HEADER_X_FORWARDED_AWS_ELB = 0b0011010; // AWS ELB doesn't send X-Forwarded-Host
+    public const HEADER_X_FORWARDED_TRAEFIK = 0b0111110; // All "X-Forwarded-*" headers sent by Traefik reverse proxy
+
+    public const METHOD_HEAD = 'HEAD';
+    public const METHOD_GET = 'GET';
+    public const METHOD_POST = 'POST';
+    public const METHOD_PUT = 'PUT';
+    public const METHOD_PATCH = 'PATCH';
+    public const METHOD_DELETE = 'DELETE';
+    public const METHOD_PURGE = 'PURGE';
+    public const METHOD_OPTIONS = 'OPTIONS';
+    public const METHOD_TRACE = 'TRACE';
+    public const METHOD_CONNECT = 'CONNECT';
 
     /** @var string[] */
     protected static $trustedProxies = [];
@@ -98,8 +108,7 @@ class Request
      */
     public HeaderBag $headers;
 
-    /** @var string|false|null */
-    private $content;
+    private ?string $content;
 
     /** @var ?string[] */
     private $languages;
@@ -130,35 +139,36 @@ class Request
 
     private bool $isHostValid = true;
 
-//    private bool $isForwardedValid = true;
-    private bool $isSafeContentPreferred;
+    private bool $isForwardedValid = true;
+
+    private ?bool $isSafeContentPreferred = null;
 
     private static int $trustedHeaderSet = -1;
 
-//    private const FORWARDED_PARAMS = [
-//        self::HEADER_X_FORWARDED_FOR => 'for',
-//        self::HEADER_X_FORWARDED_HOST => 'host',
-//        self::HEADER_X_FORWARDED_PROTO => 'proto',
-//        self::HEADER_X_FORWARDED_PORT => 'host',
-//    ];
+    private const FORWARDED_PARAMS = [
+        self::HEADER_X_FORWARDED_FOR => 'for',
+        self::HEADER_X_FORWARDED_HOST => 'host',
+        self::HEADER_X_FORWARDED_PROTO => 'proto',
+        self::HEADER_X_FORWARDED_PORT => 'host',
+    ];
 
-//    /**
-//     * Names for headers that can be trusted when
-//     * using trusted proxies.
-//     *
-//     * The FORWARDED header is the standard as of rfc7239.
-//     *
-//     * The other headers are non-standard, but widely used
-//     * by popular reverse proxies (like Apache mod_proxy or Amazon EC2).
-//     */
-//    private const TRUSTED_HEADERS = [
-//        self::HEADER_FORWARDED => 'FORWARDED',
-//        self::HEADER_X_FORWARDED_FOR => 'X_FORWARDED_FOR',
-//        self::HEADER_X_FORWARDED_HOST => 'X_FORWARDED_HOST',
-//        self::HEADER_X_FORWARDED_PROTO => 'X_FORWARDED_PROTO',
-//        self::HEADER_X_FORWARDED_PORT => 'X_FORWARDED_PORT',
-//        self::HEADER_X_FORWARDED_PREFIX => 'X_FORWARDED_PREFIX',
-//    ];
+    /**
+     * Names for headers that can be trusted when
+     * using trusted proxies.
+     *
+     * The FORWARDED header is the standard as of rfc7239.
+     *
+     * The other headers are non-standard, but widely used
+     * by popular reverse proxies (like Apache mod_proxy or Amazon EC2).
+     */
+    private const TRUSTED_HEADERS = [
+        self::HEADER_FORWARDED => 'FORWARDED',
+        self::HEADER_X_FORWARDED_FOR => 'X_FORWARDED_FOR',
+        self::HEADER_X_FORWARDED_HOST => 'X_FORWARDED_HOST',
+        self::HEADER_X_FORWARDED_PROTO => 'X_FORWARDED_PROTO',
+        self::HEADER_X_FORWARDED_PORT => 'X_FORWARDED_PORT',
+        self::HEADER_X_FORWARDED_PREFIX => 'X_FORWARDED_PREFIX',
+    ];
 
     /**
      * @param string[]             $query      The GET parameters
@@ -167,7 +177,9 @@ class Request
      * @param string[]             $cookies    The COOKIE parameters
      * @param string[]             $files      The FILES parameters
      * @param string[]             $server     The SERVER parameters
-     * @param string|false|null    $content    The raw body data
+     * @param string|null|false    $content    The raw body data.
+     * The type false is forced, because $contnent can pass the result of json_encode,
+     * but in KPHP it returns string|false. Then false will be replaced by null
      */
     public function __construct(
         $query = [],
@@ -192,7 +204,7 @@ class Request
      * @param string[]             $cookies    The COOKIE parameters
      * @param string[]             $files      The FILES parameters
      * @param string[]             $server     The SERVER parameters
-     * @param string|false|null    $content    The raw body data
+     * @param string|null|false    $content    The raw body data
      */
     public function initialize(
         $query = [],
@@ -211,7 +223,12 @@ class Request
         $this->server = new ServerBag($server);
         $this->headers = new HeaderBag($this->server->getHeaders());
 
-        $this->content = $content;
+        if ($content === false) {
+            $this->content = null;
+        } else {
+            $this->content = $content;
+        }
+
         $this->languages = null;
         $this->charsets = null;
         $this->encodings = null;
@@ -227,7 +244,7 @@ class Request
     /**
      * Creates a new request with values from PHP's super globals.
      */
-    public static function createFromGlobals(): self
+    public static function createFromGlobals(): static
     {
         /** @var string[] $getArray */
         $getArray = array_map('strval', $_GET);
@@ -287,7 +304,7 @@ class Request
      * @param string[]             $cookies    The request cookies ($_COOKIE)
      * @param string[]             $files      The request files ($_FILES)
      * @param string[]             $server     The server parameters ($_SERVER)
-     * @param string|false|null    $content    The raw body data
+     * @param ?string              $content    The raw body data
      */
     public static function create(
         $uri,
@@ -516,7 +533,7 @@ class Request
     {
         $this->server->set(
             'QUERY_STRING',
-            static::normalizeQueryString(http_build_query($this->query->all(), '', '&'))
+            self::normalizeQueryString(http_build_query($this->query->all(), '', '&'))
         );
 
         $_GET = $this->query->all();
@@ -524,7 +541,7 @@ class Request
         $_SERVER = $this->server->all();
         $_COOKIE = $this->cookies->all();
 
-        if ($this->headers->all() !== null) {
+        if (count($this->headers->all()) !== 0) {
             foreach ($this->headers->all() as $key => $value) {
                 $count = 0;
                 $key = strtoupper(str_replace('-', '_', $key, $count));
@@ -569,24 +586,67 @@ class Request
     public static function setTrustedProxies($proxies, int $trustedHeaderSet): void
     {
         if ($proxies === null) {
-            $proxies = [];
+            self::$trustedProxies = [];
+            self::$trustedHeaderSet = $trustedHeaderSet;
+            return;
         }
 
-        /** @var mixed $proxiesMixed */
-        $proxiesMixed = array_reduce($proxies, static function ($proxies, $proxy) {
+        self::$trustedProxies = array_reduce($proxies, static function ($proxies, $proxy) {
             if ($proxy !== 'REMOTE_ADDR') {
-                $proxies = $proxy;
+                $proxies[] = (string)$proxy;
             } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-                $proxies = $_SERVER['REMOTE_ADDR'];
+                $proxies[] = (string)$_SERVER['REMOTE_ADDR'];
             }
 
             return $proxies;
         }, []);
-
-        $proxies = (string)$proxiesMixed;
-
-        self::$trustedProxies = [$proxies];
         self::$trustedHeaderSet = $trustedHeaderSet;
+    }
+
+    /**
+     * Gets the list of trusted proxies.
+     *
+     * @return string[]
+     */
+    public static function getTrustedProxies()
+    {
+        return self::$trustedProxies;
+    }
+
+    /**
+     * Gets the set of trusted headers from trusted proxies.
+     *
+     * @return int A bit field of Request::HEADER_* that defines which headers are trusted from your proxies
+     */
+    public static function getTrustedHeaderSet(): int
+    {
+        return self::$trustedHeaderSet;
+    }
+
+    /**
+     * Sets a list of trusted host patterns.
+     *
+     * You should only list the hosts you manage using regexs.
+     *
+     * @param string[] $hostPatterns A list of trusted host patterns
+     */
+    public static function setTrustedHosts($hostPatterns)
+    {
+        self::$trustedHostPatterns = array_map(function ($hostPattern) {
+            return sprintf('{%s}i', $hostPattern);
+        }, $hostPatterns);
+        // we need to reset trusted hosts on trusted host patterns change
+        self::$trustedHosts = [];
+    }
+
+    /**
+     * Gets the list of trusted host patterns.
+     *
+     * @return string[]
+     */
+    public static function getTrustedHosts()
+    {
+        return self::$trustedHostPatterns;
     }
 
     /**
@@ -621,6 +681,21 @@ class Request
     public static function enableHttpMethodParameterOverride(): void
     {
         self::$httpMethodParameterOverride = true;
+    }
+
+    /**
+     *   This feature is not in Symfony/HttpFoundation, but it is used in some tests and is implemented like this:
+     *
+     *   private function disableHttpMethodParameterOverride()
+     *   {
+     *       $class = new \ReflectionClass(Request::class);
+     *       $property = $class->getProperty('httpMethodParameterOverride');
+     *       $property->setValue(false);
+     *   }
+     */
+    public static function disableHttpMethodParameterOverride(): void
+    {
+        self::$httpMethodParameterOverride = false;
     }
 
     /**
@@ -721,19 +796,17 @@ class Request
      * Use this method carefully; you should use getClientIp() instead.
      *
      * @see getClientIp()
-     * @return string[]
+     * @return (?string)[]
      */
     public function getClientIps()
     {
         $ip = $this->server->get('REMOTE_ADDR');
 
-        if ($ip === null) {
-            return [''];
+        if (!$this->isFromTrustedProxy()) {
+            return [$ip];
         }
 
-        return [$ip];
-
-        // fixme: this method has reduced functionality
+        return $this->getTrustedValues(self::HEADER_X_FORWARDED_FOR, $ip) ?: [$ip];
     }
 
     /**
@@ -817,7 +890,11 @@ class Request
     {
         $trustedPrefix = '';
 
-        // fixme: this method has reduced functionality
+        // the proxy prefix must be prepended to any prefix being needed at the webserver level
+        $trustedPrefixValues = $this->getTrustedValues(self::HEADER_X_FORWARDED_PREFIX);
+        if ($this->isFromTrustedProxy() && (count($trustedPrefixValues) !== 0)) {
+            $trustedPrefix = rtrim($trustedPrefixValues[0], '/');
+        }
 
         return $trustedPrefix . $this->getBaseUrlReal();
     }
@@ -856,13 +933,19 @@ class Request
      */
     public function getPort(): int
     {
-        // fixme: this method has reduced functionality
-        $host = $this->headers->get('HOST');
-        if (!(bool)$host) {
-            return (int)$this->server->get('SERVER_PORT');
-        }
+        $hostTrustedPort = $this->getTrustedValues(self::HEADER_X_FORWARDED_PORT);
+        $hostTrustedHost = $this->getTrustedValues(self::HEADER_X_FORWARDED_HOST);
+        $hostHeadersGet = $this->headers->get('HOST');
 
-        $host = (string)$host;
+        if ($this->isFromTrustedProxy() && (count($hostTrustedPort) !== 0)) {
+            $host = $hostTrustedPort[0];
+        } elseif ($this->isFromTrustedProxy() && (count($hostTrustedHost) !== 0)) {
+            $host = $hostTrustedHost[0];
+        } elseif ($hostHeadersGet  === null) {
+            return (int)$this->server->get('SERVER_PORT');
+        } else {
+            $host = $hostHeadersGet;
+        }
 
         if ($host[0] === '[') {
             $pos = strpos($host, ':', (int)strrpos($host, ']'));
@@ -1052,7 +1135,7 @@ class Request
      */
     public function getQueryString(): ?string
     {
-        $qs = static::normalizeQueryString($this->server->get('QUERY_STRING'));
+        $qs = self::normalizeQueryString($this->server->get('QUERY_STRING'));
 
         if ($qs === '') {
             return null;
@@ -1070,7 +1153,10 @@ class Request
      */
     public function isSecure(): bool
     {
-        // fixme: this method has reduced functionality
+        $proto = $this->getTrustedValues(self::HEADER_X_FORWARDED_PROTO);
+        if ($this->isFromTrustedProxy() && (count($proto) !== 0)) {
+            return \in_array(strtolower($proto[0]), ['https', 'on', 'ssl', '1'], true);
+        }
 
         $https = $this->server->get('HTTPS');
 
@@ -1089,16 +1175,20 @@ class Request
      */
     public function getHost(): string
     {
-//      fixme: this method has reduced functionality
+        $trustedValues = $this->getTrustedValues(self::HEADER_X_FORWARDED_HOST);
 
-        $host = $this->headers->get('HOST');
-
-        if (!(bool)$host) {
-            $host = $this->server->get('SERVER_NAME');
-            if (!(bool)$host) {
-                $host = $this->server->get('SERVER_ADDR', '');
+        if ($this->isFromTrustedProxy() && (count($trustedValues) !== 0)) {
+            $host = (string)$trustedValues[0];
+        } else {
+            $host = $this->headers->get('HOST');
+            if ($host === null) {
+                $host = $this->server->get('SERVER_NAME');
+                if ($host === null) {
+                    $host = $this->server->get('SERVER_ADDR', '');
+                }
             }
         }
+
 
         // trim and remove port number from host
         // host is lowercase as per RFC 952/2181
@@ -1373,13 +1463,13 @@ class Request
      */
     public function getProtocolVersion(): ?string
     {
-//        if ($this->isFromTrustedProxy()) {
-        preg_match('~^(HTTP/)?([1-9]\.[0-9]) ~', $this->headers->get('Via') ?? '', $matches);
+        if ($this->isFromTrustedProxy()) {
+            preg_match('~^(HTTP/)?([1-9]\.[0-9]) ~', $this->headers->get('Via') ?? '', $matches);
 
-        if ($matches) {
-            return 'HTTP/' . $matches[2];
+            if (count($matches) !== 0) {
+                return 'HTTP/' . $matches[2];
+            }
         }
-//        }
 
         return (string)$this->server->get('SERVER_PROTOCOL');
     }
@@ -1396,16 +1486,17 @@ class Request
 
     /**
      * Returns the request body content.
-     *
-     * @return false|string|null
      */
-    public function getContent()
+    public function getContent(): ?string
     {
         // There is no resource type in KPHP
         // fixme: this method has reduced functionality
 
-        if ($this->content === null || $this->content === false) {
-            $this->content = file_get_contents('php://input');
+        if ($this->content === null) {
+            $fileGetContents = file_get_contents('php://input');
+            if ($fileGetContents !== false) {
+                $this->content = $fileGetContents;
+            }
         }
 
         return $this->content;
@@ -1655,17 +1746,18 @@ class Request
      */
     public function preferSafeContent(): bool
     {
-        if (isset($this->isSafeContentPreferred)) {
-            return $this->isSafeContentPreferred;
+        if ($this->isSafeContentPreferred !== null) {
+            return (bool)$this->isSafeContentPreferred;
         }
 
-        if (!$this->isSecure()) {
+        if ($this->isSecure() === false) {
+            $this->isSafeContentPreferred = false;
             // see https://tools.ietf.org/html/rfc8674#section-3
-            return $this->isSafeContentPreferred = false;
+            return false;
         }
 
         $this->isSafeContentPreferred = AcceptHeader::fromString($this->headers->get('Prefer'))->has('safe');
-        return $this->isSafeContentPreferred;
+        return (bool)$this->isSafeContentPreferred;
     }
 
     /*
@@ -1884,6 +1976,152 @@ class Request
 
         return null;
     }
+
+    /**
+     * Indicates whether this request originated from a trusted proxy.
+     *
+     * This can be useful to determine whether or not to trust the
+     * contents of a proxy-specific header.
+     */
+    public function isFromTrustedProxy(): bool
+    {
+        if (count(self::$trustedProxies) !== 0) {
+            return IpUtils::checkIp((string)$this->server->get('REMOTE_ADDR', ''), self::$trustedProxies);
+        }
+        return false;
+    }
+
+    /** @return string[] */
+    private function getTrustedValues(int $type, ?string $ip = null)
+    {
+        /** @var string[] $clientValues */
+        $clientValues = [];
+        /** @var string[] $forwardedValues */
+        $forwardedValues = [];
+
+        if ((bool)(self::$trustedHeaderSet & $type) && $this->headers->has(self::TRUSTED_HEADERS[$type])) {
+            foreach (explode(',', (string)$this->headers->get(self::TRUSTED_HEADERS[$type])) as $v) {
+                /** @var string[] $clientValues */
+                $clientValues[] = ($type === self::HEADER_X_FORWARDED_PORT ? '0.0.0.0:' : '') . trim($v);
+            }
+        }
+
+        if (
+            (bool)(self::$trustedHeaderSet & self::HEADER_FORWARDED) &&
+            (isset(self::FORWARDED_PARAMS[$type])) &&
+            $this->headers->has(self::TRUSTED_HEADERS[self::HEADER_FORWARDED])
+        ) {
+            $forwarded = $this->headers->get(self::TRUSTED_HEADERS[self::HEADER_FORWARDED]);
+            $parts = HeaderUtils::split((string)$forwarded, ',;=');
+            $param = self::FORWARDED_PARAMS[$type];
+            foreach ($parts as $subParts) {
+                $v = HeaderUtils::combine($subParts)[$param] ?? null;
+                if ($v === null) {
+                    continue;
+                }
+                if ($type === self::HEADER_X_FORWARDED_PORT) {
+                    $v = strrchr($v, ':');
+                    if (str_ends_with((string)$v, ']') || $v === false) {
+                        $v = $this->isSecure() ? ':443' : ':80';
+                    }
+                    $v = '0.0.0.0' . $v;
+                }
+                /** @var string[] $forwardedValues */
+                $forwardedValues[] = (string)$v;
+            }
+        }
+
+        if ($ip !== null) {
+            $clientValues = $this->normalizeAndFilterClientIps($clientValues, $ip);
+            $forwardedValues = $this->normalizeAndFilterClientIps($forwardedValues, $ip);
+        }
+
+        if ($forwardedValues === $clientValues || count($clientValues) === 0) {
+            return $forwardedValues;
+        }
+
+        if (count($forwardedValues) === 0) {
+            return $clientValues;
+        }
+
+        if (!$this->isForwardedValid) {
+            if ($ip !== null) {
+                return ['0.0.0.0', $ip];
+            }
+            /** @var string[] $stringArray */
+            $stringArray = [];
+            return $stringArray;
+        }
+        $this->isForwardedValid = false;
+
+        throw new ConflictingHeadersException(sprintf('The request has both a trusted "%s" header and a trusted "%s" header, conflicting with each other. You should either configure your proxy to remove one of them, or configure your project to distrust the offending one.', self::TRUSTED_HEADERS[self::HEADER_FORWARDED], self::TRUSTED_HEADERS[$type]));
+    }
+
+    /**
+     * @param string[] $clientIps
+     * @return string[]
+     */
+    private function normalizeAndFilterClientIps($clientIps, string $ip)
+    {
+        if (count($clientIps) === 0) {
+            /** @var string[] $stringArray */
+            $stringArray = [];
+            return $stringArray;
+        }
+        $clientIps[] = $ip; // Complete the IP chain with the IP the request actually came from
+        $firstTrustedIp = null;
+
+        foreach ($clientIps as $key => $clientIp) {
+            if (!\is_bool(strpos($clientIp, '.'))) {
+                // Strip :port from IPv4 addresses. This is allowed in Forwarded
+                // and may occur in X-Forwarded-For.
+                $i = strpos($clientIp, ':');
+                if (!\is_bool($i)) {
+                    $clientIp = (string)substr($clientIp, 0, $i);
+                    $clientIps[$key] = $clientIp;
+                }
+            } elseif (str_starts_with($clientIp, '[')) {
+                // Strip brackets and :port from IPv6 addresses.
+                $i = strpos($clientIp, ']', 1);
+                $clientIp = (string)substr($clientIp, 1, $i - 1);
+                $clientIps[$key] = $clientIp;
+            }
+
+            $regexIpV4 = '([0-9]{1,3}[\.]){3}[0-9]{1,3}';
+            $regexIpV6 = '(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))';
+
+
+            if (
+                (bool)preg_match("/^{$regexIpV4}$/", $clientIp, $matches) === false &&
+                (bool)preg_match("/^{$regexIpV6}$/", $clientIp, $matches) === false
+            ) {
+                unset($clientIps[$key]);
+
+                continue;
+            }
+
+            if (IpUtils::checkIp($clientIp, self::$trustedProxies)) {
+                unset($clientIps[$key]);
+
+                // Fallback to this when the client IP falls into the range of trusted proxies
+                $firstTrustedIp ??= $clientIp;
+            }
+        }
+
+        // Now the IP chain contains only untrusted proxies and the client IP
+        if (count($clientIps) !== 0) {
+            $arrayReverse = array_reverse($clientIps);
+            /** @var string[] $stringArrayRevers */
+            $stringArrayRevers = array_map('strval', $arrayReverse);
+            return $stringArrayRevers;
+        }
+        if ($firstTrustedIp === null) {
+            /** @var string[] $stringArray */
+            $stringArray = [];
+            return $stringArray;
+        }
+        return [$firstTrustedIp];
+    }
 }
 
 // TODO [+] Start TODO for Request.php
@@ -1906,7 +2144,6 @@ class Request
 //  - [] getLocale()
 
 // TODO [+] The create() method and tests for it:
-//getTrustedValues(
 // - TODO [-] Create ServerConfig class for server configuration variables in create() method
 //      - Это не имеет смысла, легче весь массив привести к string[],
 //        иначе приходится управляться и с представлением этих переменных и в массиве, и в классе.

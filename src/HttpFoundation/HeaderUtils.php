@@ -125,7 +125,7 @@ class HeaderUtils
      */
     public static function quote(string $s): string
     {
-        if (preg_match('/^[a-z0-9!#$%&\'*.^_`|~-]+$/i', $s)) {
+        if (preg_match('/^[a-z0-9!#$%&\'*.^_`|~-]+$/i', $s, $matches)) {
             return $s;
         }
 
@@ -169,7 +169,7 @@ class HeaderUtils
         }
 
         // filenameFallback is not ASCII.
-        if (!preg_match('/^[\x20-\x7e]*$/', $filenameFallback)) {
+        if (!preg_match('/^[\x20-\x7e]*$/', $filenameFallback, $matches)) {
             throw new \InvalidArgumentException('The filename fallback must only contain ASCII characters.');
         }
 
@@ -254,6 +254,29 @@ class HeaderUtils
 
         foreach ($qArray as $k => $v) {
             $k = (string) $k;
+
+//            fixme: The parse_str function currently works a bit differently in KPHP than it does in PHP.
+//                   If you pass a string to the function without a key for the value. For example foo=bar&=a=b&=x=y.
+//                   That is, foo=bar&(empty key)=a=b&(empty key)=x=y, then parse_str in KPHP will do this array:
+//
+//                   KPHP:
+//                        array(2) {
+//                          ["foo"]=>
+//                          string(3) "bar"
+//                          [""]=>
+//                          string(3) "x=y"
+//                        }
+//
+//                    PHP:
+//                        array(1) {
+//                          'foo' =>
+//                          string(3) "bar"
+//                        }
+
+            if ($k === '') {
+                continue;
+            }
+
             $i = strpos($k, '_');
             if ($i !== false) {
                 $query[substr_replace($k, hex2bin(substr($k, 0, $i)) . '[', 0, 1 + $i)] = $v;
