@@ -501,14 +501,19 @@ class Request
         $cookieHeader = '';
         $cookies = [];
 
-        // fixme: Add support for cookies
-//        foreach ($this->cookies as $k => $v) {
-//            $cookies[] = \is_array($v) ? http_build_query([$k => $v], '', '; ', \PHP_QUERY_RFC3986) : "$k=$v";
-//        }
+        foreach ($this->cookies->all() as $k => $v) {
+            if (\is_array($v)) {
+                $cookies[] = http_build_query([$k => $v], '', '; ', \PHP_QUERY_RFC3986);
+            } else {
+                $key = (string)$k;
+                $value = (string)$v;
+                $cookies[] = "{$key}={$value}";
+            }
+        }
 
-//        if ($cookies) {
-//            $cookieHeader = 'Cookie: ' . implode('; ', $cookies) . "\r\n";
-//        }
+        if (count($cookies) !== 0) {
+            $cookieHeader = 'Cookie: ' . implode('; ', $cookies) . "\r\n";
+        }
 
         return
             sprintf(
