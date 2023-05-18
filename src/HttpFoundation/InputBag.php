@@ -33,8 +33,11 @@ class InputBag
     public function get(string $key, $default = null)
     {
         if ($default !== null && !\is_scalar($default)) {
-            throw new InvalidArgumentException(sprintf('Expected a scalar value as a 2nd argument to "%s()",
-              "%s" given.', __METHOD__, gettype($default)));
+            throw new InvalidArgumentException(sprintf(
+                'Expected a scalar value as a 2nd argument to "%s()", "%s" given.',
+                __METHOD__,
+                gettype($default)
+            ));
         }
 
         if ($this->parameters !== null && \array_key_exists($key, $this->parameters)) {
@@ -50,25 +53,6 @@ class InputBag
         return $value;
     }
 
-//    /**
-//     * Replaces the current input values by a new set.
-//     */
-//    public function replace(array $inputs = [])
-//    {
-//        $this->parameters = [];
-//        $this->add($inputs);
-//    }
-//
-//    /**
-//     * Adds input values.
-//     */
-//    public function add(array $inputs = [])
-//    {
-//        foreach ($inputs as $input => $value) {
-//            $this->set($input, $value);
-//        }
-//    }
-
     /**
      * Sets an input by name.
      *
@@ -78,33 +62,16 @@ class InputBag
     public function set(string $key, $value): void
     {
         if ($value !== null && !\is_scalar($value) && !\is_array($value)) {
-            throw new InvalidArgumentException(sprintf('Expected a scalar, or an array as a 2nd argument to "%s()",
-            "%s" given.', __METHOD__, gettype($value)));
+            throw new InvalidArgumentException(sprintf(
+                'Expected a scalar, or an array as a 2nd argument to "%s()", "%s" given.',
+                __METHOD__,
+                gettype($value)
+            ));
         }
         $this->parameters[$key] = $value;
     }
 
-//    public function filter(string $key, mixed $default = null, int $filter = \FILTER_DEFAULT, mixed $options = []): mixed
-//    {
-//        $value = $this->has($key) ? $this->all()[$key] : $default;
-//
-//        // Always turn $options into an array - this allows filter_var option shortcuts.
-//        if (!\is_array($options) && $options) {
-//            $options = ['flags' => $options];
-//        }
-//
-//        if (\is_array($value) && !(($options['flags'] ?? 0) & (\FILTER_REQUIRE_ARRAY | \FILTER_FORCE_ARRAY))) {
-//            throw new BadRequestException(sprintf('Input value "%s" contains an array, but "FILTER_REQUIRE_ARRAY" or "FILTER_FORCE_ARRAY" flags were not set.', $key));
-//        }
-//
-//        if ((\FILTER_CALLBACK & $filter) && !(($options['options'] ?? null) instanceof \Closure)) {
-//            throw new \InvalidArgumentException(sprintf('A Closure must be passed to "%s()" when FILTER_CALLBACK is used, "%s" given.', __METHOD__, get_debug_type($options['options'] ?? null)));
-//        }
-//
-//        return filter_var($value, $filter, $options);
-//    }
-
-    // This methods from ParameterBag.php
+    // Methods from ParameterBag.php
 
     /**
      * Returns true if the parameter is defined.
@@ -116,7 +83,7 @@ class InputBag
      * @param ?string $key The name of the parameter to return or null to get them all
      * @return mixed
      */
-    public function all($key = null)
+    public function all(?string $key = null)
     {
         if ($key === null) {
             return $this->parameters;
