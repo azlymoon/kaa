@@ -90,6 +90,9 @@ $test->testGetHost();
 echo"\ntestGetPort\n";
 $test->testGetPort();
 
+echo"\ntestGetHostWithFakeHttpHostValue\n";
+$test->testGetHostWithFakeHttpHostValue();
+
 echo"\ntestGetSetMethod\n";
 $test->testGetSetMethod();
 
@@ -102,6 +105,9 @@ $test->testGetClientIps();
 echo"\ntestGetClientIpsForwarded\n";
 $test->testGetClientIpsForwarded();
 
+echo"\ntestGetClientIpsWithConflictingHeaders\n";
+$test->testGetClientIpsWithConflictingHeaders();
+
 echo"\ntestGetClientIpsOnlyXHttpForwardedForTrusted\n";
 $test->testGetClientIpsOnlyXHttpForwardedForTrusted();
 
@@ -110,6 +116,12 @@ $test->testGetClientIpsWithAgreeingHeaders();
 
 echo"\ntestGetContentWorksTwiceInDefaultMode\n";
 $test->testGetContentWorksTwiceInDefaultMode();
+
+echo"\ntestToArrayEmpty\n";
+$test->testToArrayEmpty();
+
+echo"\ntestToArrayNonJson\n";
+$test->testToArrayNonJson();
 
 echo"\ntestToArray\n";
 $test->testToArray();

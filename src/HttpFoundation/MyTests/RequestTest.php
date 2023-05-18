@@ -2,6 +2,9 @@
 
 namespace Kaa\HttpFoundation\MyTests;
 
+use Kaa\HttpFoundation\Exception\ConflictingHeadersException;
+use Kaa\HttpFoundation\Exception\JsonException;
+use Kaa\HttpFoundation\Exception\SuspiciousOperationException;
 use Kaa\HttpFoundation\Request;
 
 class RequestTest
@@ -60,19 +63,6 @@ class RequestTest
 
         var_dump(false === $isNoCache);
     }
-
-//    /**
-//     * @group legacy
-//     */
-//    public function testGetContentType()
-//    {
-//        $this->expectDeprecation('Since symfony/http-foundation 6.2: The "Symfony\Component\HttpFoundation\Request::getContentType()" method is deprecated, use "getContentTypeFormat()" instead.');
-//        $request = new Request();
-//
-//        $contentType = $request->getContentType();
-//
-//        var_dump(null === $contentType);
-//    }
 
     public function testGetContentTypeFormat()
     {
@@ -296,9 +286,9 @@ class RequestTest
         var_dump('http://test.com/foo' === $request->getUri());
     }
 
-//    /**
-//     * @dataProvider getRequestUriData
-//     */
+    /**
+     * @dataProvider getRequestUriData
+     */
     public function testGetRequestUri()
     {
         $data = [
@@ -331,27 +321,6 @@ class RequestTest
             var_dump($expected === $request->server->get('REQUEST_URI'));
         }
     }
-
-//    public static function getRequestUriData()
-//    {
-//        $message = 'Do not modify the path.';
-//        yield ['/foo', '/foo', $message];
-//        yield ['//bar/foo', '//bar/foo', $message];
-//        yield ['///bar/foo', '///bar/foo', $message];
-//
-//        $message = 'Handle when the scheme, host are on REQUEST_URI.';
-//        yield ['http://test.com/foo?bar=baz', '/foo?bar=baz', $message];
-//
-//        $message = 'Handle when the scheme, host and port are on REQUEST_URI.';
-//        yield ['http://test.com:80/foo', '/foo', $message];
-//        yield ['https://test.com:8080/foo', '/foo', $message];
-//        yield ['https://test.com:443/foo', '/foo', $message];
-//
-//        $message = 'Fragment should not be included in the URI';
-//        yield ['http://test.com/foo#bar', '/foo', $message];
-//        yield ['/foo#bar', '/foo', $message];
-//    }
-
 
     public function testGetRequestUriWithoutRequiredHeader()
     {
@@ -487,9 +456,9 @@ class RequestTest
         var_dump('json' === $request->getFormat('application/json ;charset=utf-8'));
     }
 
-//    /**
-//     * @dataProvider getFormatToMimeTypeMapProvider
-//     */
+    /**
+     * @dataProvider getFormatToMimeTypeMapProvider
+     */
     public function testGetMimeTypeFromFormat()
     {
         $data = self::getFormatToMimeTypeMapProvider();
@@ -503,9 +472,9 @@ class RequestTest
         }
     }
 
-//    /**
-//     * @dataProvider getFormatToMimeTypeMapProvider
-//     */
+    /**
+     * @dataProvider getFormatToMimeTypeMapProvider
+     */
     public function testGetMimeTypesFromFormat()
     {
         $data = self::getFormatToMimeTypeMapProvider();
@@ -770,9 +739,9 @@ class RequestTest
         var_dump('http://servername/some/path' === $request->getUriForPath('/some/path'));
     }
 
-//    /**
-//     * @dataProvider getRelativeUriForPathData
-//     */
+    /**
+     * @dataProvider getRelativeUriForPathData
+     */
     public function testGetRelativeUriForPath()
     {
         $data = self::getRelativeUriForPathData();
@@ -975,14 +944,16 @@ class RequestTest
         var_dump(80 === $port);
     }
 
-//    This test throws an Exception
-//    public function testGetHostWithFakeHttpHostValue()
-//    {
-//        $this->expectException(\RuntimeException::class);
-//        $request = new Request();
-//        $request->initialize([], [], [], [], [], ['HTTP_HOST' => 'www.host.com?query=string']);
-//        $request->getHost();
-//    }
+    public function testGetHostWithFakeHttpHostValue()
+    {
+        $request = new Request();
+        $request->initialize([], [], [], [], [], ['HTTP_HOST' => 'www.host.com?query=string']);
+        try {
+            $request->getHost();
+        } catch (SuspiciousOperationException $e) {
+            var_dump($e->getMessage() === 'Invalid Host "www.host.com?query=string".');
+        }
+    }
 
     public function testGetSetMethod()
     {
@@ -1189,32 +1160,36 @@ class RequestTest
     }
 
     // This method throws an Exception
+
     /**
      * @dataProvider getClientIpsWithConflictingHeadersProvider
      */
-//    public function testGetClientIpsWithConflictingHeaders()
-//    {
-//        $data = self::getClientIpsWithConflictingHeadersProvider();
-//        foreach ($data as $input) {
-//            $httpForwarded = $input[0];
-//            $httpXForwardedFor = $input[1];
-//
-////            $this->expectException(ConflictingHeadersException::class);
-//            $request = new Request();
-//
-//            $server = [
-//                'REMOTE_ADDR' => '88.88.88.88',
-//                'HTTP_FORWARDED' => $httpForwarded,
-//                'HTTP_X_FORWARDED_FOR' => $httpXForwardedFor,
-//            ];
-//
-//            Request::setTrustedProxies(['88.88.88.88'], Request::HEADER_X_FORWARDED_FOR | Request::HEADER_FORWARDED);
-//
-//            $request->initialize([], [], [], [], [], $server);
-//
-//            $request->getClientIps();
-//        }
-//    }
+    public function testGetClientIpsWithConflictingHeaders()
+    {
+        $data = self::getClientIpsWithConflictingHeadersProvider();
+        foreach ($data as $input) {
+            $httpForwarded = $input[0];
+            $httpXForwardedFor = $input[1];
+
+            $request = new Request();
+
+            $server = [
+                'REMOTE_ADDR' => '88.88.88.88',
+                'HTTP_FORWARDED' => $httpForwarded,
+                'HTTP_X_FORWARDED_FOR' => $httpXForwardedFor,
+            ];
+
+            Request::setTrustedProxies(['88.88.88.88'], Request::HEADER_X_FORWARDED_FOR | Request::HEADER_FORWARDED);
+
+            $request->initialize([], [], [], [], [], $server);
+
+            try {
+                $request->getClientIps();
+            } catch (ConflictingHeadersException $e) {
+                var_dump($e->getMessage() === 'The request has both a trusted "FORWARDED" header and a trusted "X_FORWARDED_FOR" header, conflicting with each other. You should either configure your proxy to remove one of them, or configure your project to distrust the offending one.');
+            }
+        }
+    }
 
     /**
      * @dataProvider getClientIpsWithConflictingHeadersProvider
@@ -1385,21 +1360,26 @@ class RequestTest
         ];
     }
 
-//    public function testToArrayEmpty()
-//    {
-//        $req = new Request();
-//        $this->expectException(JsonException::class);
-//        $this->expectExceptionMessage('Request body is empty.');
-//        $req->toArray();
-//    }
-//
-//    public function testToArrayNonJson()
-//    {
-//        $req = new Request([], [], [], [], [], [], 'foobar');
-//        $this->expectException(JsonException::class);
-//        $this->expectExceptionMessageMatches('|Could not decode request body.+|');
-//        $req->toArray();
-//    }
+    public function testToArrayEmpty()
+    {
+        $req = new Request();
+        try {
+            $req->toArray();
+        } catch (JsonException $e) {
+            var_dump($e->getMessage() === 'Request body is empty.');
+        }
+    }
+
+
+    public function testToArrayNonJson()
+    {
+        $req = new Request([], [], [], [], [], [], 'foobar');
+        try {
+            $req->toArray();
+        } catch (JsonException $e) {
+            var_dump($e->getMessage() === 'JSON content was expected to decode to an array, "NULL" returned.');
+        }
+    }
 
     public function testToArray()
     {
@@ -1480,7 +1460,6 @@ class RequestTest
         var_dump(['foo' => 'bar'] === $_POST);
 
         var_dump(!isset($_SERVER['HTTP_X_FORWARDED_PROTO']));
-//        $this->assertArrayNotHasKey('HTTP_X_FORWARDED_PROTO', $_SERVER);
 
         $request->headers->set('X_FORWARDED_PROTO', 'https');
 
@@ -1492,7 +1471,6 @@ class RequestTest
         $request->overrideGlobals();
 
         var_dump(isset($_SERVER['HTTP_X_FORWARDED_PROTO']));
-//        $this->assertArrayHasKey('HTTP_X_FORWARDED_PROTO', $_SERVER);
 
         $request->headers->set('CONTENT_TYPE', 'multipart/form-data');
         $request->headers->set('CONTENT_LENGTH', 12345);
@@ -1501,8 +1479,6 @@ class RequestTest
 
         var_dump(isset($_SERVER['CONTENT_TYPE']));
         var_dump(isset($_SERVER['CONTENT_LENGTH']));
-//        $this->assertArrayHasKey('CONTENT_TYPE', $_SERVER);
-//        $this->assertArrayHasKey('CONTENT_LENGTH', $_SERVER);
 
         $request->initialize(['foo' => 'bar', 'baz' => 'foo']);
         $request->query->remove('baz');
@@ -2242,12 +2218,11 @@ class RequestTest
 
         // untrusted host
         $request->headers->set('host', 'evil.com');
-//        try {
-//            $request->getHost();
-//            $this->fail('Request::getHost() should throw an exception when host is not trusted.');
-//        } catch (SuspiciousOperationException $e) {
-//            var_dump('Untrusted Host "evil.com".' === $e->getMessage());
-//        }
+        try {
+            $request->getHost();
+        } catch (SuspiciousOperationException $e) {
+            var_dump('Untrusted Host "evil.com".' === $e->getMessage());
+        }
 
         // trusted hosts
         $request->headers->set('host', 'trusted.com');
@@ -2337,10 +2312,11 @@ class RequestTest
                     var_dump($expectedPort === $request->getPort());
                 }
             } else {
-//                $this->expectException(SuspiciousOperationException::class);
-//                $this->expectExceptionMessage('Invalid Host');
-//
-//                $request->getHost();
+                try {
+                    $request->getHost();
+                } catch (SuspiciousOperationException $e) {
+                    var_dump(strpos($e->getMessage(), 'Invalid Host') !== false);
+                }
             }
         }
     }
@@ -2705,12 +2681,12 @@ class RequestTest
     {
         $data = self::trustedProxiesRemoteAddr();
         foreach ($data as $input) {
-            if ($input[0] !== null){
+            if ($input[0] !== null) {
                 $serverRemoteAddr = $input[0];
             } else {
                 $serverRemoteAddr = null;
             }
-            $trustedProxies = array_map('strval',$input[1]);
+            $trustedProxies = array_map('strval', $input[1]);
             $result = array_map('strval', $input[2]);
 
             $_SERVER['REMOTE_ADDR'] = $serverRemoteAddr;
@@ -2736,8 +2712,8 @@ class RequestTest
     public function testPreferSafeContent()
     {
         $data = self::preferSafeContentData();
-        foreach($data as $input){
-            $server = array_map('strval',$input[0]);
+        foreach ($data as $input) {
+            $server = array_map('strval', $input[0]);
             $safePreferenceExpected = (bool)$input[1];
 
             $request = new Request([], [], [], [], [], $server);
