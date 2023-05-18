@@ -26,22 +26,11 @@ class ParameterBag
      *
      * @param ?string $key The name of the parameter to return or null to get them all
      * @return string|string[]
-     * @throws BadRequestException
      */
-    public function all($key = null)
+    public function all(?string $key = null)
     {
         if ($key === null) {
             return $this->parameters;
-        }
-
-        if (\is_array($value = $this->parameters[$key] ?? '')) {
-            throw new BadRequestException(
-                sprintf(
-                    'Unexpected value for parameter "%s": expecting "string", got "%s".',
-                    $key,
-                    gettype($value)
-                )
-            );
         }
 
         return $this->parameters[$key] ?? [];
@@ -151,14 +140,6 @@ class ParameterBag
         }
 
         return $default;
-    }
-
-    /**
-     * Returns the number of parameters.
-     */
-    public function count(): int
-    {
-        return \count($this->parameters);
     }
 }
 
