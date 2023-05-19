@@ -3,6 +3,7 @@
 namespace Kaa\HttpFoundation;
 
 //use DateTime;
+use DateTime;
 
 /**
  * Компонент полностью реализован в соответствии с HttpFoundation
@@ -17,7 +18,7 @@ class HeaderBag
     /** @var string[][] $headers */
     protected $headers = [];
 
-    /** @var string[] $cacheControl */
+    /** @var mixed[] $cacheControl */
     protected $cacheControl = [];
 
     /** @param mixed $headers */
@@ -83,15 +84,15 @@ class HeaderBag
         return $this->headers;
     }
 
-//    /**
-//     * Returns the parameter keys.
-//     *
-//     * @return string[]|int[]
-//     */
-//    public function keys()
-//    {
-//        return array_keys($this->all());
-//    }
+    /**
+     * Returns the parameter keys.
+     *
+     * @return string[]|int[]
+     */
+    public function keys()
+    {
+        return array_keys($this->all());
+    }
 
     /**
      * Replaces the current HTTP headers by a new set.
@@ -153,10 +154,10 @@ class HeaderBag
         } else {
             $this->headers[$key][] = (string)$values;
         }
-//
-//        if ('cache-control' === $key) {
-//            $this->cacheControl = $this->parseCacheControl(implode(', ', $this->headers[$key]));
-//        }
+
+        if ('cache-control' === $key) {
+            $this->cacheControl = $this->parseCacheControl(implode(', ', $this->headers[$key]));
+        }
     }
 
     /**
@@ -167,13 +168,13 @@ class HeaderBag
         return \array_key_exists(strtr($key, self::UPPER, self::LOWER), $this->all());
     }
 
-//    /**
-//     * Returns true if the given HTTP header contains the given value.
-//     */
-//    public function contains(string $key, string $value): bool
-//    {
-//        return \in_array($value, $this->all($key));
-//    }
+    /**
+     * Returns true if the given HTTP header contains the given value.
+     */
+    public function contains(string $key, string $value): bool
+    {
+        return \in_array($value, $this->all($key));
+    }
 
     /**
      * Removes a header.
@@ -189,39 +190,40 @@ class HeaderBag
         }
     }
 
-//    /**
-//     * Returns the HTTP header value converted to a date.
-//     *
-//     *
-//     *
-//     * @throws \RuntimeException When the HTTP header is not parseable
-//     */
-//    public function getDate(string $key, ?DateTime $default = null): DateTime|false|null
-//    {
-//        $value = $this->get($key);
-//        if ($value === null) {
-//            return $default;
-//        }
-//
-//        # The KPHP create from format function returns null|\DateTime
-//        $date = DateTime::createFromFormat(\DATE_RFC2822, $value);
-//        if (!isset($date)) {
-//            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
-//        }
-//
-//        return $date;
-//    }
-//
-//    /**
-//     * Adds a custom Cache-Control directive.
-//     * @param true|string $value
-//     */
-//    public function addCacheControlDirective(string $key, $value = true): void
-//    {
-//        $this->cacheControl[$key] = (string)$value;
-//
-//        $this->set('Cache-Control', $this->getCacheControlHeader());
-//    }
+    /**
+     * Returns the HTTP header value converted to a date.
+     *
+     *
+     *
+     * @throws \RuntimeException When the HTTP header is not parseable
+     */
+    public function getDate(string $key, ?DateTime $default = null): ?DateTime
+    {
+        $value = $this->get($key);
+        if ($value === null) {
+            return $default;
+        }
+
+        # The KPHP create from format function returns null|\DateTime
+        $date = DateTime::createFromFormat(\DATE_RFC2822, $value);
+        if (!isset($date)) {
+            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
+        }
+
+        # As I said, $date is null|\DateTime
+        return $date;
+    }
+
+    /**
+     * Adds a custom Cache-Control directive.
+     * @param mixed $value
+     */
+    public function addCacheControlDirective(string $key, $value = true): void
+    {
+        $this->cacheControl[$key] = (string)$value;
+
+        $this->set('Cache-Control', $this->getCacheControlHeader());
+    }
 
     /**
      * Returns true if the Cache-Control directive is defined.
@@ -231,70 +233,51 @@ class HeaderBag
         return \array_key_exists($key, $this->cacheControl);
     }
 
-//    /**
-//     * Returns a Cache-Control directive value by name.
-//     *
-//     * @return true|string|null
-//     */
-//    public function getCacheControlDirective(string $key)
-//    {
-//        $value = $this->cacheControl[$key] ?? null;
-//        if (true === $value) {
-//            return true;
-//        } elseif (isset($value)) {
-//            return (string)$this->cacheControl[$key];
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    /**
-//     * Removes a Cache-Control directive.
-//     */
-//    public function removeCacheControlDirective(string $key)
-//    {
-//        unset($this->cacheControl[$key]);
-//
-//        $this->set('Cache-Control', $this->getCacheControlHeader());
-//    }
-//
-//    /**
-//     * Returns an iterator for headers.
-//     */
-//    public function getIterator(): array
-//    {
-//        $iterator = [];
-//        foreach ($this->headers as $name => $values) {
-//            $iterator[$name] = $values;
-//        }
-//        return $iterator;
-//    }
-//
-//
-//    /**
-//     * Returns the number of headers.
-//     */
-//    public function count(): int
-//    {
-//        return \count($this->headers);
-//    }
-//
-//    protected function getCacheControlHeader(): string
-//    {
-//        ksort($this->cacheControl);
-//
-//        return HeaderUtils::toString($this->cacheControl, ',');
-//    }
-//
-//    /**
-//     * Parses a Cache-Control HTTP header.
-//     */
-//    protected function parseCacheControl(string $header): array
-//    {
-//        $parts = HeaderUtils::split($header, ',=');
-//
-//        return HeaderUtils::combine($parts);
-//    }
+    /**
+     * Returns a Cache-Control directive value by name.
+     *
+     * @return true|string|null
+     */
+    public function getCacheControlDirective(string $key)
+    {
+        $value = $this->cacheControl[$key] ?? null;
+        if ($value === true) {
+            return true;
+        } elseif (isset($value)) {
+            return (string)$this->cacheControl[$key];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Removes a Cache-Control directive.
+     */
+    public function removeCacheControlDirective(string $key): void
+    {
+        unset($this->cacheControl[$key]);
+
+        $this->set('Cache-Control', $this->getCacheControlHeader());
+    }
+
+    protected function getCacheControlHeader(): string
+    {
+        ksort($this->cacheControl);
+
+        return HeaderUtils::toString($this->cacheControl, ',');
+    }
+
+    /**
+     * Parses a Cache-Control HTTP header.
+     *
+     * @return mixed[]
+     */
+    protected function parseCacheControl(string $header)
+    {
+        $parts = HeaderUtils::split($header, ',=');
+
+        return HeaderUtils::combine($parts);
+    }
 }
 
 
