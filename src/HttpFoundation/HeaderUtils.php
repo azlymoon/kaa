@@ -200,7 +200,8 @@ class HeaderUtils
      */
     public static function parseQuery(string $query, bool $ignoreBrackets = false, string $separator = '&')
     {
-        /** @var string[] $q */
+        // fixme: Unfortunately there is no way to change it to string[][] only
+        /** @var string[][]|string[] $q */
         $q = [];
 
         foreach (explode($separator, $query) as $v) {
@@ -226,12 +227,7 @@ class HeaderUtils
             $k = ltrim($k, ' ');
 
             if ($ignoreBrackets) {
-                // TODO: В этом месте разрабы похоже допустили ошибку.
-                //  Добавляем полученное значение в массив $q по ключу $k и индексу [].
-                //  Если $k уже был определен в массиве $q, то значение будет добавлено в конец массива $q[$k],
-                //  иначе будет создан новый элемент массива $q[$k] с первым значением.
-                //  Но зачем мы его суём в конец, если дальше этот массив существует исключиткельно как string[].
-                $q[$k] = urldecode(substr($v, 1));
+                $q[$k][] = urldecode(substr($v, 1));
 
                 continue;
             }
@@ -248,13 +244,29 @@ class HeaderUtils
             return $q;
         }
 
+        // fixme: The parse_str function with input "61%5Bb=c" returns:
+        // PHP:
+        //      array(1) {
+        //          [61_b]=>
+        //          string(1) "c"
+        //      }
+        // KPHP:
+        //      array(1) {
+        //          [61]=>
+        //          string(1) "c"
+        //      }
+        // var_dump(implode('&', $q));
+        //
+        // This bug break HeaderUtils testParseQuery test 5
+
         parse_str(implode('&', $q), $qArray);
+
+        // var_dump($qArray);
 
         $query = [];
 
         foreach ($qArray as $k => $v) {
             $k = (string) $k;
-
 //            fixme: The parse_str function currently works a bit differently in KPHP than it does in PHP.
 //                   If you pass a string to the function without a key for the value. For example foo=bar&=a=b&=x=y.
 //                   That is, foo=bar&(empty key)=a=b&(empty key)=x=y, then parse_str in KPHP will do this array:
@@ -277,7 +289,9 @@ class HeaderUtils
                 continue;
             }
 
+
             $i = strpos($k, '_');
+
             if ($i !== false) {
                 $query[substr_replace($k, hex2bin(substr($k, 0, $i)) . '[', 0, 1 + $i)] = $v;
             } else {
@@ -297,7 +311,10 @@ class HeaderUtils
         $partMatches = [];
         $previousMatchWasSeparator = false;
         foreach ($matches as $match) {
-            if (!$first && $previousMatchWasSeparator && isset($match['separator']) && $match['separator'] === $separator) {
+            if (
+                !$first && $previousMatchWasSeparator &&
+                isset($match['separator']) && ($match['separator'] === $separator)
+            ) {
                 $previousMatchWasSeparator = true;
                 $partMatches[$i][] = $match;
             } elseif (isset($match['separator']) && $match['separator'] === $separator) {
