@@ -21,7 +21,7 @@ class YamlActionFinder implements ActionFinderInterface
             if (
                 !in_array(
                     $name,
-                    ["router", "service", "kernel_dir", "code_gen_namespace", "code_gen_directory"],
+                    ["router", "service", "kernel_dir", "code_gen_namespace", "code_gen_directory", "pvpender_cors"],
                     true
                 )
             ) {
