@@ -112,14 +112,14 @@ PHP;
         if ($castedEvent === null) {
             return;
         }');
-        $this->corsProvider->addCode('$req = $castedEvent->getREQUEST();');
+        $this->corsProvider->addCode('$req = $castedEvent->getRequest();');
         $nums = 0;
         foreach ($userConfig['pvpender_cors']["paths"] as $path => $headers) {
             if ($nums === 0) {
-                $this->corsProvider->addCode(sprintf('if (preg_match("%s", $req->path())){', $path));
+                $this->corsProvider->addCode(sprintf('if (preg_match("%s", $req->getRoute())){', $path));
                 $this->corsProvider->addCode("}");
             } else {
-                $this->corsProvider->addCode(sprintf('elseif (preg_match("%s", $req->path())){', $path));
+                $this->corsProvider->addCode(sprintf('elseif (preg_match("%s", $req->getRoute())){', $path));
                 $this->corsProvider->addCode("}");
             }
             $nums++;
