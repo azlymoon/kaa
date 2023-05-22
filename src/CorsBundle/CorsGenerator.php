@@ -38,7 +38,7 @@ PHP;
         $replacements = [
             '%dispatcher%' => $this->instanceProvider->provideInstanceCode('kernel.dispatcher'),
             '%eventName%' => 'http.kernel.find.action',
-            '%callable%' => "[ \Kaa|CorsBundle\PvpenderCorsBundle::class, 'checkOptions']",
+            '%callable%' => "[ \Kaa\CorsBundle\PvpenderCorsBundle::class, 'checkOptions']",
             '%priority%' => 0
         ];
         $this->bootstrapProvider->addCode(strtr(self::ADD_LISTENER_CODE, $replacements));
