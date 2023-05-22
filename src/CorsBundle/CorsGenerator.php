@@ -126,9 +126,14 @@ PHP;
                     'elseif (preg_match("/%s/", $req->getRoute())){',
                     addcslashes($path, "/")
                 ));
+                $this->corsProvider->addCode("echo 7;");
                 $this->corsProvider->addCode("}");
             }
             $nums++;
+        }
+        if ($nums > 0) {
+            $this->corsProvider->addCode('else {');
+            $this->corsProvider->addCode("}");
         }
     }
 }
