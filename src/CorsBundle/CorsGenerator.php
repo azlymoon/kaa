@@ -59,6 +59,7 @@ PHP;
         ];
         $this->bootstrapProvider->addCode(strtr(self::ADD_LISTENER_CODE, $replacements));
         $this->generateConfigCode($userConfig);
+        $this->corsProvider->dump();
     }
 
     /**
