@@ -123,7 +123,7 @@ PHP;
                 $this->corsProvider->addCode("}");
             } else {
                 $this->corsProvider->addCode(sprintf(
-                    'elseif (preg_match("/%s", $req->getRoute())){',
+                    'elseif (preg_match("/%s/", $req->getRoute())){',
                     addcslashes($path, "/")
                 ));
                 $this->corsProvider->addCode("}");
