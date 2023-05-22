@@ -26,7 +26,7 @@ class CorsGenerator implements GeneratorInterface
     public function generate(array $userConfig, ProvidedDependencies $providedDependencies): void
     {
         $this->bootstrapProvider = $this->getBootstrapProvider($providedDependencies);
-        $this->bootstrapProvider->addCode("var_dump(123);");
+        $this->bootstrapProvider->addCode("//var_dump(123);");
     }
 
     /**
