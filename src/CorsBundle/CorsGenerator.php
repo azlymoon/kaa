@@ -137,7 +137,7 @@ PHP;
                 ));
             }
             $this->corsProvider->addCode('];');
-            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas)');
+            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
             $this->corsProvider->addCode("}");
             $nums++;
         }
@@ -152,7 +152,7 @@ PHP;
                 ));
             }
             $this->corsProvider->addCode('];');
-            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas)');
+            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
             $this->corsProvider->addCode("}");
         }
     }
