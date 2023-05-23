@@ -137,14 +137,21 @@ PHP;
                 ));
             }
             $this->corsProvider->addCode('];');
-            $this->corsProvider->addCode(sprintf(
-                '$resp->setHeader($mas);'
-            ));
+            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas)');
             $this->corsProvider->addCode("}");
             $nums++;
         }
         if ($nums > 0) {
             $this->corsProvider->addCode('else {');
+            foreach ($userConfig['pvpender_cors']["defaults"] as $key => $value) {
+                $this->corsProvider->addCode(sprintf(
+                    "'%s' => '%s',",
+                    $key,
+                    is_array($value) ? implode(', ', $value) : (string)$value
+                ));
+            }
+            $this->corsProvider->addCode('];');
+            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas)');
             $this->corsProvider->addCode("}");
         }
     }
