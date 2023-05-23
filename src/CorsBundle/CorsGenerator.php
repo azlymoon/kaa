@@ -143,6 +143,7 @@ PHP;
         }
         if ($nums > 0) {
             $this->corsProvider->addCode('else {');
+            $this->corsProvider->addCode('$mas = [');
             foreach ($userConfig['pvpender_cors']["defaults"] as $key => $value) {
                 $this->corsProvider->addCode(sprintf(
                     "'%s' => '%s',",
