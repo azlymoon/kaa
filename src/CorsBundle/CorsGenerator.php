@@ -143,17 +143,20 @@ PHP;
         }
         if ($nums > 0) {
             $this->corsProvider->addCode('else {');
-            $this->corsProvider->addCode('$mas = [');
-            foreach ($userConfig['pvpender_cors']["defaults"] as $key => $value) {
-                $this->corsProvider->addCode(sprintf(
-                    "'%s' => '%s',",
-                    $key,
-                    is_array($value) ? implode(', ', $value) : (string)$value
-                ));
-            }
-            $this->corsProvider->addCode('];');
-            $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
-            $this->corsProvider->addCode("}");
+        }
+        $this->corsProvider->addCode('$mas = [');
+        foreach ($userConfig['pvpender_cors']["defaults"] as $key => $value) {
+            $this->corsProvider->addCode(sprintf(
+                "'%s' => '%s',",
+                $key,
+                (is_array($value) ? implode(', ', $value) :
+                    is_bool($value)) ? var_export($value, true) : (string)$value
+            ));
+        }
+        $this->corsProvider->addCode('];');
+        $this->corsProvider->addCode('Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
+        if ($nums > 0) {
+                $this->corsProvider->addCode("}");
         }
     }
 }
