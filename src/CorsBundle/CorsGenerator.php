@@ -13,6 +13,7 @@ use Kaa\CorsBundle\Providers\CorsProvider;
 use Kaa\DependencyInjection\Contract\InstanceProvider;
 use Kaa\DependencyInjection\DependencyInjectionGenerator;
 use Kaa\DependencyInjection\Exception\EventDispatcherLinkerException;
+use PhpParser\Node\Expr\Array_;
 use ReflectionException;
 
 #[PhpOnly]
@@ -128,11 +129,11 @@ PHP;
                 ));
             }
             $this->corsProvider->addCode('$mas = [');
-            foreach (array_map('strval', $headers) as $key => $value) {
+            foreach ($headers as $key => $value) {
                 $this->corsProvider->addCode(sprintf(
-                    '%s => %s',
+                    '%s => %s,',
                     $key,
-                    $value
+                    implode(', ', $value) ? is_array($value) : (string)$value
                 ));
             }
             $this->corsProvider->addCode('];');

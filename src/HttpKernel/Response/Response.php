@@ -33,12 +33,11 @@ class Response implements ResponseInterface
     }
 
     /**
-     * @param string[] $headers
      * @return Response $this
      */
-    public function setHeaders(array $headers): self
+    public function setHeaders(string $headerName, string $headerVal): self
     {
-        $this->headers = $headers;
+        $this->headers[$headerName] = $headerVal;
         return $this;
     }
 

@@ -25,4 +25,13 @@ class PvpenderCorsBundle
     {
         return new Response();
     }
+
+    /**
+     * @param Response $response
+     * @param string[] $headers
+     */
+    public static function setResponseHeader(Response $response, array $headers): void
+    {
+
+    }
 }
