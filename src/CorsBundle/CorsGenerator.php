@@ -131,7 +131,7 @@ PHP;
             $this->corsProvider->addCode('$mas = [');
             foreach ($headers as $key => $value) {
                 $this->corsProvider->addCode(sprintf(
-                    '%s => %s,',
+                    "'%s' => '%s',",
                     $key,
                     is_array($value) ? implode(', ', $value) : (string)$value
                 ));
