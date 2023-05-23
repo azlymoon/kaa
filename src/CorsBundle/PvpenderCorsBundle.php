@@ -49,7 +49,7 @@ class PvpenderCorsBundle
             $response->setHeaders('Access-Control-Max-Age', $headers['max_age']);
         }
 
-        if (strpos($headers['allow_methods'], $request->method()) === false) {
+        if (strpos(($headers['allow_methods'].='OPTIONS'), $request->method()) === false) {
             $response->setStatusCode(405);
         }
 
