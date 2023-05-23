@@ -18,6 +18,7 @@ class PvpenderCorsBundle
             return;
         }
         $castedEvent->setAction([PvpenderCorsBundle::class, 'returnEmptyResponse']);
+        $castedEvent->stopPropagation();
     }
 
     public static function returnEmptyResponse(Request $request): Response

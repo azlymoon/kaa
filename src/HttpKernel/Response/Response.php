@@ -33,6 +33,16 @@ class Response implements ResponseInterface
     }
 
     /**
+     * @param string[] $headers
+     * @return Response $this
+     */
+    public function setHeaders(array $headers): self
+    {
+        $this->headers = $headers;
+        return $this;
+    }
+
+    /**
      * Sets the response content.
      */
     public function setContent(?string $content): self
