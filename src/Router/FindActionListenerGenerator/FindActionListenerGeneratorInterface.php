@@ -13,7 +13,9 @@ interface FindActionListenerGeneratorInterface
 {
     /**
      * @param CallableRoute[] $callableRoutes
+     * @param RouteMatcherGeneratorInterface $routeMatcherGenerator
      * @param mixed[] $userConfig
+     * @param ProvidedDependencies $providedDependencies
      */
     public function generate(
         array $callableRoutes,

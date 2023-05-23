@@ -12,7 +12,11 @@ use Kaa\Router\Action;
 interface InterceptorGeneratorInterface
 {
     /**
+     * @param AvailableVars $availableVars
+     * @param Action $action
      * @param mixed[] $userConfig
+     * @param ProvidedDependencies $providedDependencies
+     * @return string
      */
     public function generate(
         AvailableVars $availableVars,

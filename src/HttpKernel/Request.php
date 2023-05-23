@@ -23,8 +23,12 @@ class Request
 
     private mixed $cookies;
 
+    /** @var string[] */
+    private array $urlParams;
+
     /**
      * @param string[] $queryParameters
+     * @param string[] $urlParams
      */
     public function __construct(
         string $route = '/',
@@ -34,7 +38,8 @@ class Request
         mixed $server = [],
         array $queryParameters = [],
         string $method = 'GET',
-        mixed $cookies = []
+        mixed $cookies = [],
+        array $urlParams = []
     ) {
         $this->route = $route;
         $this->get = $get;
@@ -44,6 +49,7 @@ class Request
         $this->queryParameters = $queryParameters;
         $this->method = $method;
         $this->cookies = $cookies;
+        $this->urlParams = $urlParams;
     }
 
     public static function initFromGlobals(): static
@@ -137,5 +143,17 @@ class Request
     public function method(): string
     {
         return $this->method;
+    }
+
+    /** @return string[] */
+    public function urlParams(): array
+    {
+        return $this->urlParams;
+    }
+
+    /** @param string[] $urlParams */
+    public function setUrlParams(array $urlParams): void
+    {
+        $this->urlParams = $urlParams;
     }
 }

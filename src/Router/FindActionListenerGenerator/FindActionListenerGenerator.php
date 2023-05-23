@@ -11,8 +11,6 @@ use Kaa\CodeGen\Exception\NoDependencyException;
 use Kaa\CodeGen\ProvidedDependencies;
 use Kaa\HttpKernel\Event\FindActionEvent;
 use Kaa\HttpKernel\HttpKernelEvents;
-use Kaa\Router\CallableRoute;
-use Kaa\Router\HttpRoute;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
@@ -44,23 +42,22 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
 
         $method->addBody('$route = $event->getRequest()->getRoute();');
         $method->addBody('$method = $event->getRequest()->method();');
-
+/*
         $routes = array_map(
             static fn(CallableRoute $route) => new HttpRoute($route->path, $route->method, $route->name),
             $callableRoutes
         );
+ */
         $method->addBody(
             $routeMatcherGenerator->generateMatchCode(
                 self::ROUTE_NAME_VAR,
                 'route',
                 'method',
-                $routes,
+                $callableRoutes,
                 $userConfig,
                 $providedDependencies,
             )
         );
-
-        $method->addBody($this->generateSetCode($callableRoutes));
 
         $this->saveFile($phpFile, $userConfig);
 
@@ -84,38 +81,7 @@ class FindActionListenerGenerator implements FindActionListenerGeneratorInterfac
     }
 
     /**
-     * @param CallableRoute[] $callableRoutes
-     */
-    private function generateSetCode(array $callableRoutes): string
-    {
-        $code = [];
-
-        foreach ($callableRoutes as $callableRoute) {
-            $routeCode = <<<'PHP'
-if ($%s === '%s') {
-    %s
-    $event->setAction([$%s, '%s']);
-    $event->stopPropagation();
-    return;
-}
-PHP;
-
-            $routeCode = sprintf(
-                $routeCode,
-                self::ROUTE_NAME_VAR,
-                $callableRoute->name,
-                $callableRoute->newInstanceCode,
-                $callableRoute->varName,
-                $callableRoute->methodName,
-            );
-
-            $code[] = $routeCode;
-        }
-
-        return implode("\n\n", $code);
-    }
-
-    /**
+     * @param PhpFile $phpFile
      * @param mixed[] $userConfig
      */
     private function saveFile(PhpFile $phpFile, array $userConfig): void

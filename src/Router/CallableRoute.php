@@ -9,13 +9,16 @@ use Kaa\CodeGen\Attribute\PhpOnly;
 #[PhpOnly]
 readonly class CallableRoute
 {
+    public string $method;
+
     public function __construct(
         public string $path,
-        public ?string $method,
+        ?string $method,
         public string $name,
         public string $methodName,
         public string $varName,
         public string $newInstanceCode,
     ) {
+        $this->method = ($method === null) ? 'GET' : $method;
     }
 }
