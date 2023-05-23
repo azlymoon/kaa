@@ -149,8 +149,8 @@ PHP;
             $this->corsProvider->addCode(sprintf(
                 "'%s' => '%s',",
                 $key,
-                (is_array($value) ? implode(', ', $value) :
-                    is_bool($value)) ? var_export($value, true) : (string)$value
+                is_array($value) ? implode(', ', $value) :
+                    (is_bool($value) ? var_export($value, true) : (string)$value)
             ));
         }
         $this->corsProvider->addCode('];');
