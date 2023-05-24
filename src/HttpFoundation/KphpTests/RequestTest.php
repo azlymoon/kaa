@@ -1,6 +1,6 @@
 <?php
 
-namespace Kaa\HttpFoundation\MyTests;
+namespace Kaa\HttpFoundation\KphpTests;
 
 use Kaa\HttpFoundation\Exception\ConflictingHeadersException;
 use Kaa\HttpFoundation\Exception\JsonException;

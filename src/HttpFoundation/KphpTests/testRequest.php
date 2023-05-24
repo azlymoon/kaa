@@ -1,6 +1,6 @@
 <?php
 
-use Kaa\HttpFoundation\MyTests\RequestTest;
+use Kaa\HttpFoundation\KphpTests\RequestTest;
 
 require __DIR__ . '/../../../vendor/autoload.php';
 

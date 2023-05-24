@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Kaa\HttpFoundation\MyTests;
+namespace Kaa\HttpFoundation\KphpTests;
 
 use Kaa\HttpFoundation\IpUtils;
 

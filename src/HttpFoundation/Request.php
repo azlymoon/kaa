@@ -1536,14 +1536,17 @@ class Request
         return $content;
     }
 
-//
-//    /**
-//     * Gets the Etags.
-//     */
-//    public function getETags(): array
-//    {
-//        return preg_split('/\s*,\s*/', $this->headers->get('If-None-Match', ''), -1, \PREG_SPLIT_NO_EMPTY);
-//    }
+    /**
+     * Gets the Etags.
+     */
+    public function getETags(): array
+    {
+        $ETags = preg_split('/\s*,\s*/', $this->headers->get('If-None-Match', ''), -1, \PREG_SPLIT_NO_EMPTY);
+        if ($ETags === false) {
+            return [];
+        }
+        return $ETags;
+    }
 
     public function isNoCache(): bool
     {
