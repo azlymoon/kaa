@@ -2,12 +2,9 @@
 
 namespace Kaa\HttpFoundation;
 
-//use DateTime;
 use DateTime;
 
 /**
- * Компонент полностью реализован в соответствии с HttpFoundation
- *
  * HeaderBag is a container for HTTP headers.
  */
 class HeaderBag
@@ -18,14 +15,14 @@ class HeaderBag
     /** @var string[][] $headers */
     protected $headers = [];
 
-    /** @var mixed[] $cacheControl */
+    /** @var bool[]|string[] $cacheControl */
     protected $cacheControl = [];
 
-    /** @param mixed $headers */
+    /** @param string[][]|string[] $headers */
     public function __construct($headers = [])
     {
         foreach ($headers as $key => $values) {
-            $this->set($key, $values);
+            $this->set((string)$key, $values);
         }
     }
 
@@ -87,16 +84,16 @@ class HeaderBag
     /**
      * Returns the parameter keys.
      *
-     * @return string[]|int[]
+     * @return string[]
      */
     public function keys()
     {
-        return array_keys($this->all());
+        return array_map('strval', array_keys($this->all()));
     }
 
     /**
      * Replaces the current HTTP headers by a new set.
-     * @param mixed $headers
+     * @param string[][]|string[] $headers
      */
     public function replace($headers = [])
     {
@@ -106,12 +103,12 @@ class HeaderBag
 
     /**
      * Adds new headers the current HTTP headers set.
-     * @param mixed $headers
+     * @param string[][]|string[] $headers
      */
     public function add($headers): void
     {
         foreach ($headers as $key => $values) {
-            $this->set($key, $values);
+            $this->set((string)$key, $values);
         }
     }
 
@@ -122,7 +119,7 @@ class HeaderBag
     {
         $headers = $this->all($key);
 
-        if (count($headers) === 0) {
+        if ($headers === []) {
             return $default;
         }
 
@@ -132,13 +129,13 @@ class HeaderBag
     /**
      * Sets a header by name.
      *
-     * @param int|string           $key
+     * @param string               $key
      * @param mixed                $values  The value or an array of values
      * @param bool                 $replace Whether to replace the actual value or not (true by default)
      */
-    public function set($key, $values, bool $replace = true): void
+    public function set(string $key, $values, bool $replace = true): void
     {
-        $key = strtr((string)$key, self::UPPER, self::LOWER);
+        $key = strtr($key, self::UPPER, self::LOWER);
 
         if (is_array($values)) {
             /** @var string[] $str_values */
@@ -216,11 +213,15 @@ class HeaderBag
 
     /**
      * Adds a custom Cache-Control directive.
-     * @param mixed $value
+     * @param boolean|string|int $value
      */
     public function addCacheControlDirective(string $key, $value = true): void
     {
-        $this->cacheControl[$key] = (string)$value;
+        if (is_bool($value)){
+            $this->cacheControl[$key] = $value;
+        } else {
+            $this->cacheControl[$key] = (string)$value;
+        }
 
         $this->set('Cache-Control', $this->getCacheControlHeader());
     }
@@ -236,18 +237,11 @@ class HeaderBag
     /**
      * Returns a Cache-Control directive value by name.
      *
-     * @return true|string|null
+     * @return boolean|string|null
      */
     public function getCacheControlDirective(string $key)
     {
-        $value = $this->cacheControl[$key] ?? null;
-        if ($value === true) {
-            return true;
-        } elseif (isset($value)) {
-            return (string)$this->cacheControl[$key];
-        } else {
-            return null;
-        }
+        return $this->cacheControl[$key] ?? null;
     }
 
     /**
@@ -270,7 +264,7 @@ class HeaderBag
     /**
      * Parses a Cache-Control HTTP header.
      *
-     * @return mixed[]
+     * @return string[]|bool[]
      */
     protected function parseCacheControl(string $header)
     {

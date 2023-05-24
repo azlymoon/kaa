@@ -73,9 +73,11 @@ class HeaderUtils
      *     // => ["foo" => "abc", "bar" => true]
      *
      * @param mixed $parts
+     * @return string[]|bool[]
      */
-    public static function combine($parts): array
+    public static function combine($parts)
     {
+        /** @var string[]|bool[] $assoc */
         $assoc = [];
         foreach ($parts as $part) {
             $name = strtolower($part[0]);
@@ -106,7 +108,7 @@ class HeaderUtils
     {
         $parts = [];
         foreach ($assoc as $name => $value) {
-            if (is_bool($value) && true === $value) {
+            if (true === $value) {
                 $parts[] = $name;
             } else {
                 $parts[] = $name . '=' . self::quote((string)$value);

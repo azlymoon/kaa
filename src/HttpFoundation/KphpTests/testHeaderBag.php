@@ -24,8 +24,8 @@ $test->testGetDateNull();
 echo"\ntestGetDateException\n";
 $test->testGetDateException();
 
-//echo"\ntestGetCacheControlHeader\n";
-//$test->testGetCacheControlHeader();
+echo"\ntestGetCacheControlHeader\n";
+$test->testGetCacheControlHeader();
 
 echo"\ntestAll\n";
 $test->testAll();
@@ -41,6 +41,9 @@ $test->testSetAssociativeArray();
 
 echo"\ntestContains\n";
 $test->testContains();
+
+echo"\ntestCacheControlDirectiveAccessors\n";
+$test->testCacheControlDirectiveAccessors();
 
 echo"\ntestCacheControlDirectiveParsing\n";
 $test->testCacheControlDirectiveParsing();

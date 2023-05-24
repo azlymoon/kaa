@@ -58,13 +58,13 @@ class HeaderBagTest
         }
     }
 
-//    public function testGetCacheControlHeader()
-//    {
-//        $bag = new HeaderBag();
-//        $bag->addCacheControlDirective('public', '#a');
-//        var_dump(true === $bag->hasCacheControlDirective('public'));
-//        var_dump('#a' === $bag->getCacheControlDirective('public'));
-//    }
+    public function testGetCacheControlHeader()
+    {
+        $bag = new HeaderBag();
+        $bag->addCacheControlDirective('public', '#a');
+        var_dump(true === $bag->hasCacheControlDirective('public'));
+        var_dump('#a' === $bag->getCacheControlDirective('public'));
+    }
 
     public function testAll()
     {
@@ -138,7 +138,7 @@ class HeaderBagTest
 
         $bag->addCacheControlDirective('max-age', 10);
         var_dump(true === $bag->hasCacheControlDirective('max-age'));
-        var_dump(10 === $bag->getCacheControlDirective('max-age'));
+        var_dump('10' === $bag->getCacheControlDirective('max-age'));
         var_dump('max-age=10, public' === $bag->get('cache-control'));
 
         $bag->removeCacheControlDirective('max-age');
