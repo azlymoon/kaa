@@ -36,12 +36,14 @@ class ValidatorModelGenerator
     /**
      * @throws InvalidTypeException
      */
-    private function getTypeFromDocComment(\ReflectionProperty $reflectionProperty) : string {
+    private function getTypeFromDocComment(\ReflectionProperty $reflectionProperty): string
+    {
         preg_match_all("/(?<=@var)(.+?)(?=\[\])/", $reflectionProperty->getDocComment(), $matches);
         return trim($matches[0][0]);
     }
 
-    private function getFullTypeFromNamespace(\ReflectionClass $reflectionClass, string $type) : ?string {
+    private function getFullTypeFromNamespace(\ReflectionClass $reflectionClass, string $type): ?string
+    {
         $useStatements = Reflection::getUseStatements($reflectionClass);
         if (array_key_exists($type, $useStatements)) {
             return $useStatements[$type];
@@ -56,7 +58,8 @@ class ValidatorModelGenerator
      * @throws ValidatorReturnValueException
      * @throws InaccessiblePropertyException|InvalidTypeException
      */
-    public function generate(AvailableVar $varToValidate) : array {
+    public function generate(AvailableVar $varToValidate): array
+    {
         $generatedCode = [];
         $reflectionClass = new ReflectionClass($varToValidate->type);
         foreach ($reflectionClass->getProperties() as $reflectionProperty) {
@@ -105,7 +108,7 @@ class ValidatorModelGenerator
             }
 
             if ($reflectionProperty->getType()->getName() === 'array') {
-                $typeOfElements = self::getTypeFromDocComment($reflectionProperty);
+                $typeOfElements = $this->getTypeFromDocComment($reflectionProperty);
                 if (in_array($typeOfElements, self::ALLOW_TYPES)) {
                     foreach ($assertAttributes as $assertAttribute) {
                         $attribute = $assertAttribute->newInstance();
@@ -161,7 +164,6 @@ PHP;
 
                         $generatedCode[] = $constraintGeneratedCode;
                         $generatedCode[] = ['}'];
-
                     }
                 } else {
                     $fullType = $this->getFullTypeFromNamespace($reflectionClass, $typeOfElements);
@@ -229,20 +231,17 @@ if (%s !== null){
 PHP;
                 $generatedCode[] = [
                     sprintf(
-                    $code,
-                    $fullType,
-                    $newVarToValidate->name,
-                    $accessCode,
-                    $newVarToValidate->name,
-                    $accessCode,
+                        $code,
+                        $fullType,
+                        $newVarToValidate->name,
+                        $accessCode,
+                        $newVarToValidate->name,
+                        $accessCode,
                     )
                 ];
                 $generatedCode[] = self::generate($newVarToValidate);
                 $generatedCode[] = ['}'];
             }
-
-
-
         }
         return array_merge(...$generatedCode);
     }

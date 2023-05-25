@@ -8,7 +8,6 @@ class Violation
 {
     private string $className;
     private string $propertyName;
-
     private string $message;
 
     public function __construct(string $className, string $propertyName, string $message)
