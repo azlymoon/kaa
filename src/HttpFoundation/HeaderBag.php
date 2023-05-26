@@ -123,6 +123,10 @@ class HeaderBag
             return $default;
         }
 
+        if ($headers[0] === '') {
+            return null;
+        }
+
         return (string)$headers[0];
     }
 
@@ -197,6 +201,7 @@ class HeaderBag
     public function getDate(string $key, ?DateTime $default = null): ?DateTime
     {
         $value = $this->get($key);
+
         if ($value === null) {
             return $default;
         }
@@ -217,7 +222,7 @@ class HeaderBag
      */
     public function addCacheControlDirective(string $key, $value = true): void
     {
-        if (is_bool($value)){
+        if (is_bool($value)) {
             $this->cacheControl[$key] = $value;
         } else {
             $this->cacheControl[$key] = (string)$value;
