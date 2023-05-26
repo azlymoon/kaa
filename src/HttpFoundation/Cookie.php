@@ -13,29 +13,35 @@ class Cookie
     public const SAMESITE_LAX = 'lax';
     public const SAMESITE_STRICT = 'strict';
 
-
     /** @var string $name*/
-    protected $name;
+    private $name;
 
     /** @var string|null  */
-    protected $value;
+    private $value;
 
     /** @var string|null  */
-    protected $domain;
+    private $domain;
 
-    /** @var int|string|\DateTimeInterface  */
-    protected $expire;
+//    /** @var int|string|\DateTime */
+//    private $expire;
 
     /** @var string  */
-    protected $path;
+    private $path;
 
     /** @var bool|null  */
-    protected $secure;
+    private $secure;
 
     /** @var bool  */
-    protected $httpOnly;
+    private $httpOnly;
+
+    private bool $raw;
+
     private ?string $sameSite = null;
+
+    private bool $secureDefault = false;
     private const RESERVED_CHARS_LIST = "=,; \t\r\n\v\f";
+    private const RESERVED_CHARS_FROM = ['=', ',', ';', ' ', "\t", "\r", "\n", "\v", "\f"];
+    private const RESERVED_CHARS_TO = ['%3D', '%2C', '%3B', '%20', '%09', '%0D', '%0A', '%0B', '%0C'];
 
     /**
      * @see self::__construct
@@ -45,14 +51,25 @@ class Cookie
      * @param int|string|\DateTimeInterface $expire   The time the cookie expires
      * @param string                        $path     The path on the server in which the cookie will be available on
      * @param string|null                   $domain   The domain that the cookie is available to
-     * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
-     * @param bool                          $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
+     * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or
+     *                                                null to auto-enable this when the request is already using HTTPS
+     * @param bool                          $httpOnly Whether the cookie will be made accessible
+     *                                                only through the HTTP protocol
      * @param bool                          $raw      Whether the cookie value should be sent with no url encoding
      * @param string|null                   $sameSite
      *
      */
-    public static function create($name, $value = null, $expire = 0, $path = '/', $domain = null, $secure = null, bool $httpOnly = true, $raw = false, $sameSite = self::SAMESITE_LAX): self
-    {
+    public static function create(
+        $name,
+        $value = null,
+        $expire = 0,
+        $path = '/',
+        $domain = null,
+        $secure = null,
+        bool $httpOnly = true,
+        $raw = false,
+        $sameSite = self::SAMESITE_LAX
+    ): self {
         return new self($name, $value, $expire, $path, $domain, $secure, $httpOnly, $raw, $sameSite);
     }
 
@@ -62,15 +79,26 @@ class Cookie
      * @param int|string|\DateTimeInterface $expire   The time the cookie expires
      * @param string                        $path     The path on the server in which the cookie will be available on
      * @param string|null                   $domain   The domain that the cookie is available to
-     * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or null to auto-enable this when the request is already using HTTPS
-     * @param bool                          $httpOnly Whether the cookie will be made accessible only through the HTTP protocol
+     * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or
+     *                                                null to auto-enable this when the request is already using HTTPS
+     * @param bool                          $httpOnly Whether the cookie will be made accessible
+     *                                                only through the HTTP protocol
      * @param bool                          $raw      Whether the cookie value should be sent with no url encoding
      * @param string|null                   $sameSite
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct($name, $value = null, $expire = 0, $path = '/', $domain = null, $secure = null, bool $httpOnly = true, $raw = false, $sameSite = self::SAMESITE_LAX)
-    {
+    public function __construct(
+        $name,
+        $value = null,
+        $expire = 0,
+        $path = '/',
+        $domain = null,
+        $secure = null,
+        bool $httpOnly = true,
+        $raw = false,
+        $sameSite = self::SAMESITE_LAX
+    ) {
         // from PHP source code
         if ($raw && false !== strpbrk($name, self::RESERVED_CHARS_LIST)) {
             throw new \InvalidArgumentException(sprintf('The cookie name "%s" contains invalid characters.', $name));
@@ -83,7 +111,7 @@ class Cookie
         $this->name = $name;
         $this->value = $value;
         $this->domain = $domain;
-        $this->expire = self::expiresTimestamp($expire);
+//        $this->expire = self::expiresTimestamp($expire);
         $this->path = empty($path) ? '/' : $path;
         $this->secure = $secure;
         $this->httpOnly = $httpOnly;
@@ -103,24 +131,23 @@ class Cookie
     }
 
     /**
-     * TODO: пофиксить \DateTimeInterface
      * Converts expires formats to a unix timestamp.
      */
-    private static function expiresTimestamp(int|string|\DateTimeInterface $expire = 0): int
-    {
-        // convert expiration time to a Unix timestamp
-        if ($expire instanceof \DateTimeInterface) {
-            $expire = $expire->format('U');
-        } elseif (!is_numeric($expire)) {
-            $expire = strtotime($expire);
-
-            if (false === $expire) {
-                throw new \InvalidArgumentException('The cookie expiration time is not valid.');
-            }
-        }
-
-        return 0 < $expire ? (int) $expire : 0;
-    }
+//    private static function expiresTimestamp(int|string|\DateTime $expire = 0): int
+//    {
+//        // convert expiration time to a Unix timestamp
+//        if ($expire instanceof \DateTime) {
+//            $expire = $expire->format('U');
+//        } elseif (!is_numeric($expire)) {
+//            $expire = strtotime($expire);
+//
+//            if ($expire === false) {
+//                throw new \InvalidArgumentException('The cookie expiration time is not valid.');
+//            }
+//        }
+//
+//        return 0 < $expire ? (int) $expire : 0;
+//    }
 
     /**
      * Creates a cookie copy with SameSite attribute.
@@ -144,11 +171,73 @@ class Cookie
     }
 
     /**
+     * Returns the cookie as a string.
+     */
+    public function __toString(): string
+    {
+        if ($this->isRaw()) {
+            $str = $this->getName();
+        } else {
+            $count = 0;
+            $str = str_replace(
+                self::RESERVED_CHARS_FROM,
+                self::RESERVED_CHARS_TO,
+                $this->getName(),
+                $count
+            );
+        }
+
+        $str .= '=';
+
+        if ((string) $this->getValue() === '') {
+            $str .= 'deleted; expires=' . gmdate('D, d M Y H:i:s T', time() - 31536001) . '; Max-Age=0';
+        } else {
+            $str .= $this->isRaw() ? (string)$this->getValue() : rawurlencode((string)$this->getValue());
+
+//            if (0 !== $this->getExpiresTime()) {
+//                $str .=
+//                    '; expires=' . gmdate('D, d M Y H:i:s T', $this->getExpiresTime()) .
+//                    '; Max-Age=' . $this->getMaxAge();
+//            }
+        }
+
+        if ((bool)$this->getPath()) {
+            $str .= '; path=' . $this->getPath();
+        }
+
+        if ((bool)$this->getDomain()) {
+            $str .= '; domain=' . $this->getDomain();
+        }
+
+        if ($this->isSecure() === true) {
+            $str .= '; secure';
+        }
+
+        if ($this->isHttpOnly() === true) {
+            $str .= '; httponly';
+        }
+
+        if ($this->getSameSite() !== null) {
+            $str .= '; samesite=' . $this->getSameSite();
+        }
+
+        return $str;
+    }
+
+    /**
      * Gets the name of the cookie.
      */
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * Gets the value of the cookie.
+     */
+    public function getValue(): ?string
+    {
+        return $this->value;
     }
 
     /**
@@ -165,5 +254,42 @@ class Cookie
     public function getPath(): string
     {
         return $this->path;
+    }
+
+    /**
+     * Checks whether the cookie should only be transmitted over a secure HTTPS connection from the client.
+     */
+    public function isSecure(): bool
+    {
+        return $this->secure ?? $this->secureDefault;
+    }
+
+    /**
+     * Checks whether the cookie will be made accessible only through the HTTP protocol.
+     */
+    public function isHttpOnly(): bool
+    {
+        return $this->httpOnly;
+    }
+
+    /**
+     * Checks if the cookie value should be sent with no url encoding.
+     */
+    public function isRaw(): bool
+    {
+        return $this->raw;
+    }
+
+    public function getSameSite(): ?string
+    {
+        return $this->sameSite;
+    }
+
+    /**
+     * @param bool $default The default value of the "secure" flag when it is set to null
+     */
+    public function setSecureDefault(bool $default): void
+    {
+        $this->secureDefault = $default;
     }
 }

@@ -3,9 +3,6 @@
 namespace Kaa\HttpFoundation;
 
 /**
- * Сделан полный функционал за исключением методов, которые работают с Cookie.
- * Т.к. сами Cookie пока не доделаны
- *
  * ResponseHeaderBag is a container for Response HTTP headers.
  */
 class ResponseHeaderBag extends HeaderBag
@@ -16,23 +13,22 @@ class ResponseHeaderBag extends HeaderBag
     public const DISPOSITION_ATTACHMENT = 'attachment';
     public const DISPOSITION_INLINE = 'inline';
 
-
-    /** @var mixed $computedCacheControl */
+    /** @var mixed[] $computedCacheControl */
     protected $computedCacheControl = [];
 
-    /** @var mixed $cookies */
+    /** @var Cookie[][][] $cookies */
     protected $cookies = [];
 
-    /** @var mixed $headerNames */
+    /** @var string[] $headerNames */
     protected $headerNames = [];
 
-    /** @param any[] $headers */
+    /** @param string[][]|string[] $headers */
     public function __construct($headers = [])
     {
         parent::__construct($headers);
 
         if (!isset($this->headers['cache-control'])) {
-            $this->set('Cache-Control', '');
+            $this->setResponseHeader('Cache-Control', '');
         }
 
         /* RFC2616 - 14.18 says all Responses need to have a Date */
@@ -43,18 +39,22 @@ class ResponseHeaderBag extends HeaderBag
 
     /**
      * Returns the headers, with original capitalizations.
+     *
+     * @return string[][]
      */
-    public function allPreserveCase(): array
+    public function allPreserveCase()
     {
+        /** @var string[][] $headers */
         $headers = [];
         foreach ($this->all() as $name => $value) {
-            $headers[$this->headerNames[$name] ?? $name] = $value;
+            $headers[$this->headerNames[$name] ?? $name] = array_map('strval', $value);
         }
 
         return $headers;
     }
 
-    public function allPreserveCaseWithoutCookies(): array
+    /** @return string[][] */
+    public function allPreserveCaseWithoutCookies()
     {
         $headers = $this->allPreserveCase();
         if (isset($this->headerNames['set-cookie'])) {
@@ -64,51 +64,98 @@ class ResponseHeaderBag extends HeaderBag
         return $headers;
     }
 
-    public function replace(array $headers = []): void
+//    public function replace(array $headers = []): void
+//    {
+//        $this->headerNames = [];
+//
+//        parent::replace($headers);
+//
+//        if (!isset($this->headers['cache-control'])) {
+//            $this->set('Cache-Control', '');
+//        }
+//
+//        if (!isset($this->headers['date'])) {
+//            $this->initDate();
+//        }
+//    }
+//
+//    /** @return string[]|string[][] */
+//    public function all(?string $key = null)
+//    {
+//        $headers = parent::all();
+//
+//        if ($key !== null) {
+//            $key = strtr($key, self::UPPER, self::LOWER);
+//
+//            if ($key !== 'set-cookie') {
+//                $result = isset($headers[$key]) ? $headers[$key] : [];
+//            } else {
+//                $result = array_map('strval', $this->getCookies());
+//            }
+//
+//            return $result;
+//        }
+//
+//        foreach ($this->getCookies() as $cookie) {
+//            $headers['set-cookie'][] = (string) $cookie;
+//        }
+//
+//        return $headers;
+//    }
+
+    //TODO: working with cookie
+    /**
+     * Sets a header by name.
+     *
+     * @param int|string           $key     In fact, it's always just a string
+     * @param mixed                $values  The value or an array of values
+     * @param bool                 $replace Whether to replace the actual value or not (true by default)
+     */
+
+    public function set($key, $values, bool $replace = true): void
     {
-        $this->headerNames = [];
+        $key = (string)$key;
+        $uniqueKey = strtr($key, self::UPPER, self::LOWER);
 
-        parent::replace($headers);
+//        if ($uniqueKey === 'set-cookie') {
+//            if ($replace) {
+//                $this->cookies = [];
+//            }
+//            foreach ((array) $values as $cookie) {
+//                $this->setCookie(Cookie::fromString($cookie));
+//            }
+//            $this->headerNames[$uniqueKey] = $key;
+//
+//            return;
+//        }
 
-        if (!isset($this->headers['cache-control'])) {
-            $this->set('Cache-Control', '');
+        $this->headerNames[$uniqueKey] = $key;
+
+        parent::set($key, $values, $replace);
+
+        // ensure the cache-control header has sensible defaults
+        $computed = $this->computeCacheControlValue();
+        if (
+            \in_array($uniqueKey, ['cache-control', 'etag', 'last-modified', 'expires'], true)
+            && $computed !== ''
+        ) {
+            $this->headers['cache-control'] = [$computed];
+            $this->headerNames['cache-control'] = 'Cache-Control';
+            $this->computedCacheControl = $this->parseCacheControl($computed);
         }
-
-        if (!isset($this->headers['date'])) {
-            $this->initDate();
-        }
-    }
-
-    /** @return any[]|mixed */
-    public function all(string $key = null)
-    {
-        $headers = parent::all();
-
-        if (null !== $key) {
-            $key = strtr($key, self::UPPER, self::LOWER);
-
-            return 'set-cookie' !== $key ? $headers[$key] ?? [] : array_map('strval', $this->getCookies());
-        }
-
-        foreach ($this->getCookies() as $cookie) {
-            $headers['set-cookie'][] = (string) $cookie;
-        }
-
-        return $headers;
     }
 
     /**
      * Sets a header by name.
      *
-     * @param int|string           $key
-     * @param mixed|any            $values  The value or an array of values
+     * @param mixed                $values  The value or an array of values
      * @param bool                 $replace Whether to replace the actual value or not (true by default)
      */
-    public function set($key, $values, bool $replace = true): void
+    public function setResponseHeader(string $key, $values, bool $replace = true): void
     {
-        $uniqueKey = strtr($key, self::UPPER, self::LOWER);
+        $uniqueKey = strtr($key, HeaderBag::UPPER, self::LOWER);
 
-        if ('set-cookie' === $uniqueKey) {
+        if ($uniqueKey === 'set-cookie') {
             if ($replace) {
                 $this->cookies = [];
             }
@@ -122,10 +169,14 @@ class ResponseHeaderBag extends HeaderBag
 
         // ensure the cache-control header has sensible defaults
         $computed = $this->computeCacheControlValue();
-        if (\in_array($uniqueKey, ['cache-control', 'etag', 'last-modified', 'expires'], true) && '' !== $computed) {
+        if (
+            \in_array($uniqueKey, ['cache-control', 'etag', 'last-modified', 'expires'], true)
+            && $computed !== ''
+        ) {
             $this->headers['cache-control'] = [$computed];
             $this->headerNames['cache-control'] = 'Cache-Control';
-            $this->computedCacheControl = $this->parseCacheControl($computed);
+            $computedCacheControlMixed = $this->parseCacheControl($computed);
+            $this->computedCacheControl = array_map('strval', $computedCacheControlMixed);
         }
     }
 
@@ -134,7 +185,7 @@ class ResponseHeaderBag extends HeaderBag
         $uniqueKey = strtr($key, self::UPPER, self::LOWER);
         unset($this->headerNames[$uniqueKey]);
 
-        if ('set-cookie' === $uniqueKey) {
+        if ($uniqueKey === 'set-cookie') {
             $this->cookies = [];
 
             return;
@@ -142,11 +193,11 @@ class ResponseHeaderBag extends HeaderBag
 
         parent::remove($key);
 
-        if ('cache-control' === $uniqueKey) {
+        if ($uniqueKey === 'cache-control') {
             $this->computedCacheControl = [];
         }
 
-        if ('date' === $uniqueKey) {
+        if ($uniqueKey === 'date') {
             $this->initDate();
         }
     }
@@ -156,22 +207,34 @@ class ResponseHeaderBag extends HeaderBag
         return \array_key_exists($key, $this->computedCacheControl);
     }
 
+    public function setCookie(Cookie $cookie): void
+    {
+        $this->cookies[(string)$cookie->getDomain()][$cookie->getPath()][$cookie->getName()] = $cookie;
+        $this->headerNames['set-cookie'] = 'Set-Cookie';
+    }
+
     /**
      * Returns an array with all cookies.
      *
-     * @return mixed
+     * @return Cookie[]
      *
      * @throws \InvalidArgumentException When the $format is invalid
      */
     public function getCookies(string $format = self::COOKIES_FLAT)
     {
         if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY])) {
-            throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])));
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'Format "%s" invalid (%s).',
+                    $format,
+                    implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])
+                )
+            );
         }
 
-        if (self::COOKIES_ARRAY === $format) {
-            return $this->cookies;
-        }
+//        if ($format === self::COOKIES_ARRAY) {
+//            return $this->cookies;
+//        }
 
         $flattenedCookies = [];
         foreach ($this->cookies as $path) {
@@ -185,13 +248,13 @@ class ResponseHeaderBag extends HeaderBag
         return $flattenedCookies;
     }
 
-    /**
-     * @see HeaderUtils::makeDisposition()
-     */
-    public function makeDisposition(string $disposition, string $filename, string $filenameFallback = ''): string
-    {
-        return HeaderUtils::makeDisposition($disposition, $filename, $filenameFallback);
-    }
+//    /**
+//     * @see HeaderUtils::makeDisposition()
+//     */
+//    public function makeDisposition(string $disposition, string $filename, string $filenameFallback = ''): string
+//    {
+//        return HeaderUtils::makeDisposition($disposition, $filename, $filenameFallback);
+//    }
 
     /**
      * Returns the calculated value of the cache-control header.
@@ -201,9 +264,10 @@ class ResponseHeaderBag extends HeaderBag
      */
     protected function computeCacheControlValue(): string
     {
-        if (!$this->cacheControl) {
+        if (count($this->cacheControl) === 0) {
             if ($this->has('Last-Modified') || $this->has('Expires')) {
-                return 'private, must-revalidate'; // allows for heuristic expiration (RFC 7234 Section 4.2.2) in the case of "Last-Modified"
+                return 'private, must-revalidate';
+                // allows for heuristic expiration (RFC 7234 Section 4.2.2) in the case of "Last-Modified"
             }
 
             // conservative by default
