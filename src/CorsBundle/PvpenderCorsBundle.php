@@ -33,7 +33,7 @@ class PvpenderCorsBundle
      */
     public static function setResponseHeaders(Request $request, Response $response, array $headers): void
     {
-        if (!empty($headers['forced_allow_origin_value'])){
+        if (!empty($headers['forced_allow_origin_value'])) {
             $response->setHeaders('Access-Control-Allow-Origin', $headers['forced_allow_origin_value']);
         }
         if (!empty($headers['allow_credentials'])) {
@@ -49,7 +49,7 @@ class PvpenderCorsBundle
             $response->setHeaders('Access-Control-Max-Age', $headers['max_age']);
         }
 
-        if (strpos(($headers['allow_methods'].='OPTIONS'), $request->method()) === false) {
+        if (strpos(($headers['allow_methods'] .= 'OPTIONS'), $request->method()) === false) {
             $response->setStatusCode(405);
         }
 
@@ -62,6 +62,5 @@ class PvpenderCorsBundle
             $headers['allow_methods'] .= ", {$request->method()}";
             $response->setHeaders('Access-Control-Allow-Methods', $headers['allow_methods']);
         }
-
     }
 }
