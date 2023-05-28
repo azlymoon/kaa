@@ -44,11 +44,53 @@ class Cookie
     private const RESERVED_CHARS_TO = ['%3D', '%2C', '%3B', '%20', '%09', '%0D', '%0A', '%0B', '%0C'];
 
     /**
+     * Creates cookie from raw header string.
+     */
+    public static function fromString(string $cookie, bool $decode = false): self
+    {
+        $data = [
+            'expires' => 0,
+            'path' => '/',
+            'domain' => null,
+            'secure' => false,
+            'httponly' => false,
+            'raw' => !$decode,
+            'samesite' => null,
+        ];
+
+        $parts = HeaderUtils::split($cookie, ';=');
+        $part = array_shift($parts);
+
+        $name = $decode ? urldecode($part[0]) : (string)$part[0];
+        $value = isset($part[1]) ? ($decode ? urldecode($part[1]) : (string)$part[1]) : null;
+
+        $data = HeaderUtils::combine($parts) + $data;
+        $data['expires'] = 0;
+//        $data['expires'] = self::expiresTimestamp($data['expires']);
+
+        if (isset($data['max-age']) && ($data['max-age'] > 0 || $data['expires'] > time())) {
+            $data['expires'] = time() + (int)$data['max-age'];
+        }
+
+        return new static(
+            $name,
+            $value,
+            (int)$data['expires'],
+            (string)$data['path'],
+            $data['domain'] !== null ? (string)$data['domain'] : null,
+            $data['secure'] !== null ? (bool)$data['secure'] : null,
+            (bool)$data['httponly'],
+            (bool)$data['raw'],
+            $data['samesite'] !== null ? (string)$data['samesite'] : null
+        );
+    }
+
+    /**
      * @see self::__construct
      *
      * @param string                        $name     The name of the cookie
      * @param string|null                   $value    The value of the cookie
-     * @param int|string|\DateTimeInterface $expire   The time the cookie expires
+     * @param int|string|\DateTime          $expire   The time the cookie expires
      * @param string                        $path     The path on the server in which the cookie will be available on
      * @param string|null                   $domain   The domain that the cookie is available to
      * @param bool|null                     $secure   Whether the client should send back the cookie only over HTTPS or
@@ -60,15 +102,15 @@ class Cookie
      *
      */
     public static function create(
-        $name,
-        $value = null,
+        string $name,
+        ?string $value = null,
         $expire = 0,
-        $path = '/',
-        $domain = null,
-        $secure = null,
+        string $path = '/',
+        ?string $domain = null,
+        ?bool $secure = null,
         bool $httpOnly = true,
-        $raw = false,
-        $sameSite = self::SAMESITE_LAX
+        bool $raw = false,
+        ?string $sameSite = self::SAMESITE_LAX
     ): self {
         return new self($name, $value, $expire, $path, $domain, $secure, $httpOnly, $raw, $sameSite);
     }
@@ -89,15 +131,15 @@ class Cookie
      * @throws \InvalidArgumentException
      */
     public function __construct(
-        $name,
-        $value = null,
+        string $name,
+        ?string $value = null,
         $expire = 0,
-        $path = '/',
-        $domain = null,
-        $secure = null,
+        string $path = '/',
+        ?string $domain = null,
+        ?bool $secure = null,
         bool $httpOnly = true,
-        $raw = false,
-        $sameSite = self::SAMESITE_LAX
+        bool $raw = false,
+        ?string $sameSite = self::SAMESITE_LAX
     ) {
         // from PHP source code
         if ($raw && false !== strpbrk($name, self::RESERVED_CHARS_LIST)) {

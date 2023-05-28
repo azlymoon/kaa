@@ -64,44 +64,58 @@ class ResponseHeaderBag extends HeaderBag
         return $headers;
     }
 
-//    public function replace(array $headers = []): void
-//    {
-//        $this->headerNames = [];
-//
-//        parent::replace($headers);
-//
-//        if (!isset($this->headers['cache-control'])) {
-//            $this->set('Cache-Control', '');
-//        }
-//
-//        if (!isset($this->headers['date'])) {
-//            $this->initDate();
-//        }
-//    }
-//
-//    /** @return string[]|string[][] */
-//    public function all(?string $key = null)
-//    {
-//        $headers = parent::all();
-//
-//        if ($key !== null) {
-//            $key = strtr($key, self::UPPER, self::LOWER);
-//
-//            if ($key !== 'set-cookie') {
-//                $result = isset($headers[$key]) ? $headers[$key] : [];
-//            } else {
-//                $result = array_map('strval', $this->getCookies());
-//            }
-//
-//            return $result;
-//        }
-//
-//        foreach ($this->getCookies() as $cookie) {
-//            $headers['set-cookie'][] = (string) $cookie;
-//        }
-//
-//        return $headers;
-//    }
+    /** @param string[][]|string[] $headers */
+    public function replace($headers = []): void
+    {
+        $this->headerNames = [];
+
+        parent::replace($headers);
+
+        if (!isset($this->headers['cache-control'])) {
+            $this->set('Cache-Control', '');
+        }
+
+        if (!isset($this->headers['date'])) {
+            $this->initDate();
+        }
+    }
+
+    /** @return string[]|string[][] */
+    public function all(?string $key = null)
+    {
+        if ($key !== null) {
+            /** @var string[] $result */
+            $result = [];
+            $key = strtr($key, self::UPPER, self::LOWER);
+            if ($key === 'set-cookie') {
+                foreach ($this->getCookiesFlat() as $cookie) {
+                    $result [] = (string)$cookie;
+                }
+                return $result;
+            } else {
+                foreach (parent::all($key) as $header => $value) {
+                    if (\is_string($value)) {
+                        $result[$header] = $value;
+                    }
+                }
+                return $result;
+            }
+        }
+
+        /** @var string[][] $result */
+        $result = [];
+        foreach (parent::all(null) as $header => $valueArray) {
+            if (\is_array($valueArray)) {
+                $result[$header] = array_map('strval', $valueArray);
+            }
+        }
+
+        foreach ($this->getCookiesFlat() as $cookie) {
+            $result['set-cookie'][] = (string) $cookie;
+        }
+
+        return $result;
+    }
 
     //TODO: working with cookie
     /**
@@ -117,17 +131,17 @@ class ResponseHeaderBag extends HeaderBag
         $key = (string)$key;
         $uniqueKey = strtr($key, self::UPPER, self::LOWER);
 
-//        if ($uniqueKey === 'set-cookie') {
-//            if ($replace) {
-//                $this->cookies = [];
-//            }
-//            foreach ((array) $values as $cookie) {
-//                $this->setCookie(Cookie::fromString($cookie));
-//            }
-//            $this->headerNames[$uniqueKey] = $key;
-//
-//            return;
-//        }
+        if ($uniqueKey === 'set-cookie') {
+            if ($replace) {
+                $this->cookies = [];
+            }
+            foreach ((array) $values as $cookie) {
+                $this->setCookie(Cookie::fromString((string)$cookie));
+            }
+            $this->headerNames[$uniqueKey] = $key;
+
+            return;
+        }
 
         $this->headerNames[$uniqueKey] = $key;
 
@@ -214,28 +228,43 @@ class ResponseHeaderBag extends HeaderBag
     }
 
     /**
-     * Returns an array with all cookies.
+     * Removes a cookie from the array, but does not unset it in the browser.
+     */
+    public function removeCookie(string $name, ?string $path = '/', string $domain = '')
+    {
+        $path ??= '/';
+
+        unset($this->cookies[$domain][$path][$name]);
+
+        if (empty($this->cookies[$domain][$path])) {
+            unset($this->cookies[$domain][$path]);
+
+            if (empty($this->cookies[$domain])) {
+                unset($this->cookies[$domain]);
+            }
+        }
+
+        if (empty($this->cookies)) {
+            unset($this->headerNames['set-cookie']);
+        }
+    }
+
+    // Originally, to get an array of cookies as represented in ResponseHeaderBag,
+    // you had to call the getCookies() with the flag self::COOKIES_ARRAY.
+    // And to get a one-dimensional array of Cookies, call with COOKIES_FLAT flag.
+    // But then the return values of the getCookies() will be Cookies[]|Cookies[][][]
+    // which KPHP converts to mixed. It was easier to split
+    // one function into two with strict return types.
+
+    /**
+     * Returns a flattened array with all cookies.
      *
      * @return Cookie[]
      *
      * @throws \InvalidArgumentException When the $format is invalid
      */
-    public function getCookies(string $format = self::COOKIES_FLAT)
+    public function getCookiesFlat()
     {
-        if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY])) {
-            throw new \InvalidArgumentException(
-                sprintf(
-                    'Format "%s" invalid (%s).',
-                    $format,
-                    implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])
-                )
-            );
-        }
-
-//        if ($format === self::COOKIES_ARRAY) {
-//            return $this->cookies;
-//        }
-
         $flattenedCookies = [];
         foreach ($this->cookies as $path) {
             foreach ($path as $cookies) {
@@ -246,6 +275,30 @@ class ResponseHeaderBag extends HeaderBag
         }
 
         return $flattenedCookies;
+    }
+
+    /**
+     * Returns an array with all cookies as it represented in ResponseHeaderBag
+     *
+     * @return Cookie[][][]
+     */
+    public function getCookiesArray()
+    {
+        return $this->cookies;
+    }
+
+    /**
+     * Clears a cookie in the browser.
+     */
+    public function clearCookie(
+        string $name,
+        string $path = '/',
+        ?string $domain = null,
+        bool $secure = false,
+        bool $httpOnly = true,
+        ?string $sameSite = null
+    ): void {
+        $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, $sameSite));
     }
 
 //    /**
