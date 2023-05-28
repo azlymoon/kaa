@@ -2151,8 +2151,8 @@ class RequestTest
         $data = self::iisRequestUriProvider();
         foreach ($data as $input) {
             $headers = $input[0];
-            $server = array_map('strval', $input[1]);
-            $expectedRequestUri = $input[2];
+            $server = $input[1];
+            $expectedRequestUri = $input[2][0];
 
             $request = new Request();
             $request->headers->replace($headers);
@@ -2174,7 +2174,7 @@ class RequestTest
         }
     }
 
-    /** @return mixed[][] */
+    /** @return string[][][] */
     public static function iisRequestUriProvider()
     {
         return [
@@ -2184,14 +2184,14 @@ class RequestTest
                     'IIS_WasUrlRewritten' => '1',
                     'UNENCODED_URL' => '/foo/bar',
                 ],
-                '/foo/bar',
+                ['/foo/bar'],
             ],
             [
                 [],
                 [
                     'ORIG_PATH_INFO' => '/foo/bar',
                 ],
-                '/foo/bar',
+                ['/foo/bar'],
             ],
             [
                 [],
@@ -2199,7 +2199,7 @@ class RequestTest
                     'ORIG_PATH_INFO' => '/foo/bar',
                     'QUERY_STRING' => 'foo=bar',
                 ],
-                '/foo/bar?foo=bar',
+                ['/foo/bar?foo=bar'],
             ],
         ];
     }

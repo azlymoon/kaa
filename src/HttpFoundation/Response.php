@@ -303,7 +303,7 @@ class Response
 //        $this->ensureIEOverSSLCompatibility($request);
 
         if ($request->isSecure()) {
-            foreach ($headers->getCookies() as $cookie) {
+            foreach ($headers->getCookiesFlat() as $cookie) {
                 $cookie->setSecureDefault(true);
             }
         }
@@ -331,7 +331,7 @@ class Response
         }
 
         // cookies
-        foreach ($this->headers->getCookies() as $cookie) {
+        foreach ($this->headers->getCookiesFlat() as $cookie) {
             header('Set-Cookie: ' . $cookie, false, $this->statusCode);
         }
 

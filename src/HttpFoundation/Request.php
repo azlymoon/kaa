@@ -981,9 +981,9 @@ class Request
     /**
      * Returns the password.
      */
-    public function getPassword(): ?string
+    public function getPassword(): string
     {
-        return $this->headers->get('PHP_AUTH_PW');
+        return (string)$this->headers->get('PHP_AUTH_PW');
     }
 
     /**
