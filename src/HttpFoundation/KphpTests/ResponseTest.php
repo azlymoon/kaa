@@ -779,15 +779,21 @@ class ResponseTest
         var_dump(true === $response->isImmutable());
     }
 
-    //TODO: починить DateTime
-//    public function testSetDate()
-//    {
-//        $response = new Response();
-//        $response->setDate(\DateTime::createFromFormat('Y-m-d\TH:i:sP', '2013-01-26T09:21:56+0100'));
-//
-//        var_dump('2013-01-26T08:21:56+00:00' === $response->getDate()->format('Y-m-d\TH:i:sP'));
-//        var_dump($response->getDate()->format('Y-m-d\TH:i:sP'));
-//    }
+    public function testSetDate()
+    {
+        $response = new Response();
+        $response->setDate(\DateTime::createFromFormat(\DateTimeInterface::ATOM, '2013-01-26T09:21:56+0100', new \DateTimeZone('Etc/GMT-3')));
+
+        var_dump('2013-01-26T08:21:56+00:00' === $response->getDate()->format(\DateTimeInterface::ATOM));
+    }
+
+    public function testSetDateWithImmutable()
+    {
+        $response = new Response();
+        $response->setDate(\DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, '2013-01-26T09:21:56+0100', new \DateTimeZone('Europe/Moscow')));
+
+        var_dump('2013-01-26T08:21:56+00:00' === $response->getDate()->format(\DateTimeInterface::ATOM));
+    }
 
     public function testSetExpires()
     {
@@ -799,7 +805,7 @@ class ResponseTest
         $now = $this->createDateTimeNow();
         $response->setExpires($now);
 
-        var_dump($response->getExpires()->getTimestamp() - $now->getTimestamp());
+        var_dump($response->getExpires()->getTimestamp() === $now->getTimestamp());
     }
 
     public function testSetExpiresWithImmutable()
@@ -809,7 +815,7 @@ class ResponseTest
         $now = $this->createDateTimeImmutableNow();
         $response->setExpires($now);
 
-        var_dump($response->getExpires()->getTimestamp() - $now->getTimestamp());
+        var_dump($response->getExpires()->getTimestamp() === $now->getTimestamp());
     }
 
     protected function createDateTimeImmutableNow(): \DateTimeImmutable

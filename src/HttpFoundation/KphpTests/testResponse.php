@@ -165,8 +165,11 @@ $test->testSetImmutable();
 echo"\ntestIsImmutable\n";
 $test->testIsImmutable();
 
-//echo"\ntestSetDate\n";
-//$test->testSetDate();
+echo"\ntestSetDate\n";
+$test->testSetDate();
+
+echo"\ntestSetDateWithImmutable\n";
+$test->testSetDateWithImmutable();
 
 echo"\ntestSetExpires\n";
 $test->testSetExpires();

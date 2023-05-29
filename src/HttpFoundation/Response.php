@@ -604,25 +604,26 @@ class Response
         return $this->headers->getDate('Date');
     }
 
-    //TODO: Разобраться что с таймзоной
-
     /**
      * Sets the Date header.
+     *
+     * @throws InvalidArgumentException
      */
-    final public function setDate(\DateTime $date): self
+    final public function setDate(\DateTime|\DateTimeImmutable $date): self
     {
-        $immutableDate = null;
         if ($date instanceof \DateTime) {
             $immutableDate = \DateTimeImmutable::createFromMutable($date);
-        }
-
-//        $date = $date->setTimezone(new \DateTimeZone('UTC'));
-
-        if ($immutableDate !== null) {
-            $this->headers->set('Date', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
+        } elseif ($date instanceof \DateTimeImmutable) {
+            $immutableDate = $date;
         } else {
-            $this->headers->set('Date', $date->format('D, d M Y H:i:s') . ' GMT');
+            throw new InvalidArgumentException(
+                'Only DateTime or DateTimeImmutable objects can be passed to the function'
+            );
         }
+
+        $immutableDate = self::setTimezoneZero($immutableDate);
+
+        $this->headers->set('Date', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
 
         return $this;
     }
@@ -679,9 +680,11 @@ class Response
      *
      * Passing null as value will remove the header.
      *
-     * @param ?\DateTime|\DateTimeImmutable $date
+     * @param ?\DateTimeInterface $date
+     *
+     * @throws InvalidArgumentException
      */
-    final public function setExpires($date = null): self
+    final public function setExpires(?\DateTimeInterface $date = null): self
     {
         if ($date === null) {
             $this->headers->remove('Expires');
@@ -689,19 +692,19 @@ class Response
             return $this;
         }
 
-        $immutableDate = null;
-
         if ($date instanceof \DateTime) {
             $immutableDate = \DateTimeImmutable::createFromMutable($date);
-        }
-
-//        $date = $date->setTimezone(new \DateTimeZone('UTC'));
-
-        if ($immutableDate !== null) {
-            $this->headers->set('Expires', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
+        } elseif ($date instanceof \DateTimeImmutable) {
+            $immutableDate = $date;
         } else {
-            $this->headers->set('Expires', $date->format('D, d M Y H:i:s') . ' GMT');
+            throw new InvalidArgumentException(
+                'Only DateTime or DateTimeImmutable objects can be passed to the function'
+            );
         }
+
+        $immutableDate = self::setTimezoneZero($immutableDate);
+
+        $this->headers->set('Expires', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
 
         return $this;
     }
@@ -845,6 +848,8 @@ class Response
      * Passing null as value will remove the header.
      *
      * @param ?\DateTime|\DateTimeImmutable $date
+     *
+     * @throws InvalidArgumentException
      */
     final public function setLastModified($date = null): self
     {
@@ -854,19 +859,19 @@ class Response
             return $this;
         }
 
-        $immutableDate = null;
-
         if ($date instanceof \DateTime) {
             $immutableDate = \DateTimeImmutable::createFromMutable($date);
-        }
-
-//        $date = $date->setTimezone(new \DateTimeZone('UTC'));
-
-        if ($immutableDate !== null) {
-            $this->headers->set('Last-Modified', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
+        } elseif ($date instanceof \DateTimeImmutable) {
+            $immutableDate = $date;
         } else {
-            $this->headers->set('Last-Modified', $date->format('D, d M Y H:i:s') . ' GMT');
+            throw new InvalidArgumentException(
+                'Only DateTime or DateTimeImmutable objects can be passed to the function'
+            );
         }
+
+        $immutableDate = self::setTimezoneZero($immutableDate);
+
+        $this->headers->set('Last-Modified', $immutableDate->format('D, d M Y H:i:s') . ' GMT');
 
         return $this;
     }
@@ -1097,8 +1102,8 @@ class Response
         }
 
         $notModified = false;
-        $lastModified = $this->headers->get('Last-Modified', '');
-        $modifiedSince = $request->headers->get('If-Modified-Since', '');
+        $lastModified = $this->headers->get('Last-Modified');
+        $modifiedSince = $request->headers->get('If-Modified-Since');
 
         $etag = $this->getEtag();
         $ifNoneMatchEtags = $request->getETags();
@@ -1122,8 +1127,8 @@ class Response
         }
         // Only do If-Modified-Since date comparison when If-None-Match is not present as per
         // https://tools.ietf.org/html/rfc7232#section-3.3.
-        elseif (($modifiedSince !== '') && ($lastModified !== '')) {
-            $notModified = strtotime((string)$modifiedSince) >= strtotime((string)$lastModified);
+        elseif (($modifiedSince !== null) && ($lastModified !== null)) {
+            $notModified = strtotime($modifiedSince) >= strtotime($lastModified);
         }
 
         if ($notModified) {
@@ -1216,6 +1221,15 @@ class Response
         }
 
         $this->setVary('Prefer', false);
+    }
+
+    public static function setTimezoneZero(\DateTimeImmutable $date): \DateTimeImmutable
+    {
+        $timezoneOffset = $date->getOffset();
+        $date = $date->modify("-{$timezoneOffset} seconds");
+
+        // KPHP returns DateTimeImmutable only
+        return $date;
     }
 }
 
