@@ -686,10 +686,10 @@ class ResponseTest
         $response->setCache($options);
         var_dump('"whatever"' === $response->getEtag());
 
-//        $now = $this->createDateTimeNow();
-//        $options = ['last_modified' => $now];
-//        $response->setCache($options);
-//        var_dump($now->getTimestamp(), $response->getLastModified()->getTimestamp());
+        $now = $this->createDateTimeNow();
+        $options = ['last_modified' => $now->getTimestamp()];
+        $response->setCache($options);
+        var_dump($now->getTimestamp() === $response->getLastModified()->getTimestamp());
 
         $options = ['max_age' => 100];
         $response->setCache($options);
