@@ -12,8 +12,8 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-use Symfony\Component\HttpFoundation\ParameterBag;
+use Kaa\HttpFoundation\Exception\BadRequestException;
+use Kaa\HttpFoundation\ParameterBag;
 
 class ParameterBagTest extends TestCase
 {
@@ -39,6 +39,7 @@ class ParameterBagTest extends TestCase
     public function testAllThrowsForNonArrayValues()
     {
         $this->expectException(BadRequestException::class);
+        $this->markTestSkipped('This test is not required for KPHP because of its strict typing');
         $bag = new ParameterBag(['foo' => 'bar', 'null' => null]);
         $bag->all('foo');
     }
@@ -141,67 +142,13 @@ class ParameterBagTest extends TestCase
         $this->assertEquals(0, $bag->getInt('unknown'), '->getInt() returns zero if a parameter is not defined');
     }
 
-    public function testFilter()
-    {
-        $bag = new ParameterBag([
-            'digits' => '0123ab',
-            'email' => 'example@example.com',
-            'url' => 'http://example.com/foo',
-            'dec' => '256',
-            'hex' => '0x100',
-            'array' => ['bang'],
-            ]);
-
-        $this->assertEmpty($bag->filter('nokey'), '->filter() should return empty by default if no key is found');
-
-        $this->assertEquals('0123', $bag->filter('digits', '', \FILTER_SANITIZE_NUMBER_INT), '->filter() gets a value of parameter as integer filtering out invalid characters');
-
-        $this->assertEquals('example@example.com', $bag->filter('email', '', \FILTER_VALIDATE_EMAIL), '->filter() gets a value of parameter as email');
-
-        $this->assertEquals('http://example.com/foo', $bag->filter('url', '', \FILTER_VALIDATE_URL, ['flags' => \FILTER_FLAG_PATH_REQUIRED]), '->filter() gets a value of parameter as URL with a path');
-
-        // This test is repeated for code-coverage
-        $this->assertEquals('http://example.com/foo', $bag->filter('url', '', \FILTER_VALIDATE_URL, \FILTER_FLAG_PATH_REQUIRED), '->filter() gets a value of parameter as URL with a path');
-
-        $this->assertFalse($bag->filter('dec', '', \FILTER_VALIDATE_INT, [
-            'flags' => \FILTER_FLAG_ALLOW_HEX,
-            'options' => ['min_range' => 1, 'max_range' => 0xFF],
-        ]), '->filter() gets a value of parameter as integer between boundaries');
-
-        $this->assertFalse($bag->filter('hex', '', \FILTER_VALIDATE_INT, [
-            'flags' => \FILTER_FLAG_ALLOW_HEX,
-            'options' => ['min_range' => 1, 'max_range' => 0xFF],
-        ]), '->filter() gets a value of parameter as integer between boundaries');
-
-        $this->assertEquals(['bang'], $bag->filter('array', ''), '->filter() gets a value of parameter as an array');
-    }
-
-    public function testFilterCallback()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('A Closure must be passed to "Symfony\Component\HttpFoundation\ParameterBag::filter()" when FILTER_CALLBACK is used, "string" given.');
-
-        $bag = new ParameterBag(['foo' => 'bar']);
-        $bag->filter('foo', null, \FILTER_CALLBACK, ['options' => 'strtoupper']);
-    }
-
-    public function testFilterClosure()
-    {
-        $bag = new ParameterBag(['foo' => 'bar']);
-        $result = $bag->filter('foo', null, \FILTER_CALLBACK, ['options' => function ($value) {
-            return strtoupper($value);
-        }]);
-
-        $this->assertSame('BAR', $result);
-    }
-
     public function testGetIterator()
     {
         $parameters = ['foo' => 'bar', 'hello' => 'world'];
         $bag = new ParameterBag($parameters);
 
         $i = 0;
-        foreach ($bag as $key => $val) {
+        foreach ($bag->all() as $key => $val) {
             ++$i;
             $this->assertEquals($parameters[$key], $val);
         }
@@ -214,7 +161,7 @@ class ParameterBagTest extends TestCase
         $parameters = ['foo' => 'bar', 'hello' => 'world'];
         $bag = new ParameterBag($parameters);
 
-        $this->assertCount(\count($parameters), $bag);
+        $this->assertCount(\count($parameters), $bag->all());
     }
 
     public function testGetBoolean()

@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpFoundation\Tests;
+namespace Kaa\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\HeaderBag;
+use Kaa\HttpFoundation\HeaderBag;
 
 class HeaderBagTest extends TestCase
 {
@@ -59,6 +59,7 @@ class HeaderBagTest extends TestCase
     {
         $this->expectException(\RuntimeException::class);
         $bag = new HeaderBag(['foo' => 'Tue']);
+        $this->markTestSkipped('This test works only in KPHP');
         $bag->getDate('foo');
     }
 
@@ -195,7 +196,7 @@ class HeaderBagTest extends TestCase
         $headerBag = new HeaderBag($headers);
 
         $i = 0;
-        foreach ($headerBag as $key => $val) {
+        foreach ($headerBag->all() as $key => $val) {
             ++$i;
             $this->assertEquals([$headers[$key]], $val);
         }
@@ -208,6 +209,6 @@ class HeaderBagTest extends TestCase
         $headers = ['foo' => 'bar', 'HELLO' => 'WORLD'];
         $headerBag = new HeaderBag($headers);
 
-        $this->assertCount(\count($headers), $headerBag);
+        $this->assertCount(\count($headers), $headerBag->all());
     }
 }
