@@ -5,3 +5,5 @@
 .phpunit.result.cache
 coverage.cobertura.xml
 src/*/Test/Generated
+.DS_Store
+src/HttpClient/Components/ffilibs/
