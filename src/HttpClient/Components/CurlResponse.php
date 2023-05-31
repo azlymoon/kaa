@@ -64,12 +64,12 @@ class CurlResponse implements ResponseInterface
             throw new InvalidArgumentException(sprintf("Incorrect %s constructor call, one of the required parameters CurlHandle | string url was not passed.", self::class));
         }
 
-        // попытка использовать FFI для создания временного файла через временную директорию
+        // an attempt to use FFI for creating a temporary file via temporary directory
         //BoostFilesystem::load();
         //$libboost = new BoostFilesystem();
         //$this->debugBuffer = tempnam($libboost->SysGetTempDirPath(), "temp");
 
-        // попытка использовать файл и направить вывод об ошибках потока в него
+        // attempt to use file and forward error outputs of stream to it
         //$this->debugBuffer = fopen('debugBuffer', 'w+');
         //$ch->curlSetOpt(CURLOPT_VERBOSE, true);
         //$ch->curlSetOpt(CURLOPT_STDERR, $this->debugBuffer); //отсутствует в KPHP
@@ -90,6 +90,7 @@ class CurlResponse implements ResponseInterface
             $ch->curlSetOpt(CURLOPT_PRIVATE, \in_array($method, ['GET', 'HEAD', 'OPTIONS', 'TRACE'], true) && 1.0 < (float)($options->getHttpVersion() ?? 1.1) ? 'H2' : 'H0');
         }
 
+        // there is no implementation of curl_pause function yet in KPHP
 //        $ch->curlPause(CURLPAUSE_CONT);
 //        $redirectHeaders = [];
 //        if (0 < $options->getMaxRedirects()) {
@@ -108,7 +109,7 @@ class CurlResponse implements ResponseInterface
         };
 
         // Schedule the request in a non-blocking way
-//        $multi->openHandles[$id] = tuple($ch, $options);
+        // $multi->openHandles[$id] = tuple($ch, $options);
         $multi->handle->curlMultiAddHandle($ch->getHandle());
     }
 
@@ -182,12 +183,11 @@ class CurlResponse implements ResponseInterface
 
             $iterator = new StreamIterator([$this]);
             while ($iterator->hasResponses()) {
-                $tuple = $iterator->stream();
-                if ($tuple) {
-                    $chunk = $tuple[1];
-                    if (!$chunk->isLast()) {
-                        $content .= $chunk->getContent();
-                    }
+                $chunk = $iterator->stream();
+                if ($chunk === null) {
+                    break;
+                } elseif (!$chunk->isLast()) {
+                    $content .= $chunk->getContent();
                 }
             }
 
@@ -204,7 +204,8 @@ class CurlResponse implements ResponseInterface
 
         $iterator = new StreamIterator([$this]);
         while ($iterator->hasResponses()) {
-            $iterator->stream();
+            $chunk = $iterator->stream();
+            if ($chunk === null) break;
             // Chunks are buffered in $this->content already
         }
 
@@ -254,15 +255,11 @@ class CurlResponse implements ResponseInterface
             if (($response->initializer)($response)) {
                 $iterator = new StreamIterator([$response], 0.0);
                 while ($iterator->hasResponses()) {
-                    var_dump('1');
-                    $tuple = $iterator->stream();
-                    if ($tuple !== null) {
-                        $chunk = $tuple[1];
-                        if ($chunk !== null) {
-                            if ($chunk->isFirst()) {
-                                break;
-                            }
-                        }
+                    $chunk = $iterator->stream();
+                    if ($chunk === null) {
+                        break;
+                    } elseif ($chunk->isFirst()) {
+                        break;
                     }
                 }
             }
@@ -627,11 +624,17 @@ class CurlResponse implements ResponseInterface
      * @param int|null $index
      * @return void
      */
-    public static function perform(ClientState $multi, array &$responses, ?int $index = null): void
+    public static function perform(CurlClientState $multi, array &$responses, ?int $index = null): void
     {
         if (self::$performing) {
             if ($responses !== []) {
-                $response = $index ? $responses[$index] : array_first_value($responses);
+                if (defined('IS_PHP')) {
+                    #ifndef KPHP
+                    $response = $index ? $responses[$index] : $responses[array_key_first($responses)];
+                    #endif
+                } else {
+                    $response = $index ? $responses[$index] : array_first_value($responses);
+                }
                 $multi->handlesActivity[(int)$response->handle->getHandle()][] = null;
                 $multi->handlesActivity[(int)$response->handle->getHandle()][] = (new HandleActivity())->setException(new TransportException(sprintf('Userland callback cannot use the client nor the response while processing "%s".', $response->getInfo((string) CURLINFO_EFFECTIVE_URL))));
             }
@@ -648,7 +651,7 @@ class CurlResponse implements ResponseInterface
             $tMsgCount = -1;
             while ($info = $multi->handle->curlMultiInfoRead($tMsgCount)) {
                 $result = $info['result'];
-                $id = (int) $info['handle'];
+                $id = $info['handle']; // for PHP the type of handle must be resource, but in KPHP – int
                 $ch = new CurlHandle(null, $id);
                 $waitFor = $ch->getInfo(CURLINFO_PRIVATE) ?: '_0';
 
@@ -664,11 +667,19 @@ class CurlResponse implements ResponseInterface
                         continue;
                     }
                 }
-                $multi->handlesActivity[$id][] = null;
-                $multi->handlesActivity[$id][] = \in_array(
-                    $result, [CURLE_OK, CURLE_TOO_MANY_REDIRECTS], true) ||
-                    '_0' === $waitFor ||
-                    $ch->getInfo( CURLINFO_SIZE_DOWNLOAD) === $ch->getInfo(CURLINFO_CONTENT_LENGTH_DOWNLOAD) ? null : (new HandleActivity())->setException(new TransportException(sprintf('%s for "%s".', CurlMultiHandle::curlMultiStrError($result), $ch->getInfo(CURLINFO_EFFECTIVE_URL)))
+                $multi->handlesActivity[(int) $id][] = null;
+                $multi->handlesActivity[(int) $id][] = (
+                    \in_array($result, [CURLE_OK, CURLE_TOO_MANY_REDIRECTS], true)
+                    || '_0' === $waitFor
+                    || $ch->getInfo( CURLINFO_SIZE_DOWNLOAD) === $ch->getInfo(CURLINFO_CONTENT_LENGTH_DOWNLOAD)
+                ) ? null : (new HandleActivity())->setException
+                (
+                    new TransportException(sprintf
+                    (
+                        '%s for "%s".',
+                        CurlMultiHandle::curlMultiStrError($result),
+                        $ch->getInfo(CURLINFO_EFFECTIVE_URL)
+                    ))
                 );
             }
         } catch (TransportException $e) {
