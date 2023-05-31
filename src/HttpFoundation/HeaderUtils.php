@@ -122,7 +122,8 @@ class HeaderUtils
     {
         $parts = [];
         foreach ($assoc as $name => $value) {
-            if (true === $value) {
+            // Checking for type is necessary, otherwise the KPHP compiler complains
+            if (is_bool($value) && $value === true) {
                 $parts[] = $name;
             } else {
                 $parts[] = $name . '=' . self::quote((string)$value);
