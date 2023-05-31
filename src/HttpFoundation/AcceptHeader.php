@@ -1,7 +1,12 @@
 <?php
 
 /*
- * This file is part of the Symfony package.
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
+ * This file was rewritten from the Symfony package
  *
  * (c) Fabien Potencier <fabien@symfony.com>
  *
@@ -10,10 +15,6 @@
  */
 
 namespace Kaa\HttpFoundation;
-
-// Help opcache.preload discover always-needed symbols
-
-class_exists(AcceptHeaderItem::class);
 
 /**
  * This file has been rewritten for KPHP compilation.
@@ -52,7 +53,8 @@ class AcceptHeader
 
         $parts = HeaderUtils::split($headerValue ?? '', ',;=');
 
-        return new self(array_map(static function ($subParts) use ($index) {
+        $indexHolder = new IndexHolder($index);
+        $result = new self(array_map(static function ($subParts) use ($indexHolder) {
             $part = array_shift($subParts);
             /** @var mixed $attributes2 */
             $attributes2 = HeaderUtils::combine($subParts);
@@ -61,19 +63,26 @@ class AcceptHeader
             $attributes = array_map('strval', $attributes2);
 
             $item = new AcceptHeaderItem((string)$part[0], $attributes);
-            $item->setIndex($index++);
+            $item->setIndex($indexHolder->getIndex());
+            $indexHolder->incrementIndex();
 
             return $item;
         }, $parts));
+
+        return $result;
     }
 
-//    /**
-//     * Returns header value's string representation.
-//     */
-//    public function __toString(): string
-//    {
-//        return implode(',', $this->items);
-//    }
+    /**
+     * Returns header value's string representation.
+     */
+    public function __toString(): string
+    {
+        $str = [];
+        foreach ($this->items as $item) {
+            $str [] = (string)$item;
+        }
+        return implode(',', $str);
+    }
 
     /**
      * Tests if header has given value.
@@ -83,13 +92,16 @@ class AcceptHeader
         return isset($this->items[$value]);
     }
 
-//    /**
-//     * Returns given value's item, if exists.
-//     */
-//    public function get(string $value): ?AcceptHeaderItem
-//    {
-//        return $this->items[$value] ?? $this->items[explode('/', $value)[0].'/*'] ?? $this->items['*/*'] ?? $this->items['*'] ?? null;
-//    }
+    /**
+     * Returns given value's item, if exists.
+     */
+    public function get(string $value): ?AcceptHeaderItem
+    {
+        return $this->items[$value]
+            ?? $this->items[explode('/', $value)[0] . '/*']
+            ?? $this->items['*/*'] ?? $this->items['*']
+            ?? null;
+    }
 
     /**
      * Adds an item.
@@ -116,25 +128,18 @@ class AcceptHeader
         return $this->items;
     }
 
-//    /**
-//     * Filters items on their value using given regex.
-//     */
-//    public function filter(string $pattern): self
-//    {
-//        return new self(array_filter($this->items, function (AcceptHeaderItem $item) use ($pattern) {
-//            return preg_match($pattern, $item->getValue());
-//        }));
-//    }
-//
-//    /**
-//     * Returns first item.
-//     */
-//    public function first(): ?AcceptHeaderItem
-//    {
-//        $this->sort();
-//
-//        return $this->items ? reset($this->items) : null;
-//    }
+    /**
+     * Returns first item.
+     */
+    public function first(): ?AcceptHeaderItem
+    {
+        $this->sort();
+
+        if (count($this->items) !== 0) {
+            return $this->items[array_keys($this->items)[0]];
+        }
+        return null;
+    }
 
     /**
      * Sorts items by descending quality.

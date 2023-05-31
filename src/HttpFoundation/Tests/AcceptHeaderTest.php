@@ -1,7 +1,12 @@
 <?php
 
 /*
- * This file is part of the Symfony package.
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
+ * This file was rewritten from the Symfony package
  *
  * (c) Fabien Potencier <fabien@symfony.com>
  *
@@ -9,11 +14,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpFoundation\Tests;
+namespace Kaa\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Kaa\HttpFoundation\AcceptHeader;
-use Symfony\Component\HttpFoundation\AcceptHeaderItem;
+use Kaa\HttpFoundation\AcceptHeaderItem;
 
 class AcceptHeaderTest extends TestCase
 {
@@ -64,22 +69,6 @@ class AcceptHeaderTest extends TestCase
             [[new AcceptHeaderItem('gzip')], 'gzip'],
             [[new AcceptHeaderItem('gzip'), new AcceptHeaderItem('deflate'), new AcceptHeaderItem('sdch')], 'gzip,deflate,sdch'],
             [[new AcceptHeaderItem('this;should,not=matter')], 'this;should,not=matter'],
-        ];
-    }
-
-    /**
-     * @dataProvider provideFilterData
-     */
-    public function testFilter($string, $filter, array $values)
-    {
-        $header = AcceptHeader::fromString($string)->filter($filter);
-        $this->assertEquals($values, array_keys($header->all()));
-    }
-
-    public static function provideFilterData()
-    {
-        return [
-            ['fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4', '/fr.*/', ['fr-FR', 'fr']],
         ];
     }
 
