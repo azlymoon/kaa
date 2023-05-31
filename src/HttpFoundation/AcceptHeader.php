@@ -12,12 +12,15 @@
 namespace Kaa\HttpFoundation;
 
 // Help opcache.preload discover always-needed symbols
-use Kaa\HttpFoundation\AcceptHeaderItem;
-use Kaa\HttpFoundation\HeaderUtils;
 
-//class_exists(AcceptHeaderItem::class);
+class_exists(AcceptHeaderItem::class);
 
 /**
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
  * Represents an Accept-* header.
  *
  * An accept header is compound with a list of items,

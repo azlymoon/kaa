@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Kaa\HttpFoundation;
 
 use Kaa\HttpFoundation\Exception\ConflictingHeadersException;
@@ -9,6 +18,11 @@ use Kaa\HttpFoundation\Exception\SuspiciousOperationException;
 use InvalidArgumentException;
 
 /**
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
  * Request represents an HTTP request.
  *
  * The methods dealing with URL accept / return a raw path (% encoded):
@@ -2062,7 +2076,13 @@ class Request
         }
         $this->isForwardedValid = false;
 
-        throw new ConflictingHeadersException(sprintf('The request has both a trusted "%s" header and a trusted "%s" header, conflicting with each other. You should either configure your proxy to remove one of them, or configure your project to distrust the offending one.', self::TRUSTED_HEADERS[self::HEADER_FORWARDED], self::TRUSTED_HEADERS[$type]));
+        throw new ConflictingHeadersException(
+            sprintf(
+                'The request has both a trusted "%s" header and a trusted "%s" header, conflicting with each other. You should either configure your proxy to remove one of them, or configure your project to distrust the offending one.',
+                self::TRUSTED_HEADERS[self::HEADER_FORWARDED],
+                self::TRUSTED_HEADERS[$type]
+            )
+        );
     }
 
     /**

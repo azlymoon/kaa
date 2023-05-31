@@ -1,11 +1,25 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Kaa\HttpFoundation;
 
 /**
- * Компонент предлагает полный функционал за исключением ParseQuery (пока не применялся)
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
  *
  * HTTP header utility functions.
+ *
+ * @author Christian Schmidt <github@chsc.dk>
  */
 class HeaderUtils
 {
@@ -163,7 +177,13 @@ class HeaderUtils
     public static function makeDisposition(string $disposition, string $filename, string $filenameFallback = ''): string
     {
         if (!\in_array($disposition, [self::DISPOSITION_ATTACHMENT, self::DISPOSITION_INLINE])) {
-            throw new \InvalidArgumentException(sprintf('The disposition must be either "%s" or "%s".', self::DISPOSITION_ATTACHMENT, self::DISPOSITION_INLINE));
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'The disposition must be either "%s" or "%s".',
+                    self::DISPOSITION_ATTACHMENT,
+                    self::DISPOSITION_INLINE
+                )
+            );
         }
 
         if ('' === $filenameFallback) {
@@ -185,7 +205,9 @@ class HeaderUtils
             (strpos($filename, '/') !== false) || (strpos($filename, '\\') !== false) ||
             (strpos($filenameFallback, '/') !== false) || (strpos($filenameFallback, '\\') !== false)
         ) {
-            throw new \InvalidArgumentException('The filename and the fallback cannot contain the "/" and "\\" characters.');
+            throw new \InvalidArgumentException(
+                'The filename and the fallback cannot contain the "/" and "\\" characters.'
+            );
         }
 
         $params = ['filename' => $filenameFallback];

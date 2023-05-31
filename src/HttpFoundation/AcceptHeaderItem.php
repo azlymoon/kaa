@@ -11,9 +11,12 @@
 
 namespace Kaa\HttpFoundation;
 
-//use Symfony\Component\HttpFoundation\HeaderUtils;
-
 /**
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
  * Represents an Accept-* header item.
  *
  * @author Jean-François Simon <contact@jfsimon.fr>

@@ -1,11 +1,25 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Kaa\HttpFoundation;
 
 use JsonEncoder;
 use Kaa\HttpKernel\Exception\JsonException;
 
 /**
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
  * Response represents an HTTP response in JSON format.
  *
  * Note that this class does not force the returned JSON content to be an
@@ -41,7 +55,13 @@ class JsonResponse extends Response
         parent::__construct('', $status, $headers);
 
         if ($json && !\is_string($data) && !is_numeric($data)) {
-            throw new \TypeError(sprintf('"%s": If $json is set to true, argument $data must be a string "%s" given.', __METHOD__, gettype($data)));
+            throw new \TypeError(
+                sprintf(
+                    '"%s": If $json is set to true, argument $data must be a string "%s" given.',
+                    __METHOD__,
+                    gettype($data)
+                )
+            );
         }
 
         if ($data === null && $json === false) {

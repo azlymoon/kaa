@@ -1,7 +1,12 @@
 <?php
 
 /*
- * This file is part of the Symfony package.
+ * This file has been rewritten for KPHP compilation.
+ * Please refer to the original Symfony HttpFoundation repository for the original source code.
+ * @see https://github.com/symfony/http-foundation
+ * @author Mikhail Fedosov <fedosovmichael@gmail.com>
+ *
+ * This file was rewritten from the Symfony package
  *
  * (c) Fabien Potencier <fabien@symfony.com>
  *
