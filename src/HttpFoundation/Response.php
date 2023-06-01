@@ -887,26 +887,6 @@ class Response
     }
 
     /**
-     * Sets the Last-Modified HTTP header with a DateTime instance.
-     *
-     * Passing null as value will remove the header.
-     *
-     * @throws InvalidArgumentException
-     */
-    final public function setLastModifiedTimestamp(?int $timestamp = null): self
-    {
-        if ($timestamp === null) {
-            $this->headers->remove('Last-Modified');
-
-            return $this;
-        }
-
-        $this->headers->set('Last-Modified', date('D, d M Y H:i:s', $timestamp) . ' GMT');
-
-        return $this;
-    }
-
-    /**
      * Returns the literal value of the ETag HTTP header.
      */
     final public function getEtag(): ?string
@@ -967,7 +947,8 @@ class Response
         }
 
         if (isset($options['last_modified'])) {
-            $this->setLastModifiedTimestamp((int)$options['last_modified']);
+            $immutableDate = \DateTimeImmutable::createFromFormat('U', (string)$options['last_modified']);
+            $this->setLastModified($immutableDate);
         }
 
         if (isset($options['max_age'])) {

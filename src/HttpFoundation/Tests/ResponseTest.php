@@ -15,9 +15,7 @@ use Kaa\HttpFoundation\Cookie;
 use Kaa\HttpFoundation\Request;
 use Kaa\HttpFoundation\Response;
 
-/**
- * @group time-sensitive
- */
+
 class ResponseTest extends ResponseTestCase
 {
     public function testToString()
@@ -664,7 +662,7 @@ class ResponseTest extends ResponseTestCase
         $now = $this->createDateTimeNow();
         $options = ['last_modified' => $now->getTimestamp()];
         $response->setCache($options);
-        $this->assertEquals($now->getTimestamp(), $response->getLastModified()->getTimestamp());
+        $this->assertEquals($now, $response->getLastModified());
 
         $options = ['max_age' => 100];
         $response->setCache($options);
@@ -1022,7 +1020,7 @@ class ResponseTest extends ResponseTestCase
         return $this->createDateTimeNow()->add(new \DateInterval('PT1H'));
     }
 
-    protected function createDateTimeNow()
+    protected function createDateTimeNow(): \DateTime
     {
         $date = new \DateTime();
 

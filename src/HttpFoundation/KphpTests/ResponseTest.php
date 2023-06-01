@@ -684,7 +684,6 @@ class ResponseTest
         var_dump(true === $cookie->isSecure());
     }
 
-    //TODO: Сделать работу с last-modified
     public function testSetCache()
     {
         $response = new Response();
