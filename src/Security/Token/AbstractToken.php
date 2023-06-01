@@ -6,7 +6,7 @@ namespace Kaa\Security\Token;
 
 use Kaa\Security\User\UserInterface;
 
-class AbstractToken implements TokenInterface
+abstract class AbstractToken implements TokenInterface
 {
     private ?UserInterface $user = null;
 
