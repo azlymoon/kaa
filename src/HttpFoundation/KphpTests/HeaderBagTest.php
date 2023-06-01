@@ -115,7 +115,7 @@ class HeaderBagTest
         var_dump(['bar', 'bor'] === $bag->all('foo'));
 
         $bag->set('baz', null);
-        var_dump('' === $bag->get('baz', 'nope'));
+        var_dump(null === $bag->get('baz', 'nope'));
     }
 
     public function testSetAssociativeArray()
