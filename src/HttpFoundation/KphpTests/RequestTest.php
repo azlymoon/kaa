@@ -1680,7 +1680,7 @@ class RequestTest
 
         $request = new Request();
         $request->headers->set('Accept-Charset', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7');
-        var_dump(['ISO-8859-1', '*', 'utf-8'] === $request->getCharsets());
+        var_dump(['ISO-8859-1', 'utf-8', '*'] === $request->getCharsets());
     }
 
     public function testGetEncodings()
@@ -1692,7 +1692,7 @@ class RequestTest
 
         $request = new Request();
         $request->headers->set('Accept-Encoding', 'gzip,deflate,sdch');
-        var_dump(['sdch', 'deflate', 'gzip'] === $request->getEncodings());
+        var_dump(['gzip', 'deflate', 'sdch'] === $request->getEncodings());
 
         $request = new Request();
         $request->headers->set('Accept-Encoding', 'gzip;q=0.4,deflate;q=0.9,compress;q=0.7');
@@ -1708,7 +1708,7 @@ class RequestTest
 
         $request = new Request();
         $request->headers->set('Accept', 'application/vnd.wap.wmlscriptc, text/vnd.wap.wml, application/vnd.wap.xhtml+xml, application/xhtml+xml, text/html, multipart/mixed, */*');
-        var_dump(['multipart/mixed', '*/*', 'text/html', 'application/xhtml+xml', 'text/vnd.wap.wml', 'application/vnd.wap.xhtml+xml', 'application/vnd.wap.wmlscriptc'] === $request->getAcceptableContentTypes());
+        var_dump(['application/vnd.wap.wmlscriptc', 'text/vnd.wap.wml', 'application/vnd.wap.xhtml+xml', 'application/xhtml+xml', 'text/html', 'multipart/mixed', '*/*'] === $request->getAcceptableContentTypes());
     }
 
     public function testGetLanguages()
@@ -1726,11 +1726,11 @@ class RequestTest
 
         $request = new Request();
         $request->headers->set('Accept-language', 'zh, en, en-us');
-        var_dump(['en_US', 'en', 'zh'] === $request->getLanguages()); // Test equal weighting without qvalues
+        var_dump(['zh', 'en', 'en_US'] === $request->getLanguages()); // Test equal weighting without qvalues
 
         $request = new Request();
         $request->headers->set('Accept-language', 'zh; q=0.6, en, en-us; q=0.6');
-        var_dump(['en', 'en_US', 'zh'] === $request->getLanguages()); // Test equal weighting with qvalues
+        var_dump(['en', 'zh', 'en_US'] === $request->getLanguages()); // Test equal weighting with qvalues
 
         $request = new Request();
         $request->headers->set('Accept-language', 'zh, i-cherokee; q=0.6');
