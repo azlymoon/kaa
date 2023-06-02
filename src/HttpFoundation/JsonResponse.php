@@ -86,7 +86,7 @@ class JsonResponse extends Response
             throw new JsonException(JsonEncoder::getLastError());
         }
 
-        return new self($jsonData, $status, $headers);
+        return new self($jsonData, $status, $headers, true);
     }
 
     /**

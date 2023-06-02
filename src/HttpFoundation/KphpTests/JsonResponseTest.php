@@ -172,4 +172,13 @@ class JsonResponseTest
 
         var_dump('{}' === $response->getContent());
     }
+
+    public function testConstructorWithObject(): void
+    {
+        $obj = new UserObjectJsonResponse("Vasiliy", 42);
+
+        $response = JsonResponse::fromObject($obj);
+
+        var_dump('{"name":"Vasiliy","age":42}' === $response->getContent());
+    }
 }

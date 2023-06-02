@@ -70,3 +70,6 @@ $test->testConstructorWithNullAsDataThrowsAnUnexpectedValueException();
 
 echo"\ntestConstructorWithObjectWithToStringMethod\n";
 $test->testConstructorWithObjectWithToStringMethod();
+
+echo"\ntestConstructorWithObject\n";
+$test->testConstructorWithObject();
