@@ -7,11 +7,12 @@ namespace Kaa\Security\Voter;
 use Kaa\Security\SecurityVote;
 use Kaa\Security\Token\TokenInterface;
 
-class RoleVoter implements RoleVoterInterface
+class RoleVoter implements VoterInterface
 {
-    public function vote(TokenInterface $token, array $requiredRoles): SecurityVote
+    // in this case, $requiredAttributes contain required roles
+    public function vote(TokenInterface $token, array $requiredAttributes): SecurityVote
     {
-        if (array_intersect($token->getRoles(), $requiredRoles) == $requiredRoles) {
+        if (array_intersect($token->getRoles(), $requiredAttributes) == $requiredAttributes) {
             return SecurityVote::Grant;
         }
         return SecurityVote::Deny;

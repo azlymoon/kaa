@@ -67,16 +67,16 @@ public function setUser(UserInterface $user): void;
 
 A new `Voter` class should:
 
-- implement `Kaa\Security\Voter\RoleVoterInterface` or extend `Kaa\Security\Voter\RoleVoter` class;
+- implement `Kaa\Security\Voter\VoterInterface` or extend `Kaa\Security\Voter\RoleVoter` class;
 - be placed in `Kaa\Security\Voter` namespace.
 
-Implementing`Kaa\Security\Voter\RoleVoterInterface` means that your class should define the following method:
+Implementing`Kaa\Security\Voter\VoterInterface` means that your class should define the following method:
 
 ```php
 /**
- * @param string[] $requiredRoles
+ * @param string[] $requiredAttributes
  */
-public function vote(TokenInterface $token, array $requiredRoles): SecurityVote;
+public function vote(TokenInterface $token, array $requiredAttributes): SecurityVote;
 ```
 
 ### New `Strategy` classes
