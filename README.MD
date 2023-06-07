@@ -8,3 +8,4 @@ Components:
 - [Validator](src/Validator/README.MD)
 - [Param Converter](src/ParamConverter/README.MD)
 - [Interceptor Utils](src/InterceptorUtils/README.MD)
+- [Security](src/Security/README.md)
