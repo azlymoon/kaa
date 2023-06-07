@@ -1,20 +1,57 @@
 # `KHttpClient`
-The project aims to port the `Symfony/HttpClient` library ([here is a link](https://symfony.com/doc/current/http_client.html)). 
+Проект нацелен на портирование библиотеки `Symfony/HttpClient`([тут ссылка](https://symfony.com/doc/current/http_client.html)). 
 
-## Main problems and challenges
-`KPHP` is a translator for `PHP` code into `C++`. That is, in order to support the library, the code must be compilable, not strictly interpretable.\
-This implies:
-1. Using strict typing.
-2. Prohibiting mixing of complex data and avoiding mixing of different data types in principle.
-3. The implementation of unsupported functions.
-4. Avoiding conflicts so that the library can run on both `PHP` and `KPHP`.
+## Главные проблемы и задачи
+`KPHP` – это транслятор `PHP` кода в `C++`. То есть, с целью поддержки данной библиотеки код должен быть компилируемым, не сугубо интерпретируемым.\
+Это подразумевает следующее:
+1. Использование строгой типизации.
+2. Запрет на смешивание сложных данных и недопущение смешивания различных типов данных в принципе.
+3. Имплементация неподдерживаемого функционала.
+4. Обход конфликтов для использования библиотеки как на `PHP`, так и на `KPHP` (требуется для тестирования).
 
-To start with, `CurlHttpClient` will be ported. \
-`KPHP` originally supports many (almost all necessary) functions of the cURL library: cURL in `KPHP` is the same cURL, but in a wrapper. However, there are some things that are still missing there (setting server response event handlers, `curl_pause()` and others). This will prevent a full transfer of the library, but a test version can still be created.
+Для начала будет портирован модуль `CurlHttpClient`. \
+`KPHP` изначально поддерживает (почти все необходимые) функции cURL библиотеки: cURL в `KPHP` это тот же cURL, но в обёртке. Однако, есть функционал, который пока что не поддерживается (установка обработчиков событий на хендлеры запросов, `curl_pause()` и другое). Это мешает полноценному переносу библиотеки, однако её тестовая версия может быть сделана.
+
 ## `CurlHttpClient`
-Without going into detail, the main components of this module are the following:
-* CurlResponse - query unit,
-* CurlClientState - state machine,
-* CurlHttpClient - module class itself.
+Не затрагивая детали, обозначим главные компоненты данного модуля:
+* CurlResponse - единица запросов,
+* CurlClientState - состояние клиента,
+* CurlHttpClient - класс модуля.
 
-> Note that the library in its first version will not be able to support modern HTTP/2 connections, because it cannot use the functionality of the server response handlers
+### Конструктор
+```PHP
+$client = new CurlHttpClient(null);
+```
+Вызов конструктора подразумевает следующую последовательность действий:
+1. **Вызов конструтора класса параметров запроса `Options`**: \
+*Позволяет хранить множество параметров различных типов, избегая проблему строгой типизации.*
+2. **Вызов функции подготовки запроса `prepareRequest` класса `ExtractedHttpClient`**: \
+*Вадилирует все опции и параметры запроса, делает возможным дальнейшую отправку запроса к серверу.*
+3. **Создание объекта класса состояний клиента `CurlClietState:`**
+*Данный класс является связующим между хендлерами и мультихендлерами запросов.*
+
+### Создание запроса `request`
+```PHP
+$url = 'https://<someExampleUrl>';
+$response = $client->request('GET', $url);
+```
+1. **Валидация передаваемых опций через метод `prepareRequest()`.**.
+2. **Подготовка других параметров запроса с помощью функции `ExtractedHttpClient`.**.
+3. **Создание объекта запроса класса `CurlResponse`**: \
+*Данный класс хранит всю информацию о запросе. 
+В частности, хранит связь между запросом и его мультихандлером. \
+Создание объекта запроса означает добавление запроса в очередь мультихандлера, 
+установка всех опций с помощью `curl_setopt()` и, помимо прочего, создание временного потока для отладки*.
+### Получение статуса запроса `getStatusCode`
+```PHP
+$response = $client->request('GET', $url);
+var_dump($statusCode = $response->getStatusCode());
+```
+Этот метод позволяет получить код состояния запроса. \
+Его вызов имеет довольно сложную конструкцию и требует использования функции-генератора. 
+KPHP пока не поддерживает генераторы, поэтому используется рекурсия. Для этого используется класс `StreamIterator`.
+Оказалось, что структура выглядит следующим образом:
+1. Создание объекта **StreamIterator.**.
+2. **Использование функциональности StreamIterator**: используются методы для получения информации о запросе в сочетании с curl_multi_exec().
+
+## Документация разработчика расположена по [ссылке]()
