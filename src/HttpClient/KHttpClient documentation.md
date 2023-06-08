@@ -99,5 +99,148 @@ $normalizedHeaders = $options->getNormalizedHeader($k) ?? [];
 $options = Options::mergeOptions($options, $defaultOptions);
 ```
 ## Валидация параметров запроса
+Функционал валидации параметров запроса содержится в классе `ExtractedHttpClient`.
+> В оригинальной библиотеке представлен как трейт `HttpClientTrait`, использующий alias'ы.
 
+Структура валидации запроса представлена ниже:
+1. **вызов `prepareRequest()`**: \
+*основной метод валидации, принимает массив опций* 
+    1. **вызов `mergeDefaultOptions()`**: \
+*валидирует и склеивает переданный массив опций с массивом опций по умол.*
+        - **вызов `normalizeHeaders()`**
+        - **вызов `parseUrl()`**: \
+*разбивает и валидирует URL-адрес*
+    2. **вызов `jsonEncode()` при необходимости**: \
+*Декодирует тело запроса*
+    3. **вызов `normalizePeerFingerprint()`**: \
+*В соответствии с параметром запроса определяет алгоритм защиты*
+    4. **вызов `resolveUrl()`**: \
+*Вадириует и декодирует url-части запроса*
 
+С целью возврата из функции валидации полученного url и объекта `Options` используется KPHP тип данных tuple, запоминаюший типы данных в своей структуре (отличается тем, что не позволяет изменять зранимые данные). \
+В PHP отсутствует tuple, потому используется `#ifndef KPHP` - `#endif` конструкция для возврата списка при работе с PHP. 
+
+Конструкции проверки параметра запроса тела вырезаны через `#ifndef KPHP` - `#endif` ввиду строгой типизации параметра и очевидности результата проверки. \
+Ананлогичным образом вырезан функционал `dechunk()`, затруднительный к переносу из-за отсутствия поддержки в KPHP работы с временными потоками.
+
+Пример использования функционала валидации параметров запроса:
+```PHP
+[$url, $options] = self::prepareRequest($method, $url, $options, $this->defaultOptions);
+```
+### Подключение недостающих констант
+Подключение констант в обход их дублирования на PHP осуществляется через разделение KPHP и PHP с помощью инициализации константы `IS_PHP`.
+Пример разделения исполнений:
+```PHP
+CurlHttpClient.php
+...
+// in order to understand whether KPHP or PHP is being used
+#ifndef KPHP
+define('IS_PHP', true);
+#endif
+...
+
+ExtractedHttpClient.php
+...
+#ifndef KPHP
+if (! defined('IS_PHP')) {
+#endif
+    require_once __DIR__.'/PredefinedConstants.php';
+#ifndef KPHP
+}
+#endif
+...
+```
+> Конструкция комментаривания от KPHP условния требуется для предотвращения ошибок 
+## Создание запроса 
+Единица запроса реализована через `CurlResponse`.
+Класс содержит следущие поля:
+- `CurlClientState $multi` – поле связи между запросом, клиентом и его хендлерами,
+- `int $id` – идентификатор запроса,
+- `string[][] $headers` – заголовки запроса, 
+- `mixed $info` – информация по состоянию запроса,
+- `CurlHandle $handle` – хендлер запроса (имлпементация resource-переменной),
+- `float $timeout`,
+- `int $offset`, 
+- `callable(self): bool $initializer` – функция инициализации (определяется в конструкторе)
+- `?int $content` – ресурс (в KPHP определяется целочисленным значением, в PHP – respurce типом, потому для PHP тип не указывается, используя PHPDoc), 
+- `mixed $finalInfo` – результирующая информация по состоянию запроса
+
+Пример создания запроса:
+```PHP
+return new CurlResponse($this->multi, $ch, null, $options, $method, $redirectResolverFunc);
+```
+
+### Имплементация resource-типов
+С целью инкапсуляции кода была создана обёртка над resource-данными PHP `CurlHandle` и `CurlMultiHandle`.
+Имплементриванный класс `CurlHandle` содержит один параметр хендлера, тип которого определяется в PHPDoc для обхода конфтиктов между PHP и KPHP:
+
+```PHP
+/** @var int $handle because in KPHP resources are just integers*/
+protected $handle; // do not specify the type to avoid conflicts between KPHP and PHP
+```
+
+Ананлогичным образом выстроен конструктор, способный принимать готовый resource-объект:
+```PHP
+/**
+* @param string|null $url
+* @param int|null $handle again: do not specify the type
+*/
+public function __construct(?string $url = null, $handle = null)
+{
+    // creates a curl session with url or null or stores the transferred one
+    $handle ? $this->handle = $handle : $this->handle = curl_init($url);
+}
+```
+
+Для работы компонента CurlHttpClient на KPHP на данный момент были инкапсулированы следующие методы (в представлении KPHP):
+`CurlHandle`:
+- `curl_setopt(int, mixed): bool`,
+- `curl_setopt_array(array): bool`,
+- `curl_close(int)`,
+- `curl_getinfo(int, int): mixed`
+
+`CurlMultiHandle`:
+- `curl_multi_setopt(int, int, int): bool`,
+- `curl_multi_remove_handle(int, int): int|false`,
+- `curl_multi_add_handle(int, int): int|false`,
+- `curl_multi_select(int, float): int|false`,
+- `curl_multi_close(int)`,
+- `curl_multi_exec(int, &int): int|false`,
+- `curl_multi_info_read(int, &int): int[], false`,
+- `curl_multi_strerror(int): string|null`
+
+Пример инкапсуляции новой функции:
+```PHP
+/**
+* @param int $handle
+* @return false|int
+*/
+public function curlMultiRemoveHandle($handle)
+{
+    return curl_multi_remove_handle($this->handle, $handle);
+}
+```
+
+### Проблема использования обработчиков событий
+Вырезан весь функционал с использованием автоматических обработчиков событий, реагирующих на ответы сервера в соответствии с переданными функциями.
+> KPHP не поддерживает cURL функционал с обработчиками событий.
+
+### Имплементация основного метода генератора
+KPHP не поддерживает генераторные функции, потому функционал библиотеки `CurlResponse::stream(array<CurlResponse>, int)` подвергся переносу в лоб.
+Для полноценного переноса генераторной функции был сформирован класс `StreamIterator`, хранящий промежуточные состояния после итерации по функции.
+
+Пример использования и изменение синтаксиса:
+```PHP
+// было
+foreach (self::stream([$this]) as [$chunk]) {
+    doSmth($chunk);
+}
+
+// стало
+$iterator = StreamIterator([$this]);
+while ($iterator->hasResponses()) {
+    $chunk = $iterator->stream();
+    doSmth($chunk);
+}
+```
+## Перенос класса состояний клиента 
