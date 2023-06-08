@@ -243,4 +243,4 @@ while ($iterator->hasResponses()) {
     doSmth($chunk);
 }
 ```
-## Перенос класса состояний клиента 
+## Краткое описание проекта находится по [ссылке](https://git.miem.hse.ru/kaa/kaa/-/blob/CurlHttpClient/src/HttpClient/README.md)
