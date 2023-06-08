@@ -13,6 +13,13 @@ use Kaa\Validator\Strategy\EmailGenerator;
 use Kaa\Validator\Strategy\IsTrueGenerator;
 use Kaa\Validator\Strategy\LessThanGenerator;
 use Kaa\Validator\Strategy\LessThanOrEqualGenerator;
+use Kaa\Validator\Strategy\NegativeGenerator;
+use Kaa\Validator\Strategy\NegativeOrZeroGenerator;
+use Kaa\Validator\Strategy\NotBlankGenerator;
+use Kaa\Validator\Strategy\NotNullGenerator;
+use Kaa\Validator\Strategy\PositiveGenerator;
+use Kaa\Validator\Strategy\PositiveOrZeroGenerator;
+use Kaa\Validator\Strategy\RangeGenerator;
 use PHPUnit\Framework\TestCase;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -253,7 +260,124 @@ class ValidatorTest extends TestCase
             EmailGenerator::class,
             "EmailFalse",
         );
-        $this->assertCount(0, $violationList);
+        $this->assertCount(1, $violationList);
         $this->assertEquals("This value is not a valid email address.", $violationList[0]->getMessage());
+    }
+
+    public function testNegativeTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            NegativeGenerator::class,
+            "NegativeTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testNegativeFalse(): void
+    {
+        $violationList = $this->getViolationList(
+            NegativeGenerator::class,
+            "NegativeFalse",
+        );
+        $this->assertCount(1, $violationList);
+        $this->assertEquals("This value should be negative.", $violationList[0]->getMessage());
+    }
+
+    public function testNegativeOrZeroTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            NegativeOrZeroGenerator::class,
+            "NegativeOrZeroTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testNotBlankTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            NotBlankGenerator::class,
+            "NotBlankTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testNotBlankFalse(): void
+    {
+        $violationList = $this->getViolationList(
+            NotBlankGenerator::class,
+            "NotBlankFalse",
+        );
+        $this->assertCount(1, $violationList);
+        $this->assertEquals("This value should not be blank.", $violationList[0]->getMessage());
+    }
+
+    public function testNotNullTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            NotNullGenerator::class,
+            "NotNullTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testNotNullFalse(): void
+    {
+        $violationList = $this->getViolationList(
+            NotNullGenerator::class,
+            "NotNullFalse",
+        );
+        $this->assertCount(1, $violationList);
+        $this->assertEquals("This value should not be null.", $violationList[0]->getMessage());
+    }
+
+    public function testPositiveTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            PositiveGenerator::class,
+            "PositiveTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testPositiveFalse(): void
+    {
+        $violationList = $this->getViolationList(
+            PositiveGenerator::class,
+            "PositiveFalse",
+        );
+        $this->assertCount(1, $violationList);
+        $this->assertEquals("This value should be positive.", $violationList[0]->getMessage());
+    }
+
+    public function testPositiveOrZeroTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            PositiveOrZeroGenerator::class,
+            "PositiveOrZeroTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testRangeTrue(): void
+    {
+        $violationList = $this->getViolationList(
+            RangeGenerator::class,
+            "RangeTrue",
+        );
+        $this->assertCount(0, $violationList);
+    }
+
+    public function testRangeFalse(): void
+    {
+        $violationList = $this->getViolationList(
+            RangeGenerator::class,
+            "RangeFalse",
+            $testAttributeInstance,
+        );
+        $this->assertCount(1, $violationList);
+        $this->assertEquals(
+            "The value must lie in the range from $testAttributeInstance->min to $testAttributeInstance->max",
+            $violationList[0]->getMessage(),
+        );
     }
 }

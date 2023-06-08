@@ -54,4 +54,46 @@ class TestModel
 
     #[Assert\Email]
     public string $EmailFalse = "examplegooglecom";
+
+    #[Assert\Negative]
+    public int $NegativeTrue = -5;
+
+    #[Assert\Negative]
+    public int $NegativeFalse = 5;
+
+    #[Assert\NegativeOrZero]
+    public int $NegativeOrZeroTrue = 0;
+
+    #[Assert\NotBlank]
+    public string $NotBlankTrue = "str";
+
+    #[Assert\NotBlank]
+    public string $NotBlankFalse = "";
+
+    #[Assert\NotNull]
+    public ?int $NotNullTrue = 5;
+
+    #[Assert\NotNull]
+    public ?int $NotNullFalse = null;
+
+    #[Assert\Positive]
+    public int $PositiveTrue = 5;
+
+    #[Assert\Positive]
+    public int $PositiveFalse = -5;
+
+    #[Assert\PositiveOrZero]
+    public int $PositiveOrZeroTrue = 0;
+
+    #[Assert\Range(
+        min: 3,
+        max: 10,
+    )]
+    public int $RangeTrue = 5;
+
+    #[Assert\Range(
+        min: 3,
+        max: 10,
+    )]
+    public int $RangeFalse = 13;
 }

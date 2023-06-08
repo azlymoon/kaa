@@ -34,7 +34,7 @@ class RangeGenerator implements AssertGeneratorInterface
         string $accessCode,
     ): array {
         $code = <<<'PHP'
-if (%s >= %s && %s <= %s){
+if (%s < %s || %s > %s){
     $%s[] = new \Kaa\Validator\Violation('%s', '%s', '%s');
 }
 PHP;
