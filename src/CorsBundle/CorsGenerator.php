@@ -137,7 +137,7 @@ PHP;
                 ));
             }
             $this->corsProvider->addCode('];');
-            $this->corsProvider->addCode(' if ($resp instanceof \Kaa\HttpKernel\Response\Response::class) {');
+            $this->corsProvider->addCode(' if ($resp instanceof \Kaa\HttpKernel\Response\Response) {');
             $this->corsProvider->addCode('\Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
             $this->corsProvider->addCode('}');
             $this->corsProvider->addCode("}");
@@ -156,7 +156,7 @@ PHP;
             ));
         }
         $this->corsProvider->addCode('];');
-        $this->corsProvider->addCode(' if ($resp instanceof \Kaa\HttpKernel\Response\Response::class) {');
+        $this->corsProvider->addCode(' if ($resp instanceof \Kaa\HttpKernel\Response\Response) {');
         $this->corsProvider->addCode('\Kaa\CorsBundle\PvpenderCorsBundle::setResponseHeaders($req, $resp, $mas);');
         $this->corsProvider->addCode('}');
         if ($nums > 0) {

@@ -33,7 +33,7 @@ class RouteMatcherGenerator implements RouteMatcherGeneratorInterface
         }
         $code[] = '$matches = [];';
         $code[] = '$nodes = explode("/", $route);';
-        $code[] = 'if ($nodes[0] === ""){';
+        $code[] = 'if ($nodes[0] == ""){';
         $code[] = '    unset($nodes[0]);';
         $code[] = '    $nodes = array_values($nodes);';
         $code[] = '}';
