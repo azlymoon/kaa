@@ -45,7 +45,7 @@ class CorsProvider implements CorsProviderInterface, DumpableInterface
         $this->method->setStatic();
         $this->method->setVisibility(ClassLike::VisibilityPublic);
         $this->method->setReturnType('void');
-        $this->method->addComment('@kphp-required');
+        $this->method->addComment('kphp-required');
     }
 
     public function getFqnClassName(): string
