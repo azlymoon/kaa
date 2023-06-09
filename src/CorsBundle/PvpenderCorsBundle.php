@@ -7,6 +7,9 @@ use Kaa\HttpKernel\Response\Response;
 
 class PvpenderCorsBundle
 {
+    /**
+     * @kphp-required
+     */
     public static function checkOptions(\Kaa\EventDispatcher\EventInterface $event): void
     {
         $castedEvent = instance_cast($event, \Kaa\HttpKernel\Event\FindActionEvent::class);
