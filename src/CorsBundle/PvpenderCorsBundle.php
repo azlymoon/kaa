@@ -24,6 +24,9 @@ class PvpenderCorsBundle
         $castedEvent->stopPropagation();
     }
 
+    /**
+     * @kphp-required
+     */
     public static function returnEmptyResponse(Request $request): Response
     {
         return new Response();
