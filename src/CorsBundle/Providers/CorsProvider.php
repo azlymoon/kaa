@@ -41,7 +41,7 @@ class CorsProvider implements CorsProviderInterface, DumpableInterface
         $phpNamespace = $this->phpFile->addNamespace($this->namespace);
         $class = $phpNamespace->addClass($this->getClassName());
         $this->method = $class->addMethod(self::METHOD_NAME);
-        $this->method->addParameter("event", \Kaa\EventDispatcher\EventInterface::class);
+        $this->method->addParameter("event")->setType(\Kaa\EventDispatcher\EventInterface::class);
         $this->method->setStatic();
         $this->method->setVisibility(ClassLike::VisibilityPublic);
         $this->method->setReturnType('void');
