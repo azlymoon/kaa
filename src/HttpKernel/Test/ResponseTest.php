@@ -3,7 +3,7 @@
 namespace Kaa\HttpKernel\Test;
 
 use InvalidArgumentException;
-use Kaa\HttpKernel\Response\Response;
+use Kaa\HttpFoundation\Response;
 use PHPUnit\Framework\TestCase;
 
 class ResponseTest extends TestCase
