@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -33,7 +35,7 @@ class AcceptHeaderItem
     private $attributes = [];
 
     /** @param string[] $attributes */
-    public function __construct(string $setValue, $attributes = [])
+    public function __construct(string $setValue, array $attributes = [])
     {
         $this->value = $setValue;
         foreach ($attributes as $name => $value) {
@@ -51,6 +53,7 @@ class AcceptHeaderItem
         $part = array_shift($parts);
         $attributes = HeaderUtils::combine($parts);
 
+        /** @phpstan-ignore-next-line */
         return new self((string)$part[0], array_map('strval', $attributes));
     }
 
@@ -60,7 +63,7 @@ class AcceptHeaderItem
     public function __toString(): string
     {
         $string = $this->value . ($this->quality < 1 ? ';q=' . $this->quality : '');
-        if (\count($this->attributes) > 0) {
+        if (count($this->attributes) > 0) {
             $string .= '; ' . HeaderUtils::toString($this->attributes, ';');
         }
 
@@ -148,7 +151,7 @@ class AcceptHeaderItem
      *
      * @return string[]
      */
-    public function getAttributes()
+    public function getAttributes(): array
     {
         return $this->attributes;
     }

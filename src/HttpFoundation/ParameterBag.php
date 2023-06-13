@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -11,8 +13,6 @@
 
 namespace Kaa\HttpFoundation;
 
-use Kaa\HttpFoundation\Exception\BadRequestException;
-
 /**
  * This file has been rewritten for KPHP compilation.
  * Please refer to the original Symfony HttpFoundation repository for the original source code.
@@ -22,8 +22,6 @@ use Kaa\HttpFoundation\Exception\BadRequestException;
  * ParameterBag is a container for key/value pairs.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @implements \IteratorAggregate<string, mixed>
  */
 class ParameterBag
 {
@@ -116,7 +114,7 @@ class ParameterBag
      */
     public function getAlpha(string $key, string $default = ''): string
     {
-        return (string)preg_replace('/[^[:alpha:]]/', '', $this->get($key, $default));
+        return (string)preg_replace('/[^[:alpha:]]/', '', (string)$this->get($key, $default));
     }
 
     /**
@@ -124,7 +122,7 @@ class ParameterBag
      */
     public function getAlnum(string $key, string $default = ''): string
     {
-        return (string)preg_replace('/[^[:alnum:]]/', '', $this->get($key, $default));
+        return (string)preg_replace('/[^[:alnum:]]/', '', (string)$this->get($key, $default));
     }
 
     /**

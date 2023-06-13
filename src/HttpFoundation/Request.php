@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -62,13 +64,13 @@ class Request
     public const METHOD_CONNECT = 'CONNECT';
 
     /** @var string[] */
-    protected static $trustedProxies = [];
+    private static $trustedProxies = [];
 
     /** @var string[] */
-    protected static $trustedHostPatterns = [];
+    private static $trustedHostPatterns = [];
 
     /** @var string[] */
-    protected static $trustedHosts = [];
+    private static $trustedHosts = [];
 
     /** @var string[][] */
     private static $formats = [
@@ -85,7 +87,7 @@ class Request
             'form' => ['application/x-www-form-urlencoded', 'multipart/form-data'],
         ];
 
-    private static $httpMethodParameterOverride = false;
+    private static bool $httpMethodParameterOverride = false;
 
     /**
      * Custom parameters.
@@ -270,7 +272,7 @@ class Request
         $cookiesArray = array_map('strval', $_COOKIE);
 
         /** @var mixed $filesStringValues */
-        $filesStringValues = array_filter($_FILES, function ($value) {
+        $filesStringValues = array_filter($_FILES, static function ($value) {
             return !\is_array($value);
         });
 
@@ -278,7 +280,7 @@ class Request
         $filesArray = array_map('strval', $filesStringValues);
 
         /** @var mixed $serverStringValues */
-        $serverStringValues = array_filter($_SERVER, function ($value) {
+        $serverStringValues = array_filter($_SERVER, static function ($value) {
             return !\is_array($value);
         });
 
@@ -508,6 +510,10 @@ class Request
         $this->headers = clone $this->headers;
     }
 
+    /**
+     * @throws SuspiciousOperationException
+     * @throws BadRequestException
+     */
     public function __toString(): string
     {
         $content = $this->getContent();
@@ -651,7 +657,7 @@ class Request
      */
     public static function setTrustedHosts($hostPatterns)
     {
-        self::$trustedHostPatterns = array_map(function ($hostPattern) {
+        self::$trustedHostPatterns = array_map(static function ($hostPattern) {
             return sprintf('{%s}i', $hostPattern);
         }, $hostPatterns);
         // we need to reset trusted hosts on trusted host patterns change
@@ -691,7 +697,7 @@ class Request
      *
      * Be warned that enabling this feature might lead to CSRF issues in your code.
      * Check that you are using CSRF tokens when required.
-     * If the HTTP method parameter override is enabled, an html-form with method "POST" can be altered
+     * If the HTTP method parameter override is enabled, a html-form with method "POST" can be altered
      * and used to send a "PUT" or "DELETE" request via the _method request parameter.
      * If these methods are not protected against CSRF, this presents a possible vulnerability.
      *
@@ -738,8 +744,8 @@ class Request
      */
     public function get(string $key, ?string $default = null): ?string
     {
-        $result = $this->attributes->get($key, (string)$this);
-        if ((string)$this !== $result) {
+        $result = $this->attributes->get($key, $this->__toString());
+        if ($this->__toString() !== $result) {
             return $result;
         }
 
@@ -1022,6 +1028,7 @@ class Request
      * Returns the HTTP host being requested.
      *
      * The port name will be appended to the host if it's non-standard.
+     * @throws SuspiciousOperationException
      */
     public function getHttpHost(): string
     {
@@ -1054,6 +1061,7 @@ class Request
      *
      * If the URL was called with basic authentication, the user
      * and the password are not added to the generated string.
+     * @throws SuspiciousOperationException
      */
     public function getSchemeAndHttpHost(): string
     {
@@ -1079,6 +1087,7 @@ class Request
      * Generates a normalized URI for the given path.
      *
      * @param string $path A path to use instead of the current one
+     * @throws SuspiciousOperationException
      */
     public function getUriForPath(string $path): string
     {
@@ -1384,7 +1393,8 @@ class Request
     /**
      * Associates a format with mime types.
      *
-     * @param string|string[] $mimeTypes2 The associated mime types (the preferred one must be the first as it will be used as the content type)
+     * @param string|string[] $mimeTypes2 The associated mime types
+     * (the preferred one must be the first as it will be used as the content type)
      */
     public function setFormat(string $format, $mimeTypes2): void
     {
@@ -1437,6 +1447,8 @@ class Request
      * Checks if the request method is of specified type.
      *
      * @param string $method Uppercase request method (GET, POST etc)
+     * @throws BadRequestException
+     * @throws SuspiciousOperationException
      */
     public function isMethod(string $method): bool
     {
@@ -1555,7 +1567,7 @@ class Request
      */
     public function getETags(): array
     {
-        $ETags = preg_split('/\s*,\s*/', $this->headers->get('If-None-Match', ''), -1, \PREG_SPLIT_NO_EMPTY);
+        $ETags = preg_split('/\s*,\s*/', (string)$this->headers->get('If-None-Match', ''), -1, \PREG_SPLIT_NO_EMPTY);
         if ($ETags === false) {
             return [];
         }
@@ -1662,7 +1674,7 @@ class Request
                         $lang = (string)$codes[1];
                     }
                 } else {
-                    for ($i = 0, $max = \count($codes); $i < $max; ++$i) {
+                    for ($i = 0, $max = \count($codes); $i < $max; $i++) {
                         if ($i === 0) {
                             $lang = strtolower($codes[0]);
                         } else {
@@ -1924,7 +1936,7 @@ class Request
     /**
      * Prepares the base path.
      */
-    protected function prepareBasePath(): ?string
+    public function prepareBasePath(): ?string
     {
         $baseUrl = $this->getBaseUrl();
         if (empty($baseUrl)) {
@@ -1949,7 +1961,7 @@ class Request
     /**
      * Prepares the path info.
      */
-    private function preparePathInfo(): ?string
+    private function preparePathInfo(): string
     {
         $requestUri = (string)$this->getRequestUri();
 
@@ -2042,7 +2054,7 @@ class Request
                     continue;
                 }
                 if ($type === self::HEADER_X_FORWARDED_PORT) {
-                    $v = strrchr($v, ':');
+                    $v = strrchr((string)$v, ':');
                     if (str_ends_with((string)$v, ']') || $v === false) {
                         $v = $this->isSecure() ? ':443' : ':80';
                     }
@@ -2151,126 +2163,3 @@ class Request
         return [$firstTrustedIp];
     }
 }
-
-// TODO [+] Start TODO for Request.php
-// TODO [] Change licence section
-// TODO [] Create constant file
-// TODO [+] Create Request Tests
-// TODO [+] Create KPHP Request Tests
-// TODO [+] Make the initialize() method with the correct data types
-// TODO [+] Make getContentTypeFormat() method with constant FORMATS for mime types
-
-// Локаль пользователя - это установленный на компьютере или устройстве пользователя языковой пакет и
-// региональные настройки, которые определяют, как отображаются даты, времена, числа и другие форматы данных на языке
-// пользователя и с учетом его региональных настроек.
-// TODO [] Create \Locale Class for KPHP https://www.php.net/manual/en/class.locale.php
-//  - [] Test ReguestTest/testGetLocale
-//  - [] method setPhpDefaultLocale()
-//  - [] setDefaultLocale()
-//  - [] getDefaultLocale()
-//  - [] setLocale()
-//  - [] getLocale()
-
-// TODO [+] The create() method and tests for it:
-// - TODO [-] Create ServerConfig class for server configuration variables in create() method
-//      - Это не имеет смысла, легче весь массив привести к string[],
-//        иначе приходится управляться и с представлением этих переменных и в массиве, и в классе.
-//        Так только сложнее, я попробовал
-//
-// - TODO [+] Finalise ServerBag.php functionality for all headers
-
-// TODO [+] Make methods to retrieve the values of the Request object
-//  - [+] getUri()
-//      - [+] Pass through Vietnam
-//      - [+] Write a HeaderUtils::ParseQuery() method for KPHP
-//      - [] Commit with bug fix for Symfony/HttpFoundation HeaderBag::ParseQuery()
-//      - [+] getQueryString()
-//      - [+] getPathInfo()
-//      - [+] getBaseUrl()
-//          - [-] Make full functionality of IpUtils.php
-//              - This file contains functionality to check ip addresses, but unfortunately
-//                it uses the filter_var() method, which is not supported in KPHP. This can be
-//                set aside for the future
-//      - [+] getSchemeAndHttpHost()
-//          - [+] isSecure()
-//          - [+] getPort()
-//          - [+] getHttpHost()
-//  - [+] getPathInfo()
-//      - [+] getRequestUri()
-//  - [+] getQueryString()
-//      - [+] Assign as return value string|string[] in ParameterBag methods
-//  - [+] getPort()
-//  - [+] getHttpHost()
-//      - [+] getHost()
-//  - [+] isSecure()
-//      - Unfortunately, it was not possible to fully implement the functionality either,
-//        we need to come up with a replacement for the filter_var() method
-//  - [+] getRequestUri()
-//  - [+] getContent()
-
-// TODO [+] Make a duplicate() method and tests for it
-//  - [+] get()
-//      - [+] __toString()
-//          - [] Add support for cookies
-
-// TODO [+] Add getPreferredFormat() method
-//  - [+] Basic functionality for the AcceptHeader class
-//      - [+] Basic functionality for the AcceptHeaderItem class
-
-// TODO [+] Provide functions for working with MimeTypes
-//  - Changed $formats to an already assigned variable, got rid of the initialize() method for $formats
-//  - [+] getFormat() method
-//  - [+] setFormat() method
-//  - [+] getMimeType() method
-//  - [+] getMimeTypes() method
-
-// TODO [+] getRelativeUriForPath()
-
-// TODO [+] Add advanced work with getMethod(), setMethod()
-//  - [+] Add InputBag class.
-//       I allowed myself to rewrite the logic of this class,
-//       now it is not inherited from ParameterBag, because I wanted to leave in HeaderBag
-//       the ability to store $parameters as string[], but in InputBag the same variable is
-//       already of mixed type
-
-// TODO [+] Implement basic functionality for obtaining IP addresses of requests
-//  - [+] getClientIps() and getClientIp() methods
-//  - [+] Request::setTrustedProxies() method to generate variable IP address for the request
-
-// TODO [-] Extended functionality for handling IP address requests.
-//  - More importantly, make proxy address configuration options available.
-//    For example, set $_SERVER['HTTP_X_FORWARDED_FOR'] to first accept a request from 88.88.88.88
-//    but specify that the original source address is 127.0.0.1 and if 127.0.0.1 is a trusted proxy,
-//    we can respond to the original 88.88.88.88
-//  - Unfortunately, I am postponing this task for now, as it requires working with IpUtils.php,
-//    which uses the unsupported filter_var() function of KPHP
-
-// TODO [+] Working with json in requests
-//  - [+] toArray() method
-//      - [+] Add Exception and JsonException
-
-// TODO [+] Request::createFromGlobals() method
-//  - [+] Place values of superglobal variables in arrays of type string[]
-//  - [] The $_FILES value is a two-dimensional array string[][], write full functionality for fileBag.php
-//      - [] Remove the string[] conversion for $request->files
-
-// TODO [+] Strict types in HeaderBag.php
-
-// TODO [+] overrideGlobals()
-//  - Метод определяет порядок, в котором будут объединяться данные из $_GET, $_POST и $_COOKIE в массив $_REQUEST.
-//    Это происходит путем анализа строки конфигурации переменных php.ini, которая управляет порядком объединения
-//    данных. Если строка конфигурации не определена, используется порядок "gp". Но KPHP не может получить конфигурацию
-//    переменных из php.ini , так что я поставил по умолачанию 'gpc'
-//  - [] The isSecure() functionality needs to be extended for the tests
-//      - [] getTrustedValues() method
-//          - Unfortunately, this method uses the filter_var function and IpUtils, which cannot yet be run
-
-// TODO [+] Methods to provide convenient ways to extract information from the HTTP request headers.
-//  - [+] getScriptName()
-//  - [+] getRealMethod()
-//  - [+] getPreferredLanguage()
-//  - [+] getLanguages()
-//  - [+] getCharsets()
-//  - [+] getEncodings()
-//  - [+] isXmlHttpRequest()
-//  - [+] prepareBasePath()

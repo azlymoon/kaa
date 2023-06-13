@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -25,6 +27,13 @@ use DateTime;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
+
+#ifndef KPHP
+define('KPHP', 0);
+if (false)
+#endif
+define('KPHP', 1);
+
 class Response
 {
 //  TODO: Надеюсь я не забуду    вынести эти константы в отдельный файл. Извини, Дима :)
@@ -334,7 +343,7 @@ class Response
     {
         // headers
         foreach ($this->headers->allPreserveCaseWithoutCookies() as $name => $values) {
-            $replace = 0 === strcasecmp((string)$name, 'Content-Type');
+            $replace = strcasecmp((string)$name, 'Content-Type') === 0;
             foreach ($values as $value) {
                 header($name . ': ' . $value, $replace, $this->statusCode);
             }
@@ -505,12 +514,9 @@ class Response
      */
     final public function isCacheable(): bool
     {
-        if (!\in_array($this->statusCode, [200, 203, 300, 301, 302, 404, 410])) {
-            return false;
-        }
-
         if (
-            $this->headers->hasCacheControlDirective('no-store')
+            !\in_array($this->statusCode, [200, 203, 300, 301, 302, 404, 410], true)
+            || $this->headers->hasCacheControlDirective('no-store')
             || ($this->headers->getCacheControlDirective('private') !== null)
         ) {
             return false;
@@ -681,7 +687,14 @@ class Response
             // according to RFC 2616 invalid date formats (e.g. "0" and "-1") must be treated as in the past
 
             # The KPHP create from format function returns null|DateTime
-            return DateTime::createFromFormat('U', (string)(time() - 172800));
+            $dateTime = DateTime::createFromFormat('U', (string)(time() - 172800));
+
+            #ifndef KPHP
+            if ($dateTime === false) {
+                return null;
+            }
+            #endif
+            return $dateTime;
         }
     }
 
@@ -689,10 +702,6 @@ class Response
      * Sets the Expires HTTP header with a DateTime instance.
      *
      * Passing null as value will remove the header.
-     *
-     * @param ?\DateTimeInterface $date
-     *
-     * @throws InvalidArgumentException
      */
     final public function setExpires(?\DateTimeInterface $date = null): self
     {
@@ -753,7 +762,7 @@ class Response
     /**
      * Sets the number of seconds after which the response should no longer be considered fresh.
      *
-     * This methods sets the Cache-Control max-age directive.
+     * These methods set the Cache-Control max-age directive.
      */
     final public function setMaxAge(int $value): self
     {
@@ -790,7 +799,7 @@ class Response
     /**
      * Sets the number of seconds after which the response should no longer be considered fresh by shared caches.
      *
-     * This methods sets the Cache-Control s-maxage directive.
+     * These methods set the Cache-Control s-maxage directive.
      */
     final public function setSharedMaxAge(int $value): self
     {
@@ -869,7 +878,7 @@ class Response
             return $this;
         }
 
-        if ($date instanceof \DateTime) {
+        if ($date instanceof DateTime) {
             $immutableDate = \DateTimeImmutable::createFromMutable($date);
         } elseif ($date instanceof \DateTimeImmutable) {
             $immutableDate = $date;
@@ -897,7 +906,7 @@ class Response
     /**
      * Sets the ETag value.
      *
-     * @param string|null $etag The ETag unique identifier or null to remove the header
+     * @param ?string     $etag The ETag unique identifier or null to remove the header
      * @param bool        $weak Whether you want a weak ETag or not
      */
     final public function setEtag(?string $etag = null, bool $weak = false): self
@@ -926,15 +935,15 @@ class Response
      * must_revalidate, no_cache, no_store, no_transform, public, private,
      * proxy_revalidate, max_age, s_maxage, immutable, last_modified and etag.
      *
-     * @throws \InvalidArgumentException
-     *
      * @param mixed[] $options
+     * @throws InvalidArgumentException
+     *
      */
     final public function setCache($options): self
     {
         $diff = array_diff(array_keys($options), array_keys(self::HTTP_RESPONSE_CACHE_CONTROL_DIRECTIVES));
         if ($diff !== []) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf(
                     'Response does not support the following options: "%s".',
                     implode('", "', $diff)
@@ -1204,7 +1213,8 @@ class Response
     {
         return \in_array(
             $this->statusCode,
-            [201, 301, 302, 303, 307, 308]
+            [201, 301, 302, 303, 307, 308],
+            true
         ) &&
             ($location === null || $location == $this->headers->get('Location')
             );
@@ -1215,7 +1225,7 @@ class Response
      */
     final public function isEmpty(): bool
     {
-        return \in_array($this->statusCode, [204, 304]);
+        return \in_array($this->statusCode, [204, 304], true);
     }
 
     /**
@@ -1234,13 +1244,12 @@ class Response
         $this->setVary('Prefer', false);
     }
 
-    public static function setTimezoneZero(\DateTimeImmutable $date): \DateTimeImmutable
+    /** @return false|\DateTimeImmutable*/
+    public static function setTimezoneZero(\DateTimeImmutable $date)
     {
         $timezoneOffset = $date->getOffset();
-        $date = $date->modify("-{$timezoneOffset} seconds");
-
         // KPHP returns DateTimeImmutable only
-        return $date;
+        return $date->modify("-{$timezoneOffset} seconds");
     }
 }
 

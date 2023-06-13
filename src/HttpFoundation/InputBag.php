@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -48,7 +50,7 @@ class InputBag
      */
     public function get(string $key, $default = null)
     {
-        if ($default !== null && !\is_scalar($default)) {
+        if ($default !== null && !is_scalar($default)) {
             throw new InvalidArgumentException(sprintf(
                 'Expected a scalar value as a 2nd argument to "%s()", "%s" given.',
                 __METHOD__,
@@ -56,13 +58,13 @@ class InputBag
             ));
         }
 
-        if ($this->parameters !== null && \array_key_exists($key, $this->parameters)) {
+        if ($this->parameters !== null && array_key_exists($key, $this->parameters)) {
             $value = $this->parameters[$key];
         } else {
             $value = $default;
         }
 
-        if ($value !== null && !\is_scalar($value)) {
+        if ($value !== null && !is_scalar($value)) {
             throw new BadRequestException(sprintf('Input value "%s" contains a non-scalar value.', $key));
         }
 
@@ -77,7 +79,7 @@ class InputBag
      */
     public function set(string $key, $value): void
     {
-        if ($value !== null && !\is_scalar($value) && !\is_array($value)) {
+        if ($value !== null && !is_scalar($value) && !is_array($value)) {
             throw new InvalidArgumentException(sprintf(
                 'Expected a scalar, or an array as a 2nd argument to "%s()", "%s" given.',
                 __METHOD__,
@@ -110,7 +112,7 @@ class InputBag
 
     public function has(string $key): bool
     {
-        return \array_key_exists($key, $this->parameters);
+        return array_key_exists($key, $this->parameters);
     }
 
     /**
@@ -121,7 +123,3 @@ class InputBag
         unset($this->parameters[$key]);
     }
 }
-
-//TODO: [+] Add exception handling for InputBag
-//TODO: [-] Add a check that the object passed to InputBag->paramaters implements the \Stringable interface
-//          - Unfortunately, KPHP does not allow storing objects in arrays without a known type

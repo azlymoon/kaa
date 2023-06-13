@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file has been rewritten for KPHP compilation.
  * Please refer to the original Symfony HttpFoundation repository for the original source code.
@@ -54,7 +56,7 @@ class AcceptHeader
         $parts = HeaderUtils::split($headerValue ?? '', ',;=');
 
         $indexHolder = new IndexHolder($index);
-        $result = new self(array_map(static function ($subParts) use ($indexHolder) {
+        return new self(array_map(static function ($subParts) use ($indexHolder) {
             $part = array_shift($subParts);
             /** @var mixed $attributes2 */
             $attributes2 = HeaderUtils::combine($subParts);
@@ -62,14 +64,12 @@ class AcceptHeader
             /** @var string[] $attributes */
             $attributes = array_map('strval', $attributes2);
 
-            $item = new AcceptHeaderItem((string)$part[0], $attributes);
+            $item = new AcceptHeaderItem((string)$part[0], $attributes); /** @phpstan-ignore-line */
             $item->setIndex($indexHolder->getIndex());
             $indexHolder->incrementIndex();
 
             return $item;
         }, $parts));
-
-        return $result;
     }
 
     /**
@@ -121,7 +121,7 @@ class AcceptHeader
      *
      * @return AcceptHeaderItem[]
      */
-    public function all()
+    public function all(): array
     {
         $this->sort();
 

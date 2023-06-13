@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -12,6 +14,7 @@
 namespace Kaa\HttpFoundation;
 
 use DateTime;
+use RuntimeException;
 
 /**
  * This file has been rewritten for KPHP compilation.
@@ -22,9 +25,15 @@ use DateTime;
  * HeaderBag is a container for HTTP headers.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @implements \IteratorAggregate<string, list<string|null>>
  */
+
+#ifndef KPHP
+define('KPHP', 0);
+if (false)
+#endif
+define('KPHP', 1);
+
+
 class HeaderBag
 {
     protected const UPPER = '_ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -59,7 +68,7 @@ class HeaderBag
             if (is_string($key)) {
                 return strlen($key);
             }
-            return 0;
+                return 0;
         }, array_keys($headers))) + 1;
 
         $content = '';
@@ -113,7 +122,7 @@ class HeaderBag
      * Replaces the current HTTP headers by a new set.
      * @param string[][]|string[] $headers
      */
-    public function replace($headers = [])
+    public function replace($headers = []): void
     {
         $this->headers = [];
         $this->add($headers);
@@ -151,7 +160,6 @@ class HeaderBag
     /**
      * Sets a header by name.
      *
-     * @param string               $key
      * @param mixed                $values  The value or an array of values
      * @param bool                 $replace Whether to replace the actual value or not (true by default)
      */
@@ -174,7 +182,7 @@ class HeaderBag
             $this->headers[$key][] = (string)$values;
         }
 
-        if ('cache-control' === $key) {
+        if ($key === 'cache-control') {
             $this->cacheControl = $this->parseCacheControl(implode(', ', $this->headers[$key]));
         }
     }
@@ -192,7 +200,7 @@ class HeaderBag
      */
     public function contains(string $key, string $value): bool
     {
-        return \in_array($value, $this->all($key));
+        return \in_array($value, $this->all($key), true);
     }
 
     /**
@@ -214,7 +222,7 @@ class HeaderBag
      *
      *
      *
-     * @throws \RuntimeException When the HTTP header is not parseable
+     * @throws RuntimeException When the HTTP header is not parseable
      */
     public function getDate(string $key, ?DateTime $default = null): ?DateTime
     {
@@ -226,9 +234,16 @@ class HeaderBag
 
         # The KPHP create from format function returns null|\DateTime
         $date = DateTime::createFromFormat(\DATE_RFC2822, $value);
-        if (!isset($date)) {
-            throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
+
+        if ($date === null) {
+            throw new RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
         }
+
+        #ifndef KPHP
+        if ($date === false) {
+            throw new RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
+        }
+        #endif
 
         # As I said, $date is null|\DateTime
         return $date;
@@ -277,7 +292,7 @@ class HeaderBag
         $this->set('Cache-Control', $this->getCacheControlHeader());
     }
 
-    protected function getCacheControlHeader(): string
+    public function getCacheControlHeader(): string
     {
         ksort($this->cacheControl);
 
@@ -289,15 +304,10 @@ class HeaderBag
      *
      * @return string[]|bool[]
      */
-    protected function parseCacheControl(string $header)
+    public function parseCacheControl(string $header)
     {
         $parts = HeaderUtils::split($header, ',=');
 
         return HeaderUtils::combine($parts);
     }
 }
-
-
-// TODO [+] Start TODO for HeaderBag.php
-// TODO [] Change licence section
-// TODO [+] Figure out what is stored in headers and assign the correct data types to set(), get() methods

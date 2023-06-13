@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file has been rewritten for KPHP compilation.
  * Please refer to the original Symfony HttpFoundation repository for the original source code.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -10,8 +12,6 @@
  */
 
 namespace Kaa\HttpFoundation;
-
-use Kaa\HttpFoundation\Response;
 
 /**
  * This file has been rewritten for KPHP compilation.
@@ -51,7 +51,7 @@ class RedirectResponse extends Response
             );
         }
 
-        if (301 == $status && !\array_key_exists('cache-control', self::arrayChangeKeyCase($headers))) {
+        if ($status == 301 && !\array_key_exists('cache-control', self::arrayChangeKeyCase($headers))) {
             $this->headers->remove('cache-control');
         }
     }
@@ -89,7 +89,7 @@ class RedirectResponse extends Response
      */
     public function setTargetUrl(string $url): self
     {
-        if ('' === $url) {
+        if ($url === '') {
             throw new \InvalidArgumentException('Cannot redirect to an empty URL.');
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -107,20 +109,19 @@ class ResponseHeaderBag extends HeaderBag
                 foreach ($this->getCookiesFlat() as $cookie) {
                     $result [] = (string)$cookie;
                 }
-                return $result;
             } else {
                 foreach (parent::all($key) as $header => $value) {
                     if (\is_string($value)) {
                         $result[$header] = $value;
                     }
                 }
-                return $result;
             }
+            return $result;
         }
 
         /** @var string[][] $result */
         $result = [];
-        foreach (parent::all(null) as $header => $valueArray) {
+        foreach (parent::all() as $header => $valueArray) {
             if (\is_array($valueArray)) {
                 $result[$header] = array_map('strval', $valueArray);
             }
@@ -246,7 +247,7 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * Removes a cookie from the array, but does not unset it in the browser.
      */
-    public function removeCookie(string $name, ?string $path = '/', string $domain = '')
+    public function removeCookie(string $name, ?string $path = '/', string $domain = ''): void
     {
         $path ??= '/';
 
@@ -331,7 +332,7 @@ class ResponseHeaderBag extends HeaderBag
      * This considers several other headers and calculates or modifies the
      * cache-control header to a sensible, conservative value.
      */
-    protected function computeCacheControlValue(): string
+    private function computeCacheControlValue(): string
     {
         if (count($this->cacheControl) === 0) {
             if ($this->has('Last-Modified') || $this->has('Expires')) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -11,8 +13,10 @@
 
 namespace Kaa\HttpFoundation;
 
+use Exception;
 use JsonEncoder;
 use Kaa\HttpKernel\Exception\JsonException;
+use TypeError;
 
 /**
  * This file has been rewritten for KPHP compilation.
@@ -47,15 +51,15 @@ class JsonResponse extends Response
      * @param mixed     $data
      * @param string[]  $headers
      *
-     * @throws \TypeError
-     * @throws \Exception
+     * @throws TypeError
+     * @throws Exception
      */
     public function __construct($data = null, int $status = 200, $headers = [], bool $json = false)
     {
         parent::__construct('', $status, $headers);
 
-        if ($json && !\is_string($data) && !is_numeric($data)) {
-            throw new \TypeError(
+        if ($json && !is_string($data) && !is_numeric($data)) {
+            throw new TypeError(
                 sprintf(
                     '"%s": If $json is set to true, argument $data must be a string "%s" given.',
                     __METHOD__,
@@ -78,6 +82,7 @@ class JsonResponse extends Response
     /**
      * @param string[] $headers
      * @throws JsonException
+     * @throws Exception
      */
     public static function fromObject(object $data, int $status = Response::HTTP_OK, array $headers = []): self
     {
@@ -97,9 +102,10 @@ class JsonResponse extends Response
      *     return JsonResponse::fromJsonString('{"key": "value"}')
      *         ->setSharedMaxAge(300);
      *
-     * @param string    $data    The JSON response string
-     * @param int       $status  The response status code (200 "OK" by default)
-     * @param string[]  $headers  An array of response headers
+     * @param string    $data The JSON response string
+     * @param int       $status The response status code (200 "OK" by default)
+     * @param string[]  $headers An array of response headers
+     * @throws Exception
      */
     public static function fromJsonString(string $data, int $status = 200, $headers = []): self
     {
@@ -109,7 +115,7 @@ class JsonResponse extends Response
     /**
      * Sets the JSONP callback.
      *
-     * @param string|null $callback The JSONP callback or null to use none
+     * @param ?string $callback The JSONP callback or null to use none
      *
      * @return $this
      *
@@ -160,7 +166,7 @@ class JsonResponse extends Response
      *
      * @param mixed $data
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function setData($data): Response
     {
@@ -182,7 +188,7 @@ class JsonResponse extends Response
     /**
      * Updates the content and headers according to the JSON data and callback.
      */
-    protected function update(): Response
+    private function update(): Response
     {
         if ($this->callback !== null) {
             // Not using application/javascript for compatibility reasons with older browsers.
